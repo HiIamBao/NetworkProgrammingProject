@@ -1,5 +1,4 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/multyPlayer.dir/link.d"
   "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o"
   "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o"
