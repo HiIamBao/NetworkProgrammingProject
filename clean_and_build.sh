@@ -2,6 +2,100 @@
 
 # Clean and Build Script for MultiPlayer Game
 # This script removes all generated build files and rebuilds the project from scratch
+# It also checks for and installs missing dependencies on Ubuntu/Debian
+
+# Parse command line arguments
+INSTALL_DEPS=true
+for arg in "$@"; do
+    case $arg in
+        --no-install-deps)
+            INSTALL_DEPS=false
+            shift
+            ;;
+        --help)
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --no-install-deps    Skip automatic dependency installation"
+            echo "  --help               Show this help message"
+            exit 0
+            ;;
+    esac
+done
+
+# Function to check if running on Ubuntu/Debian
+is_debian_based() {
+    [ -f /etc/debian_version ] || [ -f /etc/lsb-release ]
+}
+
+# Function to check if a package is installed
+is_package_installed() {
+    dpkg -l "$1" 2>/dev/null | grep -q "^ii"
+}
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check and install dependencies
+if [ "$INSTALL_DEPS" = true ]; then
+    echo "🔍 Checking for required dependencies..."
+    echo ""
+    
+    MISSING_PACKAGES=()
+    REQUIRED_PACKAGES=(
+        "cmake"
+        "g++"
+        "libgl1-mesa-dev"
+        "libx11-dev"
+        "libxrandr-dev"
+        "libxinerama-dev"
+        "libxcursor-dev"
+        "libxi-dev"
+        "libsqlite3-dev"
+        "libssl-dev"
+    )
+    
+    # Check if running on Debian-based system
+    if is_debian_based; then
+        for package in "${REQUIRED_PACKAGES[@]}"; do
+            if ! is_package_installed "$package"; then
+                MISSING_PACKAGES+=("$package")
+            fi
+        done
+        
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+            echo "📦 Missing packages detected: ${MISSING_PACKAGES[*]}"
+            echo ""
+            echo "Would you like to install them now? This requires sudo privileges."
+            read -p "Install missing dependencies? (y/N): " -n 1 -r
+            echo ""
+            
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo "📥 Installing dependencies..."
+                sudo apt-get update
+                sudo apt-get install -y "${MISSING_PACKAGES[@]}"
+                
+                if [ $? -ne 0 ]; then
+                    echo "❌ Failed to install some dependencies. Please install them manually:"
+                    echo "   sudo apt-get install ${MISSING_PACKAGES[*]}"
+                    exit 1
+                fi
+                echo "✅ Dependencies installed successfully!"
+            else
+                echo "⚠️  Skipping dependency installation. Build may fail if dependencies are missing."
+                echo "   To install manually: sudo apt-get install ${MISSING_PACKAGES[*]}"
+            fi
+        else
+            echo "✅ All required dependencies are already installed!"
+        fi
+    else
+        echo "⚠️  Non-Debian system detected. Please install dependencies manually."
+        echo "   Required: cmake, g++, OpenGL, X11, SQLite3, OpenSSL development libraries"
+    fi
+    echo ""
+fi
 
 echo "🧹 Cleaning old build files..."
 

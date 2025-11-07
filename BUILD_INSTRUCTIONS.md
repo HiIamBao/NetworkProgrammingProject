@@ -6,7 +6,7 @@
 
 ## Quick Start (Recommended)
 
-### Option 1: Using the Build Script
+### Option 1: Using the Build Script (Easiest!)
 
 ```bash
 # Navigate to the project directory
@@ -17,10 +17,19 @@ cd multiPlayerGame
 ```
 
 This script will:
-1. Remove all old build artifacts
-2. Create a fresh build directory
-3. Run CMake to generate new build files
-4. Compile the project
+1. **Automatically check for missing dependencies** (Ubuntu/Debian only)
+2. **Prompt to install missing packages** (requires sudo)
+3. Remove all old build artifacts
+4. Create a fresh build directory
+5. Run CMake to generate new build files
+6. Compile the project
+
+**Note:** On first run, the script may ask for your password to install missing system libraries.
+
+To skip automatic dependency installation:
+```bash
+./clean_and_build.sh --no-install-deps
+```
 
 ### Option 2: Manual Build
 
@@ -57,24 +66,39 @@ This project requires:
 - **CMake** (version 3.10 or higher)
 - **C++ Compiler** (g++ or clang with C++17 support)
 - **OpenGL development libraries**
-- **X11 development libraries** (for Linux)
+- **X11 development libraries** (for Linux window management)
+- **SQLite3 development libraries** (for account system)
+- **OpenSSL development libraries** (for authentication)
 
-### Installing Dependencies
+### Automatic Installation (Ubuntu/Debian)
+
+**The `clean_and_build.sh` script now automatically detects and installs missing dependencies!**
+
+Simply run:
+```bash
+./clean_and_build.sh
+```
+
+The script will check for missing packages and prompt you to install them.
+
+### Manual Installation
+
+If you prefer to install dependencies manually, or if you're not on Ubuntu/Debian:
 
 **Ubuntu/Debian:**
 ```bash
 sudo apt-get update
-sudo apt-get install cmake g++ libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+sudo apt-get install cmake g++ libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libsqlite3-dev libssl-dev
 ```
 
 **Fedora:**
 ```bash
-sudo dnf install cmake gcc-c++ mesa-libGL-devel libX11-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel
+sudo dnf install cmake gcc-c++ mesa-libGL-devel libX11-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel sqlite-devel openssl-devel
 ```
 
 **Arch Linux:**
 ```bash
-sudo pacman -S cmake gcc mesa libx11 libxrandr libxinerama libxcursor libxi
+sudo pacman -S cmake gcc mesa libx11 libxrandr libxinerama libxcursor libxi sqlite openssl
 ```
 
 ## Troubleshooting
