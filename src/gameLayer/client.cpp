@@ -721,16 +721,13 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			
 			// Display scoreboard (top left)
 			{
-				float yPos = 0.02f;
-				float lineHeight = 0.025f;
-				float xPos = 0.02f;
+				// Use fully pixel-based positioning for perfect alignment
+				float xPixel = 20.0f;  // 20 pixels from left edge
+				float yPixel = 40.0f;  // 20 pixels from top edge
+				float lineHeightPixel = 40.0f;  // 40 pixels between lines
+				float paddingPixel = 10.0f;  // Padding around background
 				
-				// Title - using renderText with vec2 position
-				glm::vec2 titlePos = glm::vec2(xPos * renderer.windowW, yPos * renderer.windowH);
-				renderer.renderText(titlePos, "SCOREBOARD", textures.font, Colors_White, 0.6f);
-				yPos += lineHeight;
-				
-				// Create sorted player list by kills
+				// Create sorted player list by kills first (to calculate proper height)
 				std::vector<std::pair<int32_t, phisics::Entity*>> sortedPlayers;
 				for (auto& p : players)
 				{
@@ -741,24 +738,57 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						return a.second->kills > b.second->kills;
 					});
 				
-				// Display top 5 players
 				int displayCount = std::min((int)sortedPlayers.size(), 5);
+				
+				// Semi-transparent background for scoreboard (pixel-based)
+				float bgWidthPixel = 400.0f;  // Wide enough for text
+				float bgHeightPixel = lineHeightPixel * (displayCount + 1) + (paddingPixel * 2);  // Title + players + padding
+				// auto bgBox = Ui::Box()
+				// 	.xLeft(xPixel - paddingPixel)
+				// 	.yTop(yPixel - paddingPixel)
+				// 	.xDimensionPixels(bgWidthPixel)
+				// 	.yDimensionPixels(bgHeightPixel);
+				// renderer.renderRectangle(bgBox, {0.0f, 0.0f, 0.0f, 0.85f});  // Dark background for contrast
+				
+				// Title
+				glm::vec2 titlePos = glm::vec2(xPixel, yPixel);
+				renderer.renderText(titlePos, "SCOREBOARD", textures.font, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), 1.0f, 4.f, 3.f, false);
+				yPixel += lineHeightPixel;
+				
+				// Display top 5 players with separate columns for perfect alignment
 				for (int i = 0; i < displayCount; i++)
 				{
 					auto& playerEntry = sortedPlayers[i];
-					char scoreText[64];
-					snprintf(scoreText, sizeof(scoreText), "%s: %d/%d", 
-						playerEntry.second->name, 
-						playerEntry.second->kills, 
-						playerEntry.second->deaths);
 					
-					// Highlight own player
+					// Define fixed X positions for each column
+					float rankX = xPixel;
+					float nameX = xPixel + 50.0f;   // Rank column width
+					float killsX = xPixel + 400.0f;  // Name column width
+					float slashX = xPixel + 440.0f;  // Kills column width
+					float deathsX = xPixel + 470.0f; // Slash width
+
+					// Highlight own player with bright yellow, others with white
 					glm::vec4 textColor = (playerEntry.first == cid) ? 
-						glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) : Colors_White;
+						glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 					
-					glm::vec2 scorePos = glm::vec2(xPos * renderer.windowW, yPos * renderer.windowH);
-					renderer.renderText(scorePos, scoreText, textures.font, textColor, 0.5f);
-					yPos += lineHeight;
+					// Render each column separately at fixed positions
+					char rankText[8];
+					snprintf(rankText, sizeof(rankText), "%d.", i + 1);
+					renderer.renderText(glm::vec2(rankX, yPixel), rankText, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					
+					renderer.renderText(glm::vec2(nameX, yPixel), playerEntry.second->name, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					
+					char killsText[8];
+					snprintf(killsText, sizeof(killsText), "%d", playerEntry.second->kills);
+					renderer.renderText(glm::vec2(killsX, yPixel), killsText, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					
+					renderer.renderText(glm::vec2(slashX, yPixel), "/", textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					
+					char deathsText[8];
+					snprintf(deathsText, sizeof(deathsText), "%d", playerEntry.second->deaths);
+					renderer.renderText(glm::vec2(deathsX, yPixel), deathsText, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					
+					yPixel += lineHeightPixel;
 				}
 			}
 			
