@@ -453,10 +453,17 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			}
 			else
 			{
+				// Convert mouse position from screen-space to world-space
 				auto mousePos = platform::getRelMousePosition();
-				auto screenCenter = glm::vec2(renderer.windowW, renderer.windowH) / 2.f;
-
-				auto delta = glm::vec2(mousePos) - screenCenter;
+				
+				// Convert mouse from screen space to world space using camera
+				glm::vec2 mouseWorldPos = renderer.currentCamera.convertPoint(mousePos, renderer.windowW, renderer.windowH);
+				
+				// Get player center in world coordinates  
+				glm::vec2 playerCenter = (player.pos + player.dimensions / 2.f) * worldMagnification;
+				
+				// Calculate direction from player to mouse in world space
+				auto delta = mouseWorldPos - playerCenter;
 
 				float magnitude = glm::length(delta);
 				if (magnitude == 0)

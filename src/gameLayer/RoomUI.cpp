@@ -1,6 +1,7 @@
 #include "gameLayer/RoomUI.h"
 #include <cstring>
 #include <algorithm>
+#include <iostream>
 
 RoomUI::RoomUI() 
     : currentState(RoomUIState::NONE)
@@ -221,29 +222,60 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     
     glui::Text("Max Players:", RoomUIColors::White);
     const char* playerOptions[] = {"2", "4", "6", "8"};
+    
+    // Render buttons with visual selection indicator
     for (int i = 0; i < 4; i++) {
+        char buttonLabel[64];
+        // Add visual indicator to show selection
+        if (selectedMaxPlayers == i) {
+            snprintf(buttonLabel, sizeof(buttonLabel), ">>> %s Players <<<##maxp%d", playerOptions[i], i);
+        } else {
+            snprintf(buttonLabel, sizeof(buttonLabel), "    %s Players    ##maxp%d", playerOptions[i], i);
+        }
+        
+        // Use bright colors to make selection obvious
         glm::vec4 btnColor = (selectedMaxPlayers == i) ? RoomUIColors::Success : RoomUIColors::Gray;
-        if (glui::Button(playerOptions[i], btnColor)) {
+        if (glui::Button(buttonLabel, btnColor)) {
             selectedMaxPlayers = i;
         }
     }
     glui::Space(10);
     
     glui::Text("Game Mode:", RoomUIColors::White);
-    const char* modeOptions[] = {"Classic", "Team", "FFA", "Custom"};
+    const char* modeOptions[] = {"Cooperative", "Team Deathmatch", "Free-for-All", "Custom"};
+    
+    // Render buttons with visual selection indicator
     for (int i = 0; i < 4; i++) {
+        char buttonLabel[64];
+        // Add visual indicator to show selection
+        if (selectedGameMode == i) {
+            snprintf(buttonLabel, sizeof(buttonLabel), ">>> %s <<<##mode%d", modeOptions[i], i);
+        } else {
+            snprintf(buttonLabel, sizeof(buttonLabel), "    %s    ##mode%d", modeOptions[i], i);
+        }
+        
         glm::vec4 btnColor = (selectedGameMode == i) ? RoomUIColors::Success : RoomUIColors::Gray;
-        if (glui::Button(modeOptions[i], btnColor)) {
+        if (glui::Button(buttonLabel, btnColor)) {
             selectedGameMode = i;
         }
     }
     glui::Space(10);
     
     glui::Text("Map:", RoomUIColors::White);
-    const char* mapOptions[] = {"Map 1", "Map 2", "Map 3"};
+    const char* mapOptions[] = {"Default Map", "Industrial", "Warehouse"};
+    
+    // Render buttons with visual selection indicator  
     for (int i = 0; i < 3; i++) {
+        char buttonLabel[64];
+        // Add visual indicator to show selection
+        if (selectedMapId == i) {
+            snprintf(buttonLabel, sizeof(buttonLabel), ">>> %s <<<##map%d", mapOptions[i], i);
+        } else {
+            snprintf(buttonLabel, sizeof(buttonLabel), "    %s    ##map%d", mapOptions[i], i);
+        }
+        
         glm::vec4 btnColor = (selectedMapId == i) ? RoomUIColors::Success : RoomUIColors::Gray;
-        if (glui::Button(mapOptions[i], btnColor)) {
+        if (glui::Button(buttonLabel, btnColor)) {
             selectedMapId = i;
         }
     }
