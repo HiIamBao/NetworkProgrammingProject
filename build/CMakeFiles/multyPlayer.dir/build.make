@@ -125,10 +125,24 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/GameRoom.cpp" -o CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.s
 
+CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
+CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/HordeDefenseManager.cpp
+CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/HordeDefenseManager.cpp"
+
+CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/HordeDefenseManager.cpp" > CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.i
+
+CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/HordeDefenseManager.cpp" -o CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.s
+
 CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/LANDiscovery.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/LANDiscovery.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.i: cmake_force
@@ -142,7 +156,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/MultiRoomManager.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/MultiRoomManager.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.i: cmake_force
@@ -156,7 +170,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/RoomHandler.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/RoomHandler.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.i: cmake_force
@@ -170,7 +184,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/RoomManager.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/RoomManager.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.i: cmake_force
@@ -184,7 +198,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/RoomUI.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/RoomUI.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.i: cmake_force
@@ -198,7 +212,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/SessionManager.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/SessionManager.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.i: cmake_force
@@ -209,10 +223,24 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/SessionManager.cpp" -o CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.s
 
+CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
+CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/TowerDefense.cpp
+CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/TowerDefense.cpp"
+
+CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/TowerDefense.cpp" > CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.i
+
+CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/TowerDefense.cpp" -o CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.s
+
 CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/Ui.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/Ui.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.i: cmake_force
@@ -226,7 +254,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/client.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/client.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.i: cmake_force
@@ -240,7 +268,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/gameLayer.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/gameLayer.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.i: cmake_force
@@ -254,7 +282,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/packet.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/packet.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.i: cmake_force
@@ -268,7 +296,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/gameLayer/server.cpp
 CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o -MF CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/server.cpp"
 
 CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.i: cmake_force
@@ -282,7 +310,7 @@ CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/platform/glfwMain.cpp
 CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o -MF CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/glfwMain.cpp"
 
 CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.i: cmake_force
@@ -296,7 +324,7 @@ CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/platform/headerOnly.cpp
 CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o -MF CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/headerOnly.cpp"
 
 CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.i: cmake_force
@@ -310,7 +338,7 @@ CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/platform/opterPlatformFunctions.cpp
 CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o -MF CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/opterPlatformFunctions.cpp"
 
 CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.i: cmake_force
@@ -324,7 +352,7 @@ CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.s: cmake_forc
 CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/src/platform/platformInput.cpp
 CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o -MF CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o.d -o CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/platformInput.cpp"
 
 CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.i: cmake_force
@@ -338,7 +366,7 @@ CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/include/common/Phisics.cpp
 CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o -MF CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o.d -o CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/include/common/Phisics.cpp"
 
 CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.i: cmake_force
@@ -352,7 +380,7 @@ CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.s: cmake_force
 CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o: CMakeFiles/multyPlayer.dir/flags.make
 CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame/include/common/tiles.cpp
 CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o: CMakeFiles/multyPlayer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o -MF CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o.d -o CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame/include/common/tiles.cpp"
 
 CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.i: cmake_force
@@ -369,12 +397,14 @@ multyPlayer_OBJECTS = \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountUI.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.o" \
+"CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o" \
+"CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o" \
 "CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o" \
@@ -394,12 +424,14 @@ multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/AccountManager.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/AccountUI.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.o
+multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o
+multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o
 multyPlayer: CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o
@@ -430,7 +462,7 @@ multyPlayer: /usr/lib/x86_64-linux-gnu/libX11.so
 multyPlayer: thirdparty/gl2d/libgl2d.a
 multyPlayer: thirdparty/glad/libglad.a
 multyPlayer: CMakeFiles/multyPlayer.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_22) "Linking CXX executable multyPlayer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_24) "Linking CXX executable multyPlayer"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/multyPlayer.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
