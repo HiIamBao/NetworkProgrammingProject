@@ -17,6 +17,8 @@ struct DiscoveredServer {
     int port;
     int playerCount;
     int maxPlayers;
+    int gameMode;
+    int mapId;
     uint64_t lastSeen;  // Timestamp
 };
 
@@ -26,7 +28,7 @@ public:
     ~LANDiscovery();
     
     // Server functions
-    void startBroadcasting(const std::string& serverName, const std::string& hostName, int port);
+    void startBroadcasting(const std::string& serverName, const std::string& hostName, int port, int gameMode = 0, int mapId = 0);
     void stopBroadcasting();
     void updateServerInfo(int playerCount, int maxPlayers);
     
@@ -56,6 +58,8 @@ private:
     int serverPort;
     int currentPlayers;
     int maxPlayers;
+    int gameMode;
+    int mapId;
     std::mutex serverInfoMutex;
     
     // Discovered servers

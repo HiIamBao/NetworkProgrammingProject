@@ -4,6 +4,7 @@
 #include "packet.h"
 #include "Phisics.h"
 #include "GameRoom.h"
+#include "HordeDefenseManager.h"
 #include <atomic>
 #include <cstdlib>
 #include <ctime>
@@ -39,14 +40,25 @@ struct ServerInstance {
 	int32_t leadingPlayerCid;
 	int leadingPlayerKills;
 	
+	// Horde Defense manager (only used for HORDE_DEFENSE mode)
+	HordeDefenseManager* hordeDefenseManager;
+	
 	ServerInstance() : pids(1), changedData(false), serverOpen(false), 
 	                   gameMode(GameMode::DEATHMATCH), matchState(MatchState::MATCH_WAITING),
 	                   matchStartTime(0), matchDuration(300), scoreLimit(25),
-	                   leadingPlayerCid(0), leadingPlayerKills(0) {
+	                   leadingPlayerCid(0), leadingPlayerKills(0),
+	                   hordeDefenseManager(nullptr) {
 		itemSpawnPosition = {
 			{22,12}, {44,17}, {31,32}, {16,45}, {39,28},
 			{11,23}, {25,5}, {27,46}, {22,27}
 		};
+	}
+	
+	~ServerInstance() {
+		if (hordeDefenseManager) {
+			delete hordeDefenseManager;
+			hordeDefenseManager = nullptr;
+		}
 	}
 };
 
@@ -64,6 +76,22 @@ void broadCast(ServerInstance* instance, Packet p, void *data, size_t size, ENet
 		{
 			sendPacket(it->second.peer, p, (const char *)data, size, true, channel);
 		}
+	}
+}
+
+// Broadcast wrapper for HordeDefenseManager
+void hordeDefenseBroadcast(ServerInstance* instance, Packet p, const void* data, size_t size, bool reliable)
+{
+	broadCast(instance, p, (void*)data, size, nullptr, reliable, 0);
+}
+
+// Send to specific player wrapper for HordeDefenseManager
+void hordeDefenseSendToPlayer(ServerInstance* instance, int32_t cid, Packet p, const void* data, size_t size, bool reliable)
+{
+	auto it = instance->connections.find(cid);
+	if (it != instance->connections.end())
+	{
+		sendPacket(it->second.peer, p, (const char*)data, size, reliable, 0);
 	}
 }
 
@@ -167,6 +195,36 @@ void addConnection(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 
 	broadCast(instance, sPacket, &entity, sizeof(entity), event.peer, true, 0);
 	
+	// Register player in Horde Defense mode
+	if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+	{
+		instance->hordeDefenseManager->addPlayer(p.cid);
+	}
+	
+	// Send game mode information to the newly connected player
+	// (Important: Do this BEFORE the match start check, so joining players get the mode)
+	if (instance->matchState == MatchState::MATCH_IN_PROGRESS)
+	{
+		// Match already started - send current game state to new player
+		MatchStartData startData;
+		startData.gameMode = static_cast<int>(instance->gameMode);
+		startData.matchDuration = instance->matchDuration;
+		startData.scoreLimit = instance->scoreLimit;
+		
+		Packet startPacket;
+		startPacket.header = headerMatchStart;
+		startPacket.cid = 0;
+		sendPacket(event.peer, startPacket, (const char*)&startData, sizeof(startData), true, 0);
+		
+		std::cout << "Player joined ongoing match. Sent game mode: " << static_cast<int>(instance->gameMode) << std::endl;
+		
+		// If Horde Defense, also send current wave state
+		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			instance->hordeDefenseManager->sendFullStateToPlayer(p.cid, event.peer);
+		}
+	}
+	
 	// Auto-start match if this is the first player (for testing)
 	// Or start when 2+ players join
 	if (instance->connections.size() >= 1 && instance->matchState == MatchState::MATCH_WAITING)
@@ -184,7 +242,15 @@ void addConnection(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		startPacket.cid = 0;
 		broadCast(instance, startPacket, &startData, sizeof(startData), nullptr, true, 0);
 		
-		std::cout << "Match started! Mode: Free-for-All, Score limit: " << instance->scoreLimit << std::endl;
+		if (instance->gameMode == GameMode::DEATHMATCH)
+		{
+			std::cout << "Match started! Mode: Free-for-All, Score limit: " << instance->scoreLimit << std::endl;
+		}
+		else if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			std::cout << "Match started! Mode: Horde Defense" << std::endl;
+			instance->hordeDefenseManager->startMatch();
+		}
 	}
 
 }
@@ -196,6 +262,11 @@ void removeConnection(ServerInstance* instance, ENetHost *server, ENetEvent &eve
 	{
 		if (it->second.peer == event.peer)
 		{
+			// Remove player from Horde Defense mode
+			if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+			{
+				instance->hordeDefenseManager->removePlayer(it->first);
+			}
 
 			//broadcast disconnect
 			Packet sPacket;
@@ -228,11 +299,43 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 
 	if (p.header == headerUpdateConnection)
 	{
-		instance->connections[p.cid].entityData = *(phisics::Entity*)(data);
+		// In Horde Defense mode, don't let clients overwrite server-authoritative fields
+		if (instance->gameMode == GameMode::HORDE_DEFENSE)
+		{
+			phisics::Entity clientData = *(phisics::Entity*)(data);
+			phisics::Entity& serverData = instance->connections[p.cid].entityData;
+			
+			// Only update client-controlled fields (position, input)
+			serverData.pos = clientData.pos;
+			serverData.lastPos = clientData.lastPos;
+			serverData.input = clientData.input;
+			serverData.moving = clientData.moving;
+			serverData.movingRight = clientData.movingRight;
+			
+			// Server controls: life, money, upgrades, buffs
+			// (Don't copy these from client)
+		}
+		else
+		{
+			// In other modes, accept full entity update from client
+			instance->connections[p.cid].entityData = *(phisics::Entity*)(data);
+		}
 		instance->connections[p.cid].changed = true;
 	}
 	else if (p.header == headerSendBullet)
 	{
+		// Check if the player is alive before processing bullet
+		auto playerIt = instance->connections.find(p.cid);
+		if (playerIt != instance->connections.end())
+		{
+			if (playerIt->second.entityData.life <= 0)
+			{
+				// Dead players can't shoot
+				std::cout << "Rejected bullet from dead player CID " << p.cid << std::endl;
+				return;
+			}
+		}
+		
 		Packet sPacket;
 		sPacket.header = headerSendBullet;
 		sPacket.cid = p.cid;
@@ -241,6 +344,15 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 	}
 	else if (p.header == headerRegisterHit)
 	{
+		// Player vs Player combat - ONLY in Deathmatch and Team modes
+		// Skip this in Horde Defense (cooperative mode)
+		if (instance->gameMode == GameMode::HORDE_DEFENSE)
+		{
+			// In Horde Defense, players can't damage each other
+			std::cout << "Ignored PvP hit in Horde Defense mode (cooperative)" << std::endl;
+			return;
+		}
+		
 		int32_t victimCid = *(int32_t *)data;
 		int32_t killerCid = p.cid;
 		
@@ -305,6 +417,115 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		sPacket.cid = victimCid;
 		broadCast(instance, sPacket, nullptr, 0, event.peer, true, 1);
 	}
+	// ========================================================================
+	// HORDE DEFENSE PACKET HANDLERS
+	// ========================================================================
+	else if (p.header == headerHordeBuyUpgrade)
+	{
+		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			HordeBuyUpgradeData* buyData = (HordeBuyUpgradeData*)data;
+			auto playerIt = instance->connections.find(p.cid);
+			
+			if (playerIt != instance->connections.end())
+			{
+				HordeBuyUpgradeResponse response;
+				bool success = instance->hordeDefenseManager->buyUpgrade(
+					p.cid, 
+					playerIt->second.entityData, 
+					static_cast<HordeDefense::UpgradeType>(buyData->upgradeType),
+					response
+				);
+						// Send response to requesting player
+			Packet respPacket;
+			respPacket.header = headerHordeBuyUpgradeResponse;
+			respPacket.cid = p.cid;
+			sendPacket(event.peer, respPacket, (const char*)&response, sizeof(response), true, 0);
+			
+			// If successful, broadcast player stat update to ALL clients
+			if (success)
+			{
+				// Broadcast full stats update so clients can update their UI
+				HordePlayerStatsUpdate statsUpdate;
+				statsUpdate.cid = p.cid;
+				statsUpdate.damageLevel = playerIt->second.entityData.damageUpgradeLevel;
+				statsUpdate.fireRateLevel = playerIt->second.entityData.fireRateUpgradeLevel;
+				statsUpdate.healthLevel = playerIt->second.entityData.healthUpgradeLevel;
+				statsUpdate.speedLevel = playerIt->second.entityData.speedUpgradeLevel;
+				statsUpdate.bulletSpeedLevel = playerIt->second.entityData.bulletSpeedUpgradeLevel;
+				statsUpdate.speedBoostWaves = playerIt->second.entityData.speedBoostWaves;
+				statsUpdate.damageBoostWaves = playerIt->second.entityData.damageBoostWaves;
+				statsUpdate.multiShotWaves = playerIt->second.entityData.multiShotWaves;
+				statsUpdate.shieldHealth = playerIt->second.entityData.shieldHealth;
+				
+				Packet statsPacket;
+				statsPacket.header = headerHordePlayerStatsUpdate;
+				statsPacket.cid = 0;
+				broadCast(instance, statsPacket, &statsUpdate, sizeof(statsUpdate), nullptr, true, 0);
+				
+				// IMMEDIATELY broadcast updated entity (including HP/maxLife) to all clients
+				Packet entityPacket;
+				entityPacket.header = headerUpdateConnection;
+				entityPacket.cid = p.cid;
+				broadCast(instance, entityPacket, &playerIt->second.entityData, sizeof(phisics::Entity), nullptr, true, 0);
+				
+				std::cout << "[HordeDefense] Broadcasted upgrade for player " << p.cid 
+				          << " - Health Level: " << statsUpdate.healthLevel 
+				          << ", MaxHP: " << playerIt->second.entityData.maxLife 
+				          << ", CurrentHP: " << playerIt->second.entityData.life << std::endl;
+				
+				// Also mark entity for next frame broadcast
+				playerIt->second.changed = true;
+				instance->changedData = true;
+			}
+			}
+		}
+	}
+	else if (p.header == headerHordeBuyItem)
+	{
+		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			HordeBuyItemData* buyData = (HordeBuyItemData*)data;
+			auto playerIt = instance->connections.find(p.cid);
+			
+			if (playerIt != instance->connections.end())
+			{
+				HordeBuyItemResponse response;
+				bool success = instance->hordeDefenseManager->buyItem(
+					p.cid,
+					playerIt->second.entityData,
+					static_cast<HordeDefense::ShopItemType>(buyData->itemType),
+					response
+				);
+						// Send response to requesting player
+			Packet respPacket;
+			respPacket.header = headerHordeBuyItemResponse;
+			respPacket.cid = p.cid;
+			sendPacket(event.peer, respPacket, (const char*)&response, sizeof(response), true, 0);
+			
+			// If successful, immediately broadcast updated entity to all clients
+			if (success)
+			{
+				// IMMEDIATELY broadcast updated entity (including HP/maxLife) to all clients
+				Packet entityPacket;
+				entityPacket.header = headerUpdateConnection;
+				entityPacket.cid = p.cid;
+				broadCast(instance, entityPacket, &playerIt->second.entityData, sizeof(phisics::Entity), nullptr, true, 0);
+				
+				std::cout << "[HordeDefense] Broadcasted item purchase for player " << p.cid 
+				          << " - HP: " << playerIt->second.entityData.life 
+				          << "/" << playerIt->second.entityData.maxLife << std::endl;
+				
+				// Also mark entity for next frame broadcast
+				playerIt->second.changed = true;
+				instance->changedData = true;
+			}
+			}
+		}
+	}
+	// TODO: Bullet-enemy collision detection
+	// In Horde Defense mode, bullets need to be checked against enemies on the server
+	// This will require intercepting headerSendBullet and checking collisions
 	else if (p.header == headerPickupItem)
 	{
 		Packet sPacket;
@@ -315,6 +536,43 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		if (pickupItem(instance, *(uint32_t *)data, item))
 		{
 			broadCast(instance, sPacket, &item, sizeof(item), nullptr, true, 1);
+		}
+	}
+	else if (p.header == headerHordeBulletHitEnemy)
+	{
+		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			HordeBulletHitEnemyData* hitData = (HordeBulletHitEnemyData*)data;
+			auto playerIt = instance->connections.find(p.cid);
+			
+			if (playerIt != instance->connections.end())
+			{
+				// Check if player is alive - dead players can't damage enemies
+				if (playerIt->second.entityData.life <= 0)
+				{
+					std::cout << "Rejected bullet damage from dead player CID " << p.cid << std::endl;
+					return;
+				}
+						// Calculate actual damage based on player's upgrades and buffs
+			int baseDamage = 10;  // Base bullet damage
+			phisics::Entity& playerEntity = playerIt->second.entityData;
+			
+			// Apply damage upgrade multiplier
+			float damageMultiplier = 1.0f + (playerEntity.damageUpgradeLevel * 0.25f);  // +25% per level
+			
+			// Apply damage boost buff if active (wave-based)
+			if (playerEntity.damageBoostWaves > 0)
+			{
+				damageMultiplier += 1.0f;  // +100% from damage amplifier
+			}
+				
+				int actualDamage = (int)(baseDamage * damageMultiplier);
+				
+				// Apply damage to enemy
+				instance->hordeDefenseManager->damageEnemy(hitData->enemyId, actualDamage, p.cid);
+				
+				// Server will broadcast enemy update/death automatically via its update loop
+			}
 		}
 	}
 
@@ -369,7 +627,7 @@ void resetServerState()
 	// State is now managed per-instance in ServerInstance
 }
 
-void serverFunction(int port)
+void serverFunction(int port, int gameMode, int mapId)
 {
 	// Check if server is already running on this port
 	{
@@ -387,6 +645,63 @@ void serverFunction(int port)
 	// Create new server instance
 	ServerInstance* instance = new ServerInstance();
 	instance->serverOpen = true;
+	
+	// Set game mode from parameter
+	instance->gameMode = static_cast<GameMode>(gameMode);
+	std::cout << "Server starting on port " << port << " with GameMode: " << gameMode << ", Map: " << mapId << std::endl;
+	
+	// Initialize Horde Defense manager if needed
+	if (instance->gameMode == GameMode::HORDE_DEFENSE)
+	{
+		instance->hordeDefenseManager = new HordeDefenseManager();
+		instance->hordeDefenseManager->initialize();
+		
+		// Set network callbacks
+		instance->hordeDefenseManager->setBroadcastCallback(
+			[instance](Packet p, const void* data, size_t size, bool reliable) {
+				hordeDefenseBroadcast(instance, p, data, size, reliable);
+			}
+		);
+		
+		instance->hordeDefenseManager->setSendToPlayerCallback(
+			[instance](int32_t cid, Packet p, const void* data, size_t size, bool reliable) {
+				hordeDefenseSendToPlayer(instance, cid, p, data, size, reliable);
+			}
+		);
+		
+		instance->hordeDefenseManager->setPlayerDamageCallback(
+			[instance](int32_t cid, int damage) {
+				auto playerIt = instance->connections.find(cid);
+				if (playerIt != instance->connections.end()) {
+					phisics::Entity& player = playerIt->second.entityData;
+					
+					// Only damage alive players
+					if (player.life > 0) {
+						// Apply shield damage first
+						if (player.shieldHealth > 0) {
+							int shieldDamage = std::min((int)player.shieldHealth, damage);
+							player.shieldHealth -= shieldDamage;
+							damage -= shieldDamage;
+						}
+						
+						// Apply remaining damage to health
+						if (damage > 0) {
+							player.life -= damage;
+							if (player.life < 0) player.life = 0;
+						
+							std::cout << "[ServerDamage] Player " << cid << " took " << damage << " damage. HP: " << player.life << std::endl;
+									
+							// Mark for broadcast
+							playerIt->second.changed = true;
+							instance->changedData = true;
+						}
+					}
+				}
+			}
+		);
+		
+		std::cout << "Horde Defense mode initialized." << std::endl;
+	}
 	
 	// Register instance
 	{
@@ -480,7 +795,100 @@ void serverFunction(int port)
 			stop = std::chrono::high_resolution_clock::now();
 		}
 
+	#pragma region Horde Defense Update
+		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			// Update Horde Defense game logic
+			std::map<int32_t, phisics::Entity> playerEntities;
+			for (const auto& conn : instance->connections)
+			{
+				playerEntities[conn.first] = conn.second.entityData;
+			}
+			
+			instance->hordeDefenseManager->update(deltaTime);
+			instance->hordeDefenseManager->updateEnemies(deltaTime, playerEntities);
+			
+			// Decrement wave-based buffs when wave COMPLETES (not when it starts)
+			// This way, buying an item during buy phase makes it last through the entire next wave
+			static HordeDefense::HordeDefenseState lastHordeState = HordeDefense::HordeDefenseState::WAITING;
+			HordeDefense::HordeDefenseState currentHordeState = instance->hordeDefenseManager->getState();
+			
+			// When transitioning from WAVE_ACTIVE to BUYING_PHASE (wave just completed), decrement buffs
+			if (lastHordeState == HordeDefense::HordeDefenseState::WAVE_ACTIVE && 
+			    currentHordeState == HordeDefense::HordeDefenseState::BUYING_PHASE)
+			{
+				instance->hordeDefenseManager->decrementWaveBasedBuffs(playerEntities);
+				
+				// Apply decremented buffs back to connections
+				for (auto& [cid, entity] : playerEntities) {
+					auto it = instance->connections.find(cid);
+					if (it != instance->connections.end()) {
+						it->second.entityData.speedBoostWaves = entity.speedBoostWaves;
+						it->second.entityData.damageBoostWaves = entity.damageBoostWaves;
+						it->second.entityData.multiShotWaves = entity.multiShotWaves;
+						it->second.changed = true;
+					}
+				}
+				instance->changedData = true;
+				
+				std::cout << "[HordeDefense] Wave completed - decremented wave-based buffs" << std::endl;
+			}
+			lastHordeState = currentHordeState;
+			
+			// Handle player respawning (after wave complete)
+			for (auto& conn : instance->connections)
+			{
+				// If player needs respawn (wave just ended and they were dead)
+				if (instance->hordeDefenseManager->needsRespawn(conn.first))
+				{
+					std::cout << "[HordeDefense] Player " << conn.first << " needs respawn! Current HP: " << conn.second.entityData.life << std::endl;
+					
+					// Actually respawn the player (this will restore HP regardless of current value)
+					instance->hordeDefenseManager->respawnPlayer(conn.first, conn.second.entityData);
+					instance->hordeDefenseManager->markPlayerRespawned(conn.first);
+					
+					std::cout << "[HordeDefense] Player " << conn.first << " HP after respawn: " << conn.second.entityData.life << std::endl;
+					
+					// Immediately broadcast the respawn to all clients (critical for UI update)
+					Packet sPacket;
+					sPacket.header = headerUpdateConnection;
+					sPacket.cid = conn.first;
+					broadCast(instance, sPacket, &conn.second.entityData, sizeof(phisics::Entity), nullptr, true, 0);
+					std::cout << "[HordeDefense] Broadcasted respawn update for player " << conn.first << std::endl;
+					
+					conn.second.changed = false;  // Already broadcast, don't broadcast again
+					std::cout << "[HordeDefense] Player " << conn.first << " respawned for new wave (HP: " << conn.second.entityData.life << ")" << std::endl;
+				}
+			}
+			
+			// Check for NEW player deaths (alive flag is true AND HP just dropped to 0)
+			// BUT ONLY during wave phases (not during buying phase when players respawn)
+			for (auto& conn : instance->connections)
+			{
+				bool hasHP0 = (conn.second.entityData.life <= 0);
+				bool flagAlive = instance->hordeDefenseManager->isPlayerAlive(conn.first);
+				bool notWaitingRespawn = !instance->hordeDefenseManager->needsRespawn(conn.first);
+				
+				if (hasHP0 && flagAlive && notWaitingRespawn)
+				{
+					// Player just died during wave - mark them as dead
+					instance->hordeDefenseManager->markPlayerDead(conn.first);				std::cout << "[HordeDefense] Player " << conn.first << " died! (HP: 0)" << std::endl;
+				
+				// Check if all players are dead (game over)
+				if (instance->hordeDefenseManager->allPlayersDead(playerEntities))
+				{
+					std::cout << "[HordeDefense] All players dead! Game Over!" << std::endl;
+					// The HordeDefenseManager will handle game over state
+				}
+			}
+		}
+		// Note: Buff timers are now wave-based and decremented when wave completes
+	}
+	#pragma endregion
+
 	#pragma region items
+		// Only spawn items in non-Horde Defense modes
+		if (instance->gameMode != GameMode::HORDE_DEFENSE)
 		{
 
 			static float spawnTime = 5.f;

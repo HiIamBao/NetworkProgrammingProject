@@ -67,12 +67,89 @@ enum
 	headerPlayerKill,           // Server -> All: player got a kill
 	headerPlayerDeath,          // Server -> All: player died
 	headerScoreUpdate,          // Server -> All: score/stats update
+	
+	// Tower Defense packets
+	headerTowerDefenseStateUpdate,  // Server -> All: game state update (wave, timer, base health)
+	headerBuildTowerRequest,        // Client -> Server: request to build tower
+	headerBuildTowerResponse,       // Server -> Client: success/failure with reason
+	headerTowerPlaced,              // Server -> All: tower was placed successfully
+	headerUpgradeTowerRequest,      // Client -> Server: request to upgrade tower
+	headerUpgradeTowerResponse,     // Server -> Client: success/failure
+	headerTowerUpgraded,            // Server -> All: tower was upgraded
+	headerSellTowerRequest,         // Client -> Server: request to sell tower
+	headerTowerSold,                // Server -> All: tower was sold
+	headerSpawnEnemy,               // Server -> All: enemy spawned
+	headerEnemyUpdate,              // Server -> All: enemy position/health update (batched)
+	headerEnemyDeath,               // Server -> All: enemy died
+	headerEnemyReachedBase,         // Server -> All: enemy reached base, took damage
+	headerBaseHealthUpdate,         // Server -> All: base health changed
+	headerWaveStart,                // Server -> All: wave started
+	headerWaveComplete,             // Server -> All: wave completed
+	headerPlayerMoneyUpdate,        // Server -> Client: player money changed
+	headerTowerAttack,              // Server -> All: tower fired (for visual effects)
+	headerStartWaveEarly,           // Client -> Server: request to start wave early
+	
+	// Horde Defense packets (New game mode)
+	headerHordeStateUpdate,         // Server -> All: game state (wave, timer, state)
+	headerHordeSpawnEnemy,          // Server -> All: enemy spawned
+	headerHordeEnemyUpdate,         // Server -> All: enemy position/health (batched, 10Hz)
+	headerHordeEnemyDeath,          // Server -> All: enemy died, award money
+	headerHordeWaveStart,           // Server -> All: wave started
+	headerHordeWaveComplete,        // Server -> All: wave completed, bonus money
+	headerHordeBuyUpgrade,          // Client -> Server: buy permanent upgrade
+	headerHordeBuyUpgradeResponse,  // Server -> Client: upgrade success/failure
+	headerHordeBuyItem,             // Client -> Server: buy shop item
+	headerHordeBuyItemResponse,     // Server -> Client: item purchase result
+	headerHordePlayerMoneyUpdate,   // Server -> Client: money changed
+	headerHordePlayerStatsUpdate,   // Server -> All: player upgrade levels/buffs
+	headerHordePlayerRespawn,       // Server -> All: player respawned
+	headerHordeMatchEnd,            // Server -> All: match ended (victory/defeat)
+	headerHordeBulletHitEnemy,      // Client -> Server: bullet hit enemy (for damage)
+	headerHordeEnemyAttack,         // Server -> All: enemy attacks player (deal damage)
 };
 
 constexpr int SERVER_CHANNELS = 2;
 
 void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable, int channel);
 char *parsePacket(ENetEvent &event, Packet &p, size_t &dataSize);
+
+// ============================================================================
+// HORDE DEFENSE - Helper Functions
+// ============================================================================
+
+// Send Horde Defense state update to all players
+void sendHordeStateUpdate(ENetPeer* peer, const struct HordeStateUpdateData& data, bool reliable = true);
+
+// Send enemy spawn notification
+void sendHordeEnemySpawn(ENetPeer* peer, const struct HordeEnemySpawnData& data, bool reliable = true);
+
+// Send batched enemy updates (unreliable, 10Hz)
+void sendHordeEnemyUpdate(ENetPeer* peer, const struct HordeEnemyUpdateData* enemies, int count, bool reliable = false);
+
+// Send enemy death notification
+void sendHordeEnemyDeath(ENetPeer* peer, const struct HordeEnemyDeathData& data, bool reliable = true);
+
+// Send wave start notification
+void sendHordeWaveStart(ENetPeer* peer, const struct HordeWaveStartData& data, bool reliable = true);
+
+// Send wave complete notification
+void sendHordeWaveComplete(ENetPeer* peer, const struct HordeWaveCompleteData& data, bool reliable = true);
+
+// Send player money update
+void sendHordePlayerMoney(ENetPeer* peer, const struct HordePlayerMoneyUpdate& data, bool reliable = true);
+
+// Send player stats update (upgrades and buffs)
+void sendHordePlayerStats(ENetPeer* peer, const struct HordePlayerStatsUpdate& data, bool reliable = true);
+
+// Send player respawn notification
+void sendHordePlayerRespawn(ENetPeer* peer, const struct HordePlayerRespawnData& data, bool reliable = true);
+
+// Send match end (victory/defeat)
+void sendHordeMatchEnd(ENetPeer* peer, const struct HordeMatchEndData& data, bool reliable = true);
+
+// Response helpers (server -> client)
+void sendHordeBuyUpgradeResponse(ENetPeer* peer, const struct HordeBuyUpgradeResponse& data, bool reliable = true);
+void sendHordeBuyItemResponse(ENetPeer* peer, const struct HordeBuyItemResponse& data, bool reliable = true);
 
 // Room-related data structures
 struct CreateRoomData {
@@ -194,4 +271,131 @@ struct ScoreUpdateData {
     int32_t cid;
     int kills;
     int deaths;
+};
+
+// ============================================================================
+// HORDE DEFENSE MODE - Network Data Structures
+// ============================================================================
+
+struct HordeStateUpdateData {
+    int currentWave;           // Current wave number (1-20)
+    int gameState;             // HordeDefenseState as int
+    float timeRemaining;       // Time remaining for current phase
+    int playersAlive;          // Number of players still alive
+    int enemiesRemaining;      // Enemies left in current wave
+};
+
+struct HordeEnemySpawnData {
+    int32_t enemyId;           // Unique enemy ID
+    int enemyType;             // EnemyType as int
+    float posX, posY;          // Spawn position
+    float health;              // Current health
+    float maxHealth;           // Maximum health
+};
+
+struct HordeEnemyUpdateData {
+    int32_t enemyId;
+    float posX, posY;
+    float health;
+    int32_t targetPlayerId;    // CID of target player (-1 = no target)
+};
+
+struct HordeEnemyDeathData {
+    int32_t enemyId;
+    int32_t killerCid;         // Player who killed the enemy
+    int moneyReward;           // Money awarded to killer
+    int enemyType;             // For animation/effects
+    float posX, posY;          // Death position for effects
+};
+
+struct HordeWaveStartData {
+    int waveNumber;
+    int totalEnemies;          // Total enemies in this wave
+    int zombieCount;
+    int runnerCount;
+    int tankCount;
+    int exploderCount;
+    int bossCount;
+};
+
+struct HordeWaveCompleteData {
+    int waveNumber;
+    int completionBonus;       // Bonus money for all players
+    int totalKills;            // Total enemies killed this wave
+    int32_t mvpPlayerId;       // Player with most kills this wave
+};
+
+struct HordeBuyUpgradeData {
+    int upgradeType;           // UpgradeType as int
+    int currentLevel;          // Current level before purchase
+};
+
+struct HordeBuyUpgradeResponse {
+    bool success;
+    int upgradeType;           // UpgradeType as int
+    int newLevel;              // New level after purchase
+    int newMoney;              // Player's money after purchase
+    char message[64];          // Error message if failed
+};
+
+struct HordeBuyItemData {
+    int itemType;              // ShopItemType as int
+};
+
+struct HordeBuyItemResponse {
+    bool success;
+    int itemType;              // ShopItemType as int
+    int newMoney;              // Player's money after purchase
+    float effectValue;         // Effect value applied
+    float duration;            // Effect duration
+    char message[64];          // Error message if failed
+};
+
+struct HordePlayerMoneyUpdate {
+    int32_t cid;
+    int newMoney;
+    int changeAmount;          // Money gained/lost
+    char reason[32];           // "Enemy Kill", "Wave Bonus", "Purchase", etc.
+};
+
+struct HordePlayerStatsUpdate {
+    int32_t cid;
+    // Upgrade levels
+    int damageLevel;
+    int fireRateLevel;
+    int healthLevel;
+    int speedLevel;
+    int bulletSpeedLevel;
+    // Active buffs (wave-based)
+    int speedBoostWaves;
+    int damageBoostWaves;
+    int multiShotWaves;
+    float shieldHealth;  // Kept for compatibility
+};
+
+struct HordePlayerRespawnData {
+    int32_t cid;
+    float posX, posY;          // Respawn position
+};
+
+struct HordeMatchEndData {
+    bool victory;              // true = all waves completed, false = all players dead
+    int finalWave;             // Last wave reached
+    int totalKills;            // Total enemies killed
+    int totalMoney;            // Total money earned
+    int32_t mvpPlayerId;       // Player with most kills
+    char mvpPlayerName[32];
+    int mvpKills;
+};
+
+struct HordeBulletHitEnemyData {
+    int32_t enemyId;           // ID of enemy that was hit
+    int damage;                // Damage dealt (calculated by server based on upgrades)
+};
+
+struct HordeEnemyAttackData {
+    int32_t enemyId;           // ID of enemy attacking
+    int32_t targetCid;         // Player being attacked
+    int damage;                // Damage dealt to player
+    int enemyType;             // Type of enemy (for animation/effects)
 };

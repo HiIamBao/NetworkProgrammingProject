@@ -16,6 +16,8 @@ struct RoomInfo {
     std::string hostName;
     int maxPlayers;
     int currentPlayers;
+    int gameMode;
+    int mapId;
 };
 
 struct RoomSlot {
@@ -26,9 +28,11 @@ struct RoomSlot {
     std::string hostName;
     int maxPlayers;
     std::atomic<int> currentPlayers;
+    int gameMode;
+    int mapId;
     std::unique_ptr<std::thread> serverThread;
     
-    RoomSlot() : active(false), currentPlayers(0), slotId(0), port(0), maxPlayers(4) {}
+    RoomSlot() : active(false), currentPlayers(0), slotId(0), port(0), maxPlayers(4), gameMode(0), mapId(0) {}
 };
 
 class MultiRoomManager {
@@ -39,7 +43,9 @@ public:
     // Create a new room, returns slot ID or -1 if failed
     int createRoom(const std::string& roomName, 
                    const std::string& hostName,
-                   int maxPlayers);
+                   int maxPlayers,
+                   int gameMode = 0,
+                   int mapId = 0);
     
     // Stop a specific room by slot ID
     void stopRoom(int slotId);

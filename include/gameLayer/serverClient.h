@@ -5,7 +5,7 @@
 
 struct Textures;
 
-void serverFunction(int port = 7778);  // Now accepts port parameter with default
+void serverFunction(int port = 7778, int gameMode = 0, int mapId = 0);  // Now accepts port, gameMode, and mapId parameters with defaults
 
 // Server state management
 bool isServerRunning();  // Check if any server is running

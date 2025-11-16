@@ -9,6 +9,8 @@
 #include <string>
 #include <iostream>
 #include "GameRoom.h"
+#include "HordeDefense.h"
+#include <map>
 
 phisics::MapData map;
 
@@ -33,6 +35,28 @@ static char matchWinnerName[32] = {};
 static int matchWinnerKills = 0;
 static std::string lastKillMessage = "";
 static float killMessageTimer = 0.0f;
+
+// Horde Defense client-side state
+static std::map<int32_t, HordeDefense::Enemy> hordeEnemies;
+static HordeDefense::HordeDefenseState hordeState = HordeDefense::HordeDefenseState::WAITING;
+static int currentWave = 0;
+static int totalWaves = 20;
+static float phaseTimer = 0.0f;
+static int playerMoney = 0;
+static int enemiesAlive = 0;
+static std::string waveNotification = "";
+static float waveNotificationTimer = 0.0f;
+static bool showShopUI = false;
+
+// Shop UI state
+static int selectedShopTab = 0;  // 0 = Upgrades, 1 = Items
+static int selectedUpgradeIndex = 0;
+static int selectedItemIndex = 0;
+static std::string lastShopMessage = "";
+static float shopMessageTimer = 0.0f;
+
+// Player's current upgrade levels (for UI display)
+static HordeDefense::PlayerUpgrades playerUpgrades;
 
 glm::ivec2 spawnPositions[] =
 {
@@ -69,6 +93,26 @@ void resetClient()
 	matchWinnerKills = 0;
 	lastKillMessage = "";
 	killMessageTimer = 0.0f;
+	
+	// Reset Horde Defense state
+	hordeEnemies.clear();
+	hordeState = HordeDefense::HordeDefenseState::WAITING;
+	currentWave = 0;
+	totalWaves = 20;
+	phaseTimer = 0.0f;
+	playerMoney = 0;
+	enemiesAlive = 0;
+	waveNotification = "";
+	waveNotificationTimer = 0.0f;
+	showShopUI = false;
+	
+	// Reset shop UI state
+	selectedShopTab = 0;
+	selectedUpgradeIndex = 0;
+	selectedItemIndex = 0;
+	lastShopMessage = "";
+	shopMessageTimer = 0.0f;
+	playerUpgrades = HordeDefense::PlayerUpgrades();
 
 	//todo add a struct here
 
@@ -200,8 +244,18 @@ void msgLoop(ENetHost *client)
 
 				}else if (p.header == headerUpdateConnection)
 				{
-
-					players[p.cid] = *(phisics::Entity *)data;
+					phisics::Entity updatedEntity = *(phisics::Entity *)data;
+					
+					// Log HP updates for our player
+					if (p.cid == cid && currentGameMode == GameMode::HORDE_DEFENSE)
+					{
+						auto oldHP = players[cid].life;
+						auto oldMaxHP = players[cid].maxLife;
+						std::cout << "[ClientUpdate] Received entity update: HP " << oldHP << "->" << updatedEntity.life 
+						          << ", MaxHP " << oldMaxHP << "->" << updatedEntity.maxLife << std::endl;
+					}
+					
+					players[p.cid] = updatedEntity;
 
 				}else if (p.header == headerAnounceDisconnect)
 				{
@@ -252,7 +306,7 @@ void msgLoop(ENetHost *client)
 
 						if (item.itemType == phisics::itemTypeHealth)
 						{
-							find->second.life = phisics::Entity::maxLife;
+							find->second.life = find->second.maxLife;  // Heal to max HP
 						}
 						else if (item.itemType == phisics::itemTypeBatery)
 						{
@@ -307,9 +361,222 @@ void msgLoop(ENetHost *client)
 					currentMatchState = MatchState::MATCH_IN_PROGRESS;
 					matchEnded = false;
 					
-					std::cout << "Match started! Game mode: Free-for-All Deathmatch" << std::endl;
+					if (currentGameMode == GameMode::DEATHMATCH)
+					{
+						std::cout << "Match started! Game mode: Free-for-All Deathmatch" << std::endl;
+					}
+					else if (currentGameMode == GameMode::HORDE_DEFENSE)
+					{
+						std::cout << "Match started! Game mode: Horde Defense" << std::endl;
+						hordeEnemies.clear();
+						hordeState = HordeDefense::HordeDefenseState::WAITING;
+						currentWave = 0;
+						playerMoney = 500;  // Starting money
+					}
 				}
-
+				// ========================================================================
+				// HORDE DEFENSE PACKET HANDLERS
+				// ========================================================================
+				else if (p.header == headerHordeStateUpdate)
+				{
+					auto stateData = *(HordeStateUpdateData*)data;
+					hordeState = static_cast<HordeDefense::HordeDefenseState>(stateData.gameState);
+					currentWave = stateData.currentWave;
+					phaseTimer = stateData.timeRemaining;
+					enemiesAlive = stateData.enemiesRemaining;
+					
+					// Debug output
+					//std::cout << "Horde State: Wave " << currentWave << "/" << totalWaves 
+					//          << " Timer: " << phaseTimer << "s" << std::endl;
+				}
+				else if (p.header == headerHordeSpawnEnemy)
+				{
+					auto spawnData = *(HordeEnemySpawnData*)data;
+					HordeDefense::Enemy enemy;
+					enemy.id = spawnData.enemyId;
+					enemy.type = static_cast<HordeDefense::EnemyType>(spawnData.enemyType);
+					enemy.position = glm::vec2(spawnData.posX, spawnData.posY);
+					enemy.health = spawnData.health;
+					enemy.maxHealth = spawnData.maxHealth;
+					enemy.speed = HordeDefense::EnemyStats::getStats(enemy.type).baseSpeed;
+					hordeEnemies[enemy.id] = enemy;
+					
+					std::cout << "Enemy spawned: ID=" << enemy.id << " Type=" << (int)enemy.type << std::endl;
+				}
+				else if (p.header == headerHordeEnemyUpdate)
+				{
+					// Server sends ARRAY of enemy updates
+					int numEnemies = event.packet->dataLength / sizeof(HordeEnemyUpdateData);
+					HordeEnemyUpdateData* updates = (HordeEnemyUpdateData*)data;
+					
+					for (int i = 0; i < numEnemies; i++)
+					{
+						auto& updateData = updates[i];
+						auto it = hordeEnemies.find(updateData.enemyId);
+						if (it != hordeEnemies.end())
+						{
+							it->second.position = glm::vec2(updateData.posX, updateData.posY);
+							it->second.health = updateData.health;
+							it->second.targetPlayerId = updateData.targetPlayerId;
+						}
+					}
+				}
+				else if (p.header == headerHordeEnemyDeath)
+				{
+					auto deathData = *(HordeEnemyDeathData*)data;
+					hordeEnemies.erase(deathData.enemyId);
+					
+					// Update player money if we killed it
+					if (deathData.killerCid == cid)
+					{
+						playerMoney += deathData.moneyReward;
+						std::cout << "Enemy killed! +$" << deathData.moneyReward << " (Total: $" << playerMoney << ")" << std::endl;
+					}
+				}
+				else if (p.header == headerHordeEnemyAttack)
+				{
+					auto attackData = *(HordeEnemyAttackData*)data;
+							// Find the target player and apply damage
+				auto playerIt = players.find(attackData.targetCid);
+				if (playerIt != players.end())
+				{
+					phisics::Entity& targetPlayer = playerIt->second;
+					
+					int remainingDamage = attackData.damage;
+					
+					// Check if player has shield first
+					if (targetPlayer.shieldHealth > 0)
+					{
+						// Shield absorbs damage
+						int shieldDamage = std::min((int)targetPlayer.shieldHealth, remainingDamage);
+						targetPlayer.shieldHealth -= shieldDamage;
+						remainingDamage -= shieldDamage;
+						
+						if (attackData.targetCid == cid)
+						{
+							std::cout << "Shield absorbed " << shieldDamage << " damage! Shield remaining: " << targetPlayer.shieldHealth << std::endl;
+						}
+					}
+					
+					// Apply remaining damage to health
+					if (remainingDamage > 0)
+					{
+						targetPlayer.life -= remainingDamage;
+						if (targetPlayer.life < 0) targetPlayer.life = 0;
+						
+						if (attackData.targetCid == cid)
+						{
+							std::cout << "Enemy hit you for " << remainingDamage << " damage! Health: " << targetPlayer.life << "/" << targetPlayer.maxLife << std::endl;					}
+				}
+			}
+				}
+				else if (p.header == headerHordeWaveStart)
+				{
+					auto waveData = *(HordeWaveStartData*)data;
+					currentWave = waveData.waveNumber;
+					
+					waveNotification = "Wave " + std::to_string(currentWave) + " Starting!";
+					waveNotificationTimer = 3.0f;
+					
+					std::cout << "Wave " << currentWave << " started!" << std::endl;
+				}
+				else if (p.header == headerHordeWaveComplete)
+				{
+					auto completeData = *(HordeWaveCompleteData*)data;
+					
+					waveNotification = "Wave Complete! Bonus: $" + std::to_string(completeData.completionBonus);
+				 waveNotificationTimer = 3.0f;
+					
+					// Update money if we got bonus
+					if (completeData.mvpPlayerId == cid)
+					{
+						playerMoney += completeData.completionBonus;
+						waveNotification += " (MVP!)";
+					}
+					
+					std::cout << "Wave " << completeData.waveNumber << " complete! MVP: " << completeData.mvpPlayerId << std::endl;
+				}
+				else if (p.header == headerHordePlayerMoneyUpdate)
+				{
+					auto moneyData = *(HordePlayerMoneyUpdate*)data;
+					if (moneyData.cid == cid)
+					{
+						playerMoney = moneyData.newMoney;
+						std::cout << "Money updated: $" << playerMoney << " (" << moneyData.reason << ")" << std::endl;
+					}
+				}
+				else if (p.header == headerHordePlayerStatsUpdate)
+				{
+					auto statsData = *(HordePlayerStatsUpdate*)data;
+					auto it = players.find(statsData.cid);
+					if (it != players.end())
+					{
+						// Update player upgrade levels and buffs
+						it->second.damageUpgradeLevel = statsData.damageLevel;
+						it->second.fireRateUpgradeLevel = statsData.fireRateLevel;
+						it->second.healthUpgradeLevel = statsData.healthLevel;
+						it->second.speedUpgradeLevel = statsData.speedLevel;
+						it->second.bulletSpeedUpgradeLevel = statsData.bulletSpeedLevel;
+						it->second.speedBoostWaves = statsData.speedBoostWaves;
+						it->second.damageBoostWaves = statsData.damageBoostWaves;
+						it->second.multiShotWaves = statsData.multiShotWaves;
+						it->second.shieldHealth = statsData.shieldHealth;
+						
+						// Update local upgrade levels for UI
+						if (statsData.cid == cid)
+						{
+							playerUpgrades.damageLevel = statsData.damageLevel;
+							playerUpgrades.fireRateLevel = statsData.fireRateLevel;
+							playerUpgrades.healthLevel = statsData.healthLevel;
+							playerUpgrades.speedLevel = statsData.speedLevel;
+							playerUpgrades.bulletSpeedLevel = statsData.bulletSpeedLevel;
+						}
+					}
+				}
+				else if (p.header == headerHordeBuyUpgradeResponse)
+				{
+					auto response = *(HordeBuyUpgradeResponse*)data;
+					
+					if (response.success)
+					{
+						playerMoney = response.newMoney;
+						auto upgradeType = static_cast<HordeDefense::UpgradeType>(response.upgradeType);
+						auto upgradeInfo = HordeDefense::UpgradeInfo::getInfo(upgradeType);
+						
+						lastShopMessage = "Purchased: " + std::string(upgradeInfo.name) + " (Level " + std::to_string(response.newLevel) + ")";
+						shopMessageTimer = 3.0f;
+						
+						std::cout << "Upgrade successful: " << upgradeInfo.name << " -> Level " << response.newLevel << std::endl;
+					}
+					else
+					{
+						lastShopMessage = "Purchase Failed: " + std::string(response.message);
+						shopMessageTimer = 3.0f;
+						std::cout << "Upgrade failed: " << response.message << std::endl;
+					}
+				}
+				else if (p.header == headerHordeBuyItemResponse)
+				{
+					auto response = *(HordeBuyItemResponse*)data;
+					
+					if (response.success)
+					{
+						playerMoney = response.newMoney;
+						auto itemType = static_cast<HordeDefense::ShopItemType>(response.itemType);
+						auto itemInfo = HordeDefense::ShopItemInfo::getInfo(itemType);
+						
+						lastShopMessage = "Purchased: " + std::string(itemInfo.name);
+						shopMessageTimer = 3.0f;
+						
+						std::cout << "Item purchased: " << itemInfo.name << std::endl;
+					}
+					else
+					{
+						lastShopMessage = "Purchase Failed: " + std::string(response.message);
+						shopMessageTimer = 3.0f;
+						std::cout << "Item purchase failed: " << response.message << std::endl;
+					}
+				}
 				enet_packet_destroy(event.packet);
 
 				break;
@@ -377,8 +644,32 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 		auto &player = players[cid];
 
 	#pragma region input
-		float speed = 10 * deltaTime;
-		float bulletSpeed = 16;
+		// Base stats (lowered to make upgrades more noticeable)
+		float baseSpeed = 6 * deltaTime;
+		float baseBulletSpeed = 16;
+		float baseFireRateCooldown = 0.5;
+		
+		// Apply Horde Defense upgrades
+		float speed = baseSpeed;
+		float bulletSpeed = baseBulletSpeed;
+		float fireRateCooldown = baseFireRateCooldown;
+		
+		if (currentGameMode == GameMode::HORDE_DEFENSE)
+		{
+			// Speed upgrade: +15% per level
+			float speedMultiplier = 1.0f + (player.speedUpgradeLevel * 0.15f);
+			if (player.speedBoostWaves > 0) speedMultiplier += 0.5f;  // +50% from speed boost item
+			speed = baseSpeed * speedMultiplier;
+			
+			// Fire rate upgrade: +20% per level (reduces cooldown)
+			float fireRateMultiplier = 1.0f + (player.fireRateUpgradeLevel * 0.20f);
+			fireRateCooldown = baseFireRateCooldown / fireRateMultiplier;
+			
+			// Bullet speed upgrade: +30% per level
+			float bulletSpeedMultiplier = 1.0f + (player.bulletSpeedUpgradeLevel * 0.30f);
+			bulletSpeed = baseBulletSpeed * bulletSpeedMultiplier;
+		}
+		
 		float posy = 0;
 		float posx = 0;
 		constexpr float CONTROLLER_MARGIN = 0.5;
@@ -420,9 +711,107 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 		{
 			platform::setFullScreen(!platform::isFullScreen());
 		}
+		
+		// Toggle shop UI with 'B' key (only during buy phase in Horde Defense)
+		if (platform::isKeyPressedOn(platform::Button::B))
+		{
+			if (currentGameMode == GameMode::HORDE_DEFENSE && 
+			    hordeState == HordeDefense::HordeDefenseState::BUYING_PHASE)
+			{
+				showShopUI = !showShopUI;
+				
+				// Reset selections when opening shop
+				if (showShopUI)
+				{
+					selectedShopTab = 0;
+					selectedUpgradeIndex = 0;
+					selectedItemIndex = 0;
+					lastShopMessage = "";
+					shopMessageTimer = 0.0f;
+				}
+			}
+		}
+		
+		// Shop UI navigation (only when shop is open)
+		if (showShopUI && currentGameMode == GameMode::HORDE_DEFENSE)
+		{
+			// Tab switching (1/2 keys or Left/Right shoulder buttons)
+			if (platform::isKeyPressedOn(platform::Button::NR1) || 
+			    platform::getControllerButtons().buttons[platform::ControllerButtons::LBumper].pressed)
+			{
+				selectedShopTab = 0;  // Upgrades tab
+			}
+			if (platform::isKeyPressedOn(platform::Button::NR2) || 
+			    platform::getControllerButtons().buttons[platform::ControllerButtons::RBumper].pressed)
+			{
+				selectedShopTab = 1;  // Items tab
+			}
+			
+			// Navigation within current tab
+			if (selectedShopTab == 0)  // Upgrades
+			{
+				if (platform::isKeyPressedOn(platform::Button::Up) || platform::isKeyPressedOn(platform::Button::W))
+				{
+					selectedUpgradeIndex--;
+					if (selectedUpgradeIndex < 0) selectedUpgradeIndex = 4;  // 5 upgrades (0-4)
+				}
+				if (platform::isKeyPressedOn(platform::Button::Down) || platform::isKeyPressedOn(platform::Button::S))
+				{
+					selectedUpgradeIndex++;
+					if (selectedUpgradeIndex > 4) selectedUpgradeIndex = 0;
+				}
+				
+				// Purchase upgrade (Space/E key or A button)
+				if (platform::isKeyPressedOn(platform::Button::Space) || 
+				    platform::isKeyPressedOn(platform::Button::E) ||
+				    platform::getControllerButtons().buttons[platform::ControllerButtons::A].pressed)
+				{
+					// Send buy upgrade request
+					HordeBuyUpgradeData buyData;
+					buyData.upgradeType = selectedUpgradeIndex;
+					buyData.currentLevel = playerUpgrades.getLevel(static_cast<HordeDefense::UpgradeType>(selectedUpgradeIndex));
+					
+					Packet p;
+					p.cid = cid;
+					p.header = headerHordeBuyUpgrade;
+					sendPacket(server, p, (const char*)&buyData, sizeof(buyData), true, 1);
+					
+					std::cout << "Requesting upgrade purchase: Type " << selectedUpgradeIndex << std::endl;
+				}
+			}
+			else  // Items
+			{
+				if (platform::isKeyPressedOn(platform::Button::Up) || platform::isKeyPressedOn(platform::Button::W))
+				{
+					selectedItemIndex--;
+					if (selectedItemIndex < 0) selectedItemIndex = 6;  // 7 items (0-6)
+				}
+				if (platform::isKeyPressedOn(platform::Button::Down) || platform::isKeyPressedOn(platform::Button::S))
+				{
+					selectedItemIndex++;
+					if (selectedItemIndex > 6) selectedItemIndex = 0;
+				}
+				
+				// Purchase item (Space/E key or A button)
+				if (platform::isKeyPressedOn(platform::Button::Space) || 
+				    platform::isKeyPressedOn(platform::Button::E) ||
+				    platform::getControllerButtons().buttons[platform::ControllerButtons::A].pressed)
+				{
+					// Send buy item request
+					HordeBuyItemData buyData;
+					buyData.itemType = selectedItemIndex;
+					
+					Packet p;
+					p.cid = cid;
+					p.header = headerHordeBuyItem;
+					sendPacket(server, p, (const char*)&buyData, sizeof(buyData), true, 1);
+					
+					std::cout << "Requesting item purchase: Type " << selectedItemIndex << std::endl;
+				}
+			}
+		}
 
 		static float culldown = 0;
-		constexpr float culldownTime = 0.3;
 		static int bateryShooting = 0;
 
 		if (culldown > 0)
@@ -430,14 +819,16 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			culldown -= deltaTime;
 		}
 
+		// Only allow shooting if player is alive
 		if ((platform::isLMouseHeld() 
 			||
 			platform::getControllerButtons().LT > CONTROLLER_MARGIN
 			)
-			&& culldown <= 0.f)
+			&& culldown <= 0.f
+			&& player.life > 0)  // Check if player is alive
 		{
 
-			culldown = culldownTime;
+			culldown = fireRateCooldown;  // Use calculated fire rate cooldown
 
 			phisics::Bullet b;
 			b.pos = player.pos + (player.dimensions/2.f);
@@ -446,10 +837,11 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 
 			glm::vec2 thumbDir = {platform::getControllerButtons().RStick.x,platform::getControllerButtons().RStick.y};
 
+			glm::vec2 baseDirection;
 			if (glm::length(thumbDir) > 0.f)
 			{
 				thumbDir = glm::normalize(thumbDir);
-				b.direction = thumbDir;
+				baseDirection = thumbDir;
 			}
 			else
 			{
@@ -468,22 +860,62 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				float magnitude = glm::length(delta);
 				if (magnitude == 0)
 				{
-					b.direction = {1,0};
+					baseDirection = {1,0};
 				}
 				else
 				{
-					b.direction = delta / magnitude;
+					baseDirection = delta / magnitude;
 				}
 			}
 
-			
-
-			Packet p;
-			p.cid = cid;
-			p.header = headerSendBullet;
-			sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
-
-			ownBullets.push_back(b);
+			// Check if multi-shot is active
+			if (currentGameMode == GameMode::HORDE_DEFENSE && player.multiShotWaves > 0)
+			{
+				// Shoot 3 bullets in a spread pattern
+				float spreadAngle = 0.3f; // ~17 degrees spread
+				
+				// Center bullet
+				b.direction = baseDirection;
+				Packet p;
+				p.cid = cid;
+				p.header = headerSendBullet;
+				sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
+				ownBullets.push_back(b);
+				
+				// Left bullet (rotated counterclockwise)
+				phisics::Bullet bLeft = b;
+				float cosLeft = std::cos(-spreadAngle);
+				float sinLeft = std::sin(-spreadAngle);
+				bLeft.direction = glm::vec2(
+					baseDirection.x * cosLeft - baseDirection.y * sinLeft,
+					baseDirection.x * sinLeft + baseDirection.y * cosLeft
+				);
+				bLeft.direction = glm::normalize(bLeft.direction);
+				sendPacket(server, p, (const char *)&bLeft, sizeof(phisics::Bullet), true, 1);
+				ownBullets.push_back(bLeft);
+				
+				// Right bullet (rotated clockwise)
+				phisics::Bullet bRight = b;
+				float cosRight = std::cos(spreadAngle);
+				float sinRight = std::sin(spreadAngle);
+				bRight.direction = glm::vec2(
+					baseDirection.x * cosRight - baseDirection.y * sinRight,
+					baseDirection.x * sinRight + baseDirection.y * cosRight
+				);
+				bRight.direction = glm::normalize(bRight.direction);
+				sendPacket(server, p, (const char *)&bRight, sizeof(phisics::Bullet), true, 1);
+				ownBullets.push_back(bRight);
+			}
+			else
+			{
+				// Normal single bullet
+				b.direction = baseDirection;
+				Packet p;
+				p.cid = cid;
+				p.header = headerSendBullet;
+				sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
+				ownBullets.push_back(b);
+			}
 
 			if (hasBatery)
 			{
@@ -492,7 +924,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			hasBatery = false;
 		}
 
-		if (bateryShooting > 0)
+		if (bateryShooting > 0 && player.life > 0)  // Only shoot battery if alive
 		{
 
 			static float batteryShootingDellay = 0;
@@ -584,6 +1016,77 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			{
 				i.second.draw(renderer, deltaTime, textures.character, textures.font);
 			}
+			
+	#pragma region Horde Defense - Enemy Rendering
+			if (currentGameMode == GameMode::HORDE_DEFENSE)
+			{
+				// Draw all enemies
+				for (const auto& [enemyId, enemy] : hordeEnemies)
+				{
+					// Calculate screen position
+					glm::vec4 enemyRect = {
+						enemy.position.x * worldMagnification,
+						enemy.position.y * worldMagnification,
+						1.0f * worldMagnification,
+						1.0f * worldMagnification
+					};
+					
+					// Color based on enemy type
+					glm::vec4 enemyColor;
+					switch (enemy.type)
+					{
+						case HordeDefense::EnemyType::ZOMBIE:
+							enemyColor = {0.3f, 0.8f, 0.3f, 1.0f};  // Green
+							break;
+						case HordeDefense::EnemyType::RUNNER:
+							enemyColor = {1.0f, 0.6f, 0.2f, 1.0f};  // Orange
+							break;
+						case HordeDefense::EnemyType::TANK:
+							enemyColor = {0.6f, 0.6f, 0.6f, 1.0f};  // Gray
+							break;
+						case HordeDefense::EnemyType::EXPLODER:
+							enemyColor = {0.9f, 0.2f, 0.2f, 1.0f};  // Red
+							break;
+						case HordeDefense::EnemyType::BOSS:
+							enemyColor = {0.8f, 0.1f, 0.9f, 1.0f};  // Purple
+							break;
+						default:
+							enemyColor = {1.0f, 1.0f, 1.0f, 1.0f};
+							break;
+					}
+					
+					// Draw enemy body
+					renderer.renderRectangle(enemyRect, enemyColor);
+					
+					// Draw health bar above enemy
+					float healthPercent = enemy.health / enemy.maxHealth;
+					if (healthPercent < 1.0f)  // Only show if damaged
+					{
+						float healthBarWidth = 1.0f * worldMagnification;
+						float healthBarHeight = 0.1f * worldMagnification;
+						float healthBarY = (enemy.position.y - 0.2f) * worldMagnification;
+						
+						// Background (red)
+						glm::vec4 bgRect = {
+							enemy.position.x * worldMagnification,
+							healthBarY,
+							healthBarWidth,
+							healthBarHeight
+						};
+						renderer.renderRectangle(bgRect, {0.3f, 0.0f, 0.0f, 0.8f});
+						
+						// Foreground (green)
+						glm::vec4 fgRect = {
+							enemy.position.x * worldMagnification,
+							healthBarY,
+							healthBarWidth * healthPercent,
+							healthBarHeight
+						};
+						renderer.renderRectangle(fgRect, {0.0f, 1.0f, 0.0f, 0.9f});
+					}
+				}
+			}
+	#pragma endregion
 
 			static float timer = 0;
 			constexpr float updateTime = 1.f / 10;
@@ -652,6 +1155,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			ownBullets[i].updateMove(deltaTime * bulletSpeed);
 			ownBullets[i].draw(renderer, textures.character);
 
+			// Check collision with other players (Deathmatch mode)
 			for (auto &e : players)
 			{
 				if (e.first != cid)
@@ -672,9 +1176,50 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					}
 				}
 			}
-
-
 			
+			// Check collision with enemies (Horde Defense mode)
+			if (currentGameMode == GameMode::HORDE_DEFENSE && i < ownBullets.size())
+			{
+				bool bulletHit = false;
+				
+				for (auto& [enemyId, enemy] : hordeEnemies)
+				{
+					// Simple circle-circle collision (bullet center vs enemy center)
+					glm::vec2 bulletCenter = ownBullets[i].pos + glm::vec2(0.5f, 0.5f);
+					glm::vec2 enemyCenter = enemy.position + glm::vec2(0.5f, 0.5f);
+					float distance = glm::length(bulletCenter - enemyCenter);
+					float collisionRadius = 0.7f;  // Combined radius for collision
+					
+					if (distance < collisionRadius)
+					{
+						// Bullet hit enemy!
+						// Send notification to server
+						HordeBulletHitEnemyData hitData;
+						hitData.enemyId = enemyId;
+						hitData.damage = 10;  // Base damage, server will apply upgrades
+						
+						Packet p;
+						p.header = headerHordeBulletHitEnemy;
+						p.cid = cid;
+						sendPacket(server, p, (const char*)&hitData, sizeof(hitData), true, 1);
+						
+						// Remove bullet
+						ownBullets.erase(ownBullets.begin() + i);
+						i--;
+						bulletHit = true;
+						
+						// Optional: Add visual hit effect here
+						// std::cout << "Hit enemy " << enemyId << "!" << std::endl;
+						
+						break;  // Bullet can only hit one enemy
+					}
+				}
+				
+				if (bulletHit)
+				{
+					continue;  // Skip to next bullet
+				}
+			}
 		}
 
 		for (int i = 0; i < ownBullets.size(); i++)
@@ -696,20 +1241,291 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 
 			auto c = renderer.currentCamera; //todo push pop camera
 			renderer.currentCamera.setDefault();
-
-			float xLeft = 0.95;
-			float xSize = 0.04;
-			float xAdvance = xSize - 0.025;
-
-			for (int i = 0; i < player.life; i++)
+			
+	#pragma region Horde Defense HUD
+			if (currentGameMode == GameMode::HORDE_DEFENSE)
 			{
-				auto crossPos = Ui::Box().xLeftPerc(xLeft).yTopPerc(0.02).xDimensionPercentage(xSize).yAspectRatio(1.f);
-				auto crossPosDown = Ui::Box().xLeftPerc(xLeft+0.003).yTopPerc(0.025).xDimensionPercentage(xSize).yAspectRatio(1.f);
+				// Top bar - Wave, State, and Money
+				{
+					// Wave display (top center) - increased padding from 20 to 50
+					char waveText[64];
+					snprintf(waveText, sizeof(waveText), "Wave: %d/%d", currentWave, totalWaves);
+					glm::vec2 wavePos = glm::vec2(0.42f * renderer.windowW, 50.0f);
+					renderer.renderText(wavePos, waveText, textures.font, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.8f, 4.f, 3.f, false);
+					
+					// State/Timer display (top center-left)
+					if (hordeState == HordeDefense::HordeDefenseState::BUYING_PHASE)
+					{
+						char timerText[64];
+						snprintf(timerText, sizeof(timerText), "Buy Phase: %ds", (int)phaseTimer);
+						glm::vec2 timerPos = glm::vec2(0.35f * renderer.windowW, 90.0f);
+						renderer.renderText(timerPos, timerText, textures.font, glm::vec4(0.2f, 1.0f, 0.8f, 1.0f), 0.7f, 4.f, 3.f, false);
+						
+						// Show shop hint
+						glm::vec2 hintPos = glm::vec2(0.38f * renderer.windowW, 130.0f);
+						renderer.renderText(hintPos, "Press B to open shop", textures.font, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), 0.5f, 4.f, 3.f, false);
+					}
+					else if (hordeState == HordeDefense::HordeDefenseState::WAVE_ACTIVE)
+					{
+						char enemyText[64];
+						snprintf(enemyText, sizeof(enemyText), "Enemies: %d", enemiesAlive);
+						glm::vec2 enemyPos = glm::vec2(0.38f * renderer.windowW, 90.0f);
+						renderer.renderText(enemyPos, enemyText, textures.font, glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), 0.7f, 4.f, 3.f, false);
+					}
+					
+					// Money display (top right) - moved down to avoid overlap with health icons
+					char moneyText[64];
+					snprintf(moneyText, sizeof(moneyText), "Money: $%d", playerMoney);
+					glm::vec2 moneyPos = glm::vec2(renderer.windowW - 250.0f, 120.0f);
+					renderer.renderText(moneyPos, moneyText, textures.font, glm::vec4(1.0f, 0.9f, 0.2f, 1.0f), 0.8f, 4.f, 3.f, false);
+				}
+				
+				// Active buffs display (below money)
+				{
+					auto it = players.find(cid);
+					if (it != players.end())
+					{
+						const auto& player = it->second;
+						float buffY = 160.0f;  // Updated to be below money (80 + 40 spacing)
+						float buffX = renderer.windowW - 250.0f;
+						
+						if (player.speedBoostWaves > 0)
+						{
+							char buffText[32];
+							snprintf(buffText, sizeof(buffText), "[Speed: %d]", player.speedBoostWaves, player.speedBoostWaves > 1 ? "s" : "");
+							renderer.renderText(glm::vec2(buffX, buffY), buffText, textures.font, glm::vec4(0.2f, 0.8f, 1.0f, 1.0f), 0.5f, 4.f, 3.f, false);
+							buffY += 25.0f;
+						}
+						if (player.damageBoostWaves > 0)
+						{
+							char buffText[32];
+							snprintf(buffText, sizeof(buffText), "[Damage: %d]", player.damageBoostWaves);
+							renderer.renderText(glm::vec2(buffX, buffY), buffText, textures.font, glm::vec4(1.0f, 0.5f, 0.2f, 1.0f), 0.5f, 4.f, 3.f, false);
+							buffY += 25.0f;
+						}
+						if (player.multiShotWaves > 0)
+						{
+							char buffText[32];
+							snprintf(buffText, sizeof(buffText), "[Multi-Shot: %d]", player.multiShotWaves);
+							renderer.renderText(glm::vec2(buffX, buffY), buffText, textures.font, glm::vec4(0.9f, 0.2f, 0.9f, 1.0f), 0.5f, 4.f, 3.f, false);
+							buffY += 25.0f;
+						}
+						if (player.shieldHealth > 0.0f)
+						{
+							char buffText[32];
+							snprintf(buffText, sizeof(buffText), "[Shield: %.0f HP]", player.shieldHealth);
+							renderer.renderText(glm::vec2(buffX, buffY), buffText, textures.font, glm::vec4(0.4f, 0.8f, 1.0f, 1.0f), 0.5f, 4.f, 3.f, false);
+							buffY += 25.0f;
+						}
+					}
+				}
+				
+				// Wave notifications (center screen)
+				if (waveNotificationTimer > 0.0f)
+				{
+					float alpha = std::min(1.0f, waveNotificationTimer);
+					glm::vec4 notifColor = glm::vec4(1.0f, 1.0f, 0.2f, alpha);
+					glm::vec2 notifPos = glm::vec2(0.30f * renderer.windowW, 0.45f * renderer.windowH);
+					renderer.renderText(notifPos, waveNotification.c_str(), textures.font, notifColor, 1.0f, 4.f, 3.f, false);
+					waveNotificationTimer -= deltaTime;
+				}
+				
+				// Victory/Defeat screens
+				if (hordeState == HordeDefense::HordeDefenseState::VICTORY || hordeState == HordeDefense::HordeDefenseState::DEFEAT)
+				{
+					// Semi-transparent overlay
+					auto overlayPos = Ui::Box().xLeftPerc(0.0).yTopPerc(0.0).xDimensionPercentage(1.0).yDimensionPercentage(1.0);
+					renderer.renderRectangle(overlayPos, {0.0f, 0.0f, 0.0f, 0.7f});
+					
+					// Victory/Defeat text
+					const char* resultText = (hordeState == HordeDefense::HordeDefenseState::VICTORY) ? "VICTORY!" : "DEFEAT!";
+					glm::vec4 resultColor = (hordeState == HordeDefense::HordeDefenseState::VICTORY) ? 
+						glm::vec4(0.2f, 1.0f, 0.2f, 1.0f) : glm::vec4(1.0f, 0.2f, 0.2f, 1.0f);
+					glm::vec2 resultPos = glm::vec2(0.38f * renderer.windowW, 0.35f * renderer.windowH);
+					renderer.renderText(resultPos, resultText, textures.font, resultColor, 1.2f, 4.f, 3.f, false);
+					
+					// Details
+					glm::vec2 detailPos = glm::vec2(0.35f * renderer.windowW, 0.45f * renderer.windowH);
+					renderer.renderText(detailPos, waveNotification.c_str(), textures.font, Colors_White, 0.7f, 4.f, 3.f, false);
+					
+					// Instructions
+					glm::vec2 instructPos = glm::vec2(0.35f * renderer.windowW, 0.55f * renderer.windowH);
+					renderer.renderText(instructPos, "Press ESC to leave", textures.font, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), 0.5f, 4.f, 3.f, false);
+				}
+				
+				// Shop UI (only during buy phase when toggled)
+				if (showShopUI && hordeState == HordeDefense::HordeDefenseState::BUYING_PHASE)
+				{
+					// Dark semi-transparent overlay
+					auto overlayPos = Ui::Box().xLeftPerc(0.0).yTopPerc(0.0).xDimensionPercentage(1.0).yDimensionPercentage(1.0);
+					renderer.renderRectangle(overlayPos, {0.0f, 0.0f, 0.0f, 0.8f});
+					
+					// Shop window background
+					float shopX = 0.15f * renderer.windowW;
+					float shopY = 0.1f * renderer.windowH;
+					float shopW = 0.7f * renderer.windowW;
+					float shopH = 0.8f * renderer.windowH;
+					auto shopBox = Ui::Box().xLeft(shopX).yTop(shopY).xDimensionPixels(shopW).yDimensionPixels(shopH);
+					renderer.renderRectangle(shopBox, {0.1f, 0.1f, 0.15f, 0.95f});
+					
+					// Shop title
+					glm::vec2 titlePos = glm::vec2(shopX + shopW * 0.38f, shopY + 20.0f);
+					renderer.renderText(titlePos, "SHOP", textures.font, glm::vec4(1.0f, 0.9f, 0.2f, 1.0f), 1.2f, 4.f, 3.f, false);
+					
+					// Money display
+					char moneyText[64];
+					snprintf(moneyText, sizeof(moneyText), "Money: $%d", playerMoney);
+					glm::vec2 moneyPos = glm::vec2(shopX + shopW * 0.35f, shopY + 70.0f);
+					renderer.renderText(moneyPos, moneyText, textures.font, glm::vec4(0.2f, 1.0f, 0.2f, 1.0f), 0.9f, 4.f, 3.f, false);
+					
+					// Tab headers
+					float tab1X = shopX + 50.0f;
+					float tab2X = shopX + shopW * 0.5f + 20.0f;
+					float tabY = shopY + 120.0f;
+					
+					glm::vec4 tab1Color = (selectedShopTab == 0) ? glm::vec4(1.0f, 1.0f, 0.2f, 1.0f) : glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+					glm::vec4 tab2Color = (selectedShopTab == 1) ? glm::vec4(1.0f, 1.0f, 0.2f, 1.0f) : glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+					
+					renderer.renderText(glm::vec2(tab1X, tabY), "[1] UPGRADES", textures.font, tab1Color, 0.8f, 4.f, 3.f, false);
+					renderer.renderText(glm::vec2(tab2X, tabY), "[2] ITEMS", textures.font, tab2Color, 0.8f, 4.f, 3.f, false);
+					
+					// Content area
+					float contentY = tabY + 50.0f;
+					
+					if (selectedShopTab == 0)  // Upgrades tab
+					{
+						// List all 5 upgrade types
+						for (int i = 0; i < 5; i++)
+						{
+							auto upgradeType = static_cast<HordeDefense::UpgradeType>(i);
+							auto upgradeInfo = HordeDefense::UpgradeInfo::getInfo(upgradeType);
+							int currentLevel = playerUpgrades.getLevel(upgradeType);
+							int cost = upgradeInfo.getCostForLevel(currentLevel + 1);
+							
+							float itemY = contentY + i * 80.0f;
+							float itemX = shopX + 50.0f;
+							
+							// Selection highlight
+							if (i == selectedUpgradeIndex)
+							{
+								auto highlightBox = Ui::Box().xLeft(itemX - 10.0f).yTop(itemY - 5.0f).xDimensionPixels(shopW - 80.0f).yDimensionPixels(75.0f);
+								renderer.renderRectangle(highlightBox, {0.3f, 0.3f, 0.5f, 0.5f});
+							}
+							
+							// Upgrade name and level
+							char nameText[128];
+							snprintf(nameText, sizeof(nameText), "%s [Level %d/%d]", upgradeInfo.name, currentLevel, upgradeInfo.maxLevel);
+							glm::vec4 nameColor = (currentLevel >= upgradeInfo.maxLevel) ? 
+								glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+							renderer.renderText(glm::vec2(itemX, itemY), nameText, textures.font, nameColor, 0.7f, 4.f, 3.f, false);
+							
+							// Description
+							renderer.renderText(glm::vec2(itemX, itemY + 25.0f), upgradeInfo.description, textures.font, 
+								glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), 0.5f, 4.f, 3.f, false);
+							
+							// Cost
+							if (currentLevel < upgradeInfo.maxLevel)
+							{
+								char costText[64];
+								snprintf(costText, sizeof(costText), "Cost: $%d", cost);
+								glm::vec4 costColor = (playerMoney >= cost) ? 
+									glm::vec4(0.2f, 1.0f, 0.2f, 1.0f) : glm::vec4(1.0f, 0.3f, 0.3f, 1.0f);
+								renderer.renderText(glm::vec2(itemX, itemY + 50.0f), costText, textures.font, costColor, 0.6f, 4.f, 3.f, false);
+							}
+							else
+							{
+								renderer.renderText(glm::vec2(itemX, itemY + 50.0f), "MAX LEVEL", textures.font, 
+									glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 0.6f, 4.f, 3.f, false);
+							}
+						}
+					}
+					else  // Items tab
+					{
+						// List all 7 shop items
+						for (int i = 0; i < 7; i++)
+						{
+							auto itemType = static_cast<HordeDefense::ShopItemType>(i);
+							auto itemInfo = HordeDefense::ShopItemInfo::getInfo(itemType);
+							
+							float itemY = contentY + i * 80.0f;
+							float itemX = shopX + 50.0f;
+							
+							// Selection highlight
+							if (i == selectedItemIndex)
+							{
+								auto highlightBox = Ui::Box().xLeft(itemX - 10.0f).yTop(itemY - 5.0f).xDimensionPixels(shopW - 80.0f).yDimensionPixels(75.0f);
+								renderer.renderRectangle(highlightBox, {0.3f, 0.3f, 0.5f, 0.5f});
+							}
+							
+							// Item name
+							renderer.renderText(glm::vec2(itemX, itemY), itemInfo.name, textures.font, 
+								glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.7f, 4.f, 3.f, false);
+							
+							// Description
+							renderer.renderText(glm::vec2(itemX, itemY + 25.0f), itemInfo.description, textures.font, 
+								glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), 0.5f, 4.f, 3.f, false);
+							
+							// Cost
+							char costText[64];
+							snprintf(costText, sizeof(costText), "Cost: $%d", itemInfo.cost);
+							glm::vec4 costColor = (playerMoney >= itemInfo.cost) ? 
+								glm::vec4(0.2f, 1.0f, 0.2f, 1.0f) : glm::vec4(1.0f, 0.3f, 0.3f, 1.0f);
+							renderer.renderText(glm::vec2(itemX, itemY + 50.0f), costText, textures.font, costColor, 0.6f, 4.f, 3.f, false);
+						}
+					}
+					
+					// Instructions at bottom
+					float instructY = shopY + shopH - 80.0f;
+					renderer.renderText(glm::vec2(shopX + 50.0f, instructY), "W/S: Navigate  |  Space/E: Purchase  |  B: Close", 
+						textures.font, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), 0.5f, 4.f, 3.f, false);
+					
+					// Shop message (purchase feedback)
+					if (shopMessageTimer > 0.0f)
+					{
+						float alpha = std::min(1.0f, shopMessageTimer);
+						glm::vec4 msgColor = glm::vec4(1.0f, 1.0f, 0.2f, alpha);
+						renderer.renderText(glm::vec2(shopX + 50.0f, instructY + 40.0f), lastShopMessage.c_str(), 
+							textures.font, msgColor, 0.6f, 4.f, 3.f, false);
+						shopMessageTimer -= deltaTime;
+					}
+				}
+			}
+	#pragma endregion
+		float xLeft = 0.95;
+		float xSize = 0.04;
+		float xAdvance = xSize - 0.025;
+
+		// Debug: Log health values occasionally
+		static float debugTimer = 0.0f;
+		debugTimer += deltaTime;
+		if (debugTimer > 2.0f && currentGameMode == GameMode::HORDE_DEFENSE)
+		{
+			std::cout << "[HealthRender] Rendering hearts: HP=" << player.life << "/" << player.maxLife << std::endl;
+			debugTimer = 0.0f;
+		}
+
+		// Render health hearts: filled for current HP, empty for lost HP
+		for (int i = 0; i < player.maxLife; i++)
+		{
+			auto crossPos = Ui::Box().xLeftPerc(xLeft).yTopPerc(0.02).xDimensionPercentage(xSize).yAspectRatio(1.f);
+			auto crossPosDown = Ui::Box().xLeftPerc(xLeft+0.003).yTopPerc(0.025).xDimensionPercentage(xSize).yAspectRatio(1.f);
+			
+			if (i < player.life)
+			{
+				// Filled heart (current HP)
 				renderer.renderRectangle(crossPosDown, {0.f,0.f,0.f,1.f}, {}, 0.f, textures.cross);
 				renderer.renderRectangle(crossPos, {1.f,1.f,1.f,1.f}, {}, 0.f, textures.cross);
-				xLeft -= xAdvance;
 			}
-			xLeft = 0.95;
+			else
+			{
+				// Empty heart (lost HP) - render with transparency
+				renderer.renderRectangle(crossPosDown, {0.f,0.f,0.f,0.5f}, {}, 0.f, textures.cross);
+				renderer.renderRectangle(crossPos, {0.4f,0.4f,0.4f,0.5f}, {}, 0.f, textures.cross);
+			}
+			
+			xLeft -= xAdvance;
+		}
+		xLeft = 0.95;
 
 			if (hasBatery)
 			{
@@ -719,7 +1535,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				renderer.renderRectangle(pos, {1.f,1.f,1.f,1.f}, {}, 0.f, textures.battery);
 			}
 			
-			// Display scoreboard (top left)
+			// Display scoreboard (top left) - Only for Deathmatch mode
+			if (currentGameMode == GameMode::DEATHMATCH)
 			{
 				// Use fully pixel-based positioning for perfect alignment
 				float xPixel = 20.0f;  // 20 pixels from left edge
@@ -802,8 +1619,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				killMessageTimer -= deltaTime;
 			}
 			
-			// Display match end screen
-			if (matchEnded)
+			// Display match end screen (Deathmatch only)
+			if (matchEnded && currentGameMode == GameMode::DEATHMATCH)
 			{
 				// Semi-transparent overlay
 				auto overlayPos = Ui::Box().xLeftPerc(0.0).yTopPerc(0.0).xDimensionPercentage(1.0).yDimensionPercentage(1.0);
@@ -822,6 +1639,58 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				// Instructions
 				glm::vec2 instructPos = glm::vec2(0.35f * renderer.windowW, 0.55f * renderer.windowH);
 				renderer.renderText(instructPos, "Press ESC to leave", textures.font, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), 0.5f);
+			}
+			
+			// Display death screen (Horde Defense only)
+			if (player.life <= 0 && currentGameMode == GameMode::HORDE_DEFENSE)
+			{
+				static bool wasDeadLastFrame = false;
+				if (!wasDeadLastFrame)
+				{
+					std::cout << "[ClientDeath] Entering death screen. HP: " << player.life << std::endl;
+					wasDeadLastFrame = true;
+				}
+				
+				// Semi-transparent red overlay
+				auto overlayPos = Ui::Box().xLeftPerc(0.0).yTopPerc(0.0).xDimensionPercentage(1.0).yDimensionPercentage(1.0);
+				renderer.renderRectangle(overlayPos, {0.3f, 0.0f, 0.0f, 0.6f});
+				
+				// Death text
+				glm::vec2 deathPos = glm::vec2(0.40f * renderer.windowW, 0.35f * renderer.windowH);
+				renderer.renderText(deathPos, "YOU DIED", textures.font, glm::vec4(1.0f, 0.2f, 0.2f, 1.0f), 1.2f);
+				
+				// Status message based on wave state
+				glm::vec2 statusPos = glm::vec2(0.30f * renderer.windowW, 0.45f * renderer.windowH);
+				if (hordeState == HordeDefense::HordeDefenseState::BUYING_PHASE)
+				{
+					renderer.renderText(statusPos, "You will respawn at the start of the next wave", 
+						textures.font, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.6f);
+				}
+				else
+				{
+					char statusText[128];
+					snprintf(statusText, sizeof(statusText), "Spectating... You will respawn next wave");
+					renderer.renderText(statusPos, statusText, textures.font, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.6f);
+					
+					// Show current wave info
+					glm::vec2 wavePos = glm::vec2(0.35f * renderer.windowW, 0.52f * renderer.windowH);
+					char waveText[64];
+					snprintf(waveText, sizeof(waveText), "Wave %d/%d in progress", currentWave, totalWaves);
+					renderer.renderText(wavePos, waveText, textures.font, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), 0.5f);
+				}
+				
+				// Instructions
+				glm::vec2 instructPos = glm::vec2(0.35f * renderer.windowW, 0.60f * renderer.windowH);
+				renderer.renderText(instructPos, "Press ESC to leave match", textures.font, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), 0.5f);
+			}
+			else if (currentGameMode == GameMode::HORDE_DEFENSE)
+			{
+				static bool wasDeadLastFrame = false;
+				if (wasDeadLastFrame)
+				{
+					std::cout << "[ClientRespawn] Exiting death screen. HP: " << player.life << std::endl;
+					wasDeadLastFrame = false;
+				}
 			}
 
 			renderer.currentCamera = c;

@@ -242,7 +242,7 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     glui::Space(10);
     
     glui::Text("Game Mode:", RoomUIColors::White);
-    const char* modeOptions[] = {"Cooperative", "Team Deathmatch", "Free-for-All", "Custom"};
+    const char* modeOptions[] = {"Deathmatch (FFA)", "Team Battle", "Cooperative", "Horde Defense"};
     
     // Render buttons with visual selection indicator
     for (int i = 0; i < 4; i++) {
@@ -259,6 +259,16 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             selectedGameMode = i;
         }
     }
+    
+    // Show description based on selected mode
+    glui::Space(5);
+    const char* modeDescriptions[] = {
+        "Free-for-all combat - Last player standing!",
+        "Team vs Team - Coordinate with teammates!",
+        "Work together vs AI - Coming soon!",
+        "Survive 20 waves of enemies - Buy upgrades!"
+    };
+    glui::Text(modeDescriptions[selectedGameMode], RoomUIColors::Gray);
     glui::Space(10);
     
     glui::Text("Map:", RoomUIColors::White);
@@ -298,7 +308,13 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             
             int maxPlayersValues[] = {2, 4, 6, 8};
             createData.maxPlayers = maxPlayersValues[selectedMaxPlayers];
-            createData.gameMode = selectedGameMode;
+            
+            // Map UI selection to GameMode enum
+            // UI: 0=Deathmatch, 1=Team Battle, 2=Cooperative, 3=Horde Defense
+            // Enum: 0=DEATHMATCH, 1=TEAM_BATTLE, 2=COOPERATIVE, 3=TOWER_DEFENSE(deprecated), 4=HORDE_DEFENSE
+            int gameModeMapping[] = {0, 1, 2, 4};  // Skip TOWER_DEFENSE(3), use HORDE_DEFENSE(4) for button 3
+            createData.gameMode = gameModeMapping[selectedGameMode];
+            
             createData.mapId = selectedMapId;
             
             onCreateRoom(createData);
@@ -556,10 +572,11 @@ void RoomUI::clearJoinInputs() {
 
 const char* RoomUI::getGameModeName(int mode) {
     switch (mode) {
-        case 0: return "Classic";
-        case 1: return "Team";
-        case 2: return "FFA";
-        case 3: return "Custom";
+        case 0: return "Deathmatch";
+        case 1: return "Team Battle";
+        case 2: return "Cooperative";
+        case 3: return "Tower Defense";
+        case 4: return "Horde Defense";
         default: return "Unknown";
     }
 }

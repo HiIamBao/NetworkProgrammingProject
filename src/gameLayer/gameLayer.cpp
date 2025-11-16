@@ -138,7 +138,9 @@ bool gameLogic(float deltaTime)
 							int roomSlot = g_multiRoomManager->createRoom(
 								data.roomName,
 								g_accountUI->getCurrentUsername(),
-								data.maxPlayers
+								data.maxPlayers,
+								data.gameMode,
+								data.mapId
 							);						
 						if (roomSlot >= 0) {
 							std::cout << "Room created successfully in slot " << roomSlot << std::endl;
@@ -164,11 +166,13 @@ bool gameLogic(float deltaTime)
 										g_lanDiscovery->stopBroadcasting();
 									}
 									
-									// Start broadcasting the room with correct port
+									// Start broadcasting the room with correct port, game mode, and map
 									g_lanDiscovery->startBroadcasting(
 										room.roomName,
 										room.hostName,
-										room.port
+										room.port,
+										room.gameMode,
+										room.mapId
 									);
 									g_lanDiscovery->updateServerInfo(room.currentPlayers, room.maxPlayers);
 								}
@@ -244,8 +248,8 @@ bool gameLogic(float deltaTime)
 								strncpy(room.hostUsername, server.hostName.c_str(), sizeof(room.hostUsername) - 1);
 								room.currentPlayers = server.playerCount;
 								room.maxPlayers = server.maxPlayers;
-								room.gameMode = 0;
-								room.mapId = 0;
+								room.gameMode = server.gameMode;  // Use actual game mode from server
+								room.mapId = server.mapId;        // Use actual map from server
 								room.status = 0; // WAITING
 								room.hasPassword = false;
 								rooms.push_back(room);

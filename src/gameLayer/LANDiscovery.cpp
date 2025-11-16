@@ -50,7 +50,7 @@ uint64_t LANDiscovery::getCurrentTimeMs() {
     ).count();
 }
 
-void LANDiscovery::startBroadcasting(const std::string& name, const std::string& host, int port) {
+void LANDiscovery::startBroadcasting(const std::string& name, const std::string& host, int port, int mode, int map) {
     if (broadcasting.load()) {
         return;
     }
@@ -60,6 +60,8 @@ void LANDiscovery::startBroadcasting(const std::string& name, const std::string&
         serverName = name;
         hostName = host;
         serverPort = port;
+        gameMode = mode;
+        mapId = map;
     }
     
     broadcasting = true;
@@ -111,12 +113,14 @@ void LANDiscovery::broadcastLoop() {
         char message[256];
         {
             std::lock_guard<std::mutex> lock(serverInfoMutex);
-            snprintf(message, sizeof(message), "GAMESERVER|%s|%s|%d|%d|%d", 
+            snprintf(message, sizeof(message), "GAMESERVER|%s|%s|%d|%d|%d|%d|%d", 
                      serverName.c_str(), 
                      hostName.c_str(),
                      serverPort,
                      currentPlayers,
-                     maxPlayers);
+                     maxPlayers,
+                     gameMode,
+                     mapId);
         }
         
         // Send broadcast
@@ -227,7 +231,7 @@ void LANDiscovery::listenLoop() {
         if (received > 0) {
             buffer[received] = '\0';
             
-            // Parse message: "GAMESERVER|serverName|hostName|port|players|maxPlayers"
+            // Parse message: "GAMESERVER|serverName|hostName|port|players|maxPlayers|gameMode|mapId"
             char* token = strtok(buffer, "|");
             if (token && strcmp(token, "GAMESERVER") == 0) {
                 DiscoveredServer server;
@@ -246,6 +250,14 @@ void LANDiscovery::listenLoop() {
                 
                 token = strtok(nullptr, "|");
                 if (token) server.maxPlayers = atoi(token);
+                
+                token = strtok(nullptr, "|");
+                if (token) server.gameMode = atoi(token);
+                else server.gameMode = 0;  // Default to Deathmatch
+                
+                token = strtok(nullptr, "|");
+                if (token) server.mapId = atoi(token);
+                else server.mapId = 0;  // Default to map 0
                 
                 // Get IP address from sender
                 server.ipAddress = inet_ntoa(senderAddr.sin_addr);

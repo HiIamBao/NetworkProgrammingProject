@@ -37,7 +37,9 @@ void MultiRoomManager::initializeRooms() {
 
 int MultiRoomManager::createRoom(const std::string& roomName, 
                                   const std::string& hostName,
-                                  int maxPlayers) {
+                                  int maxPlayers,
+                                  int gameMode,
+                                  int mapId) {
     std::lock_guard<std::mutex> lock(roomsMutex);
     
     // Find an available slot
@@ -69,14 +71,17 @@ int MultiRoomManager::createRoom(const std::string& roomName,
             rooms[i].hostName = hostName;
             rooms[i].maxPlayers = maxPlayers;
             rooms[i].currentPlayers = 1;  // Host counts as player
+            rooms[i].gameMode = gameMode;
+            rooms[i].mapId = mapId;
             
-            // Start server thread
-            rooms[i].serverThread = std::make_unique<std::thread>([port]() {
-                serverFunction(port);
+            // Start server thread with game mode and map
+            rooms[i].serverThread = std::make_unique<std::thread>([port, gameMode, mapId]() {
+                serverFunction(port, gameMode, mapId);
             });
             
             std::cout << "MultiRoomManager: Created room '" << roomName 
-                      << "' in slot " << i << " on port " << port << std::endl;
+                      << "' in slot " << i << " on port " << port 
+                      << " (GameMode: " << gameMode << ", Map: " << mapId << ")" << std::endl;
             
             return i;  // Return slot ID
         }
@@ -135,6 +140,8 @@ std::vector<RoomInfo> MultiRoomManager::getActiveRooms() {
             info.hostName = rooms[i].hostName;
             info.maxPlayers = rooms[i].maxPlayers;
             info.currentPlayers = rooms[i].currentPlayers.load();
+            info.gameMode = rooms[i].gameMode;
+            info.mapId = rooms[i].mapId;
             activeRooms.push_back(info);
         }
     }
@@ -156,7 +163,7 @@ void MultiRoomManager::updateRoomPlayers(int slotId, int playerCount) {
 
 RoomInfo MultiRoomManager::getRoomInfo(int slotId) {
     if (slotId < 0 || slotId >= MAX_ROOMS) {
-        return RoomInfo{-1, 0, false, "", "", 0, 0};
+        return RoomInfo{-1, 0, false, "", "", 0, 0, 0, 0};
     }
     
     std::lock_guard<std::mutex> lock(roomsMutex);
@@ -170,10 +177,12 @@ RoomInfo MultiRoomManager::getRoomInfo(int slotId) {
         info.hostName = rooms[slotId].hostName;
         info.maxPlayers = rooms[slotId].maxPlayers;
         info.currentPlayers = rooms[slotId].currentPlayers.load();
+        info.gameMode = rooms[slotId].gameMode;
+        info.mapId = rooms[slotId].mapId;
         return info;
     }
     
-    return RoomInfo{-1, 0, false, "", "", 0, 0};
+    return RoomInfo{-1, 0, false, "", "", 0, 0, 0, 0};
 }
 
 bool MultiRoomManager::hasActiveRooms() const {

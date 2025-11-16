@@ -421,6 +421,30 @@ src/gameLayer/GameRoom.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.s
 .PHONY : src/gameLayer/GameRoom.cpp.s
 
+src/gameLayer/HordeDefenseManager.o: src/gameLayer/HordeDefenseManager.cpp.o
+.PHONY : src/gameLayer/HordeDefenseManager.o
+
+# target to build an object file
+src/gameLayer/HordeDefenseManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o
+.PHONY : src/gameLayer/HordeDefenseManager.cpp.o
+
+src/gameLayer/HordeDefenseManager.i: src/gameLayer/HordeDefenseManager.cpp.i
+.PHONY : src/gameLayer/HordeDefenseManager.i
+
+# target to preprocess a source file
+src/gameLayer/HordeDefenseManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.i
+.PHONY : src/gameLayer/HordeDefenseManager.cpp.i
+
+src/gameLayer/HordeDefenseManager.s: src/gameLayer/HordeDefenseManager.cpp.s
+.PHONY : src/gameLayer/HordeDefenseManager.s
+
+# target to generate assembly for a file
+src/gameLayer/HordeDefenseManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.s
+.PHONY : src/gameLayer/HordeDefenseManager.cpp.s
+
 src/gameLayer/LANDiscovery.o: src/gameLayer/LANDiscovery.cpp.o
 .PHONY : src/gameLayer/LANDiscovery.o
 
@@ -564,6 +588,30 @@ src/gameLayer/SessionManager.s: src/gameLayer/SessionManager.cpp.s
 src/gameLayer/SessionManager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.s
 .PHONY : src/gameLayer/SessionManager.cpp.s
+
+src/gameLayer/TowerDefense.o: src/gameLayer/TowerDefense.cpp.o
+.PHONY : src/gameLayer/TowerDefense.o
+
+# target to build an object file
+src/gameLayer/TowerDefense.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o
+.PHONY : src/gameLayer/TowerDefense.cpp.o
+
+src/gameLayer/TowerDefense.i: src/gameLayer/TowerDefense.cpp.i
+.PHONY : src/gameLayer/TowerDefense.i
+
+# target to preprocess a source file
+src/gameLayer/TowerDefense.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.i
+.PHONY : src/gameLayer/TowerDefense.cpp.i
+
+src/gameLayer/TowerDefense.s: src/gameLayer/TowerDefense.cpp.s
+.PHONY : src/gameLayer/TowerDefense.s
+
+# target to generate assembly for a file
+src/gameLayer/TowerDefense.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.s
+.PHONY : src/gameLayer/TowerDefense.cpp.s
 
 src/gameLayer/Ui.o: src/gameLayer/Ui.cpp.o
 .PHONY : src/gameLayer/Ui.o
@@ -832,6 +880,9 @@ help:
 	@echo "... src/gameLayer/GameRoom.o"
 	@echo "... src/gameLayer/GameRoom.i"
 	@echo "... src/gameLayer/GameRoom.s"
+	@echo "... src/gameLayer/HordeDefenseManager.o"
+	@echo "... src/gameLayer/HordeDefenseManager.i"
+	@echo "... src/gameLayer/HordeDefenseManager.s"
 	@echo "... src/gameLayer/LANDiscovery.o"
 	@echo "... src/gameLayer/LANDiscovery.i"
 	@echo "... src/gameLayer/LANDiscovery.s"
@@ -850,6 +901,9 @@ help:
 	@echo "... src/gameLayer/SessionManager.o"
 	@echo "... src/gameLayer/SessionManager.i"
 	@echo "... src/gameLayer/SessionManager.s"
+	@echo "... src/gameLayer/TowerDefense.o"
+	@echo "... src/gameLayer/TowerDefense.i"
+	@echo "... src/gameLayer/TowerDefense.s"
 	@echo "... src/gameLayer/Ui.o"
 	@echo "... src/gameLayer/Ui.i"
 	@echo "... src/gameLayer/Ui.s"
