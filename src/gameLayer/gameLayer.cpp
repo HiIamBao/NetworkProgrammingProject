@@ -19,6 +19,7 @@
 #include <thread>
 #include <ctime>
 #include <GLFW/glfw3.h>  // For GLFW_KEY_ESCAPE
+#include <cstring>
 
 gl2d::Renderer2D renderer;
 

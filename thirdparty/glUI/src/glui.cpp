@@ -2,7 +2,7 @@
 #include "gl2d/gl2d.h"
 #include <unordered_map>
 #include <iostream>
-
+#include <cstring>
 namespace glui
 {
 

@@ -11,6 +11,7 @@
 #include "GameRoom.h"
 #include "HordeDefense.h"
 #include <map>
+#include <cstring>
 
 phisics::MapData map;
 
@@ -1023,12 +1024,15 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				// Draw all enemies
 				for (const auto& [enemyId, enemy] : hordeEnemies)
 				{
-					// Calculate screen position
+					// Size multiplier (boss is larger)
+					float sizeMultiplier = (enemy.type == HordeDefense::EnemyType::BOSS) ? 5.0f : 1.0f;
+
+					// Calculate screen position and size
 					glm::vec4 enemyRect = {
 						enemy.position.x * worldMagnification,
 						enemy.position.y * worldMagnification,
-						1.0f * worldMagnification,
-						1.0f * worldMagnification
+						sizeMultiplier * worldMagnification,
+						sizeMultiplier * worldMagnification
 					};
 					
 					// Color based on enemy type
@@ -1062,10 +1066,11 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					float healthPercent = enemy.health / enemy.maxHealth;
 					if (healthPercent < 1.0f)  // Only show if damaged
 					{
-						float healthBarWidth = 1.0f * worldMagnification;
+						float healthBarWidth = sizeMultiplier * worldMagnification;
 						float healthBarHeight = 0.1f * worldMagnification;
-						float healthBarY = (enemy.position.y - 0.2f) * worldMagnification;
-						
+						// Raise the health bar proportional to enemy size
+						float healthBarY = (enemy.position.y - 0.2f * sizeMultiplier) * worldMagnification;
+
 						// Background (red)
 						glm::vec4 bgRect = {
 							enemy.position.x * worldMagnification,
@@ -1074,7 +1079,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 							healthBarHeight
 						};
 						renderer.renderRectangle(bgRect, {0.3f, 0.0f, 0.0f, 0.8f});
-						
+
 						// Foreground (green)
 						glm::vec4 fgRect = {
 							enemy.position.x * worldMagnification,
@@ -1185,11 +1190,13 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				for (auto& [enemyId, enemy] : hordeEnemies)
 				{
 					// Simple circle-circle collision (bullet center vs enemy center)
+					// Account for larger boss size by using a size multiplier
+					float sizeMultiplier = (enemy.type == HordeDefense::EnemyType::BOSS) ? 5.0f : 1.0f;
 					glm::vec2 bulletCenter = ownBullets[i].pos + glm::vec2(0.5f, 0.5f);
-					glm::vec2 enemyCenter = enemy.position + glm::vec2(0.5f, 0.5f);
+					glm::vec2 enemyCenter = enemy.position + glm::vec2(sizeMultiplier / 2.0f, sizeMultiplier / 2.0f);
 					float distance = glm::length(bulletCenter - enemyCenter);
-					float collisionRadius = 0.7f;  // Combined radius for collision
-					
+					float collisionRadius = 0.7f * sizeMultiplier;  // Combined radius for collision
+
 					if (distance < collisionRadius)
 					{
 						// Bullet hit enemy!

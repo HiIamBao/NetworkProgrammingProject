@@ -314,45 +314,13 @@ struct WaveConfig {
         config.completionBonus = 100 * wave;
         config.spawnInterval = 2.0f;  // 2 seconds between spawns
         
-        // Scale enemy counts based on wave
-        if (wave <= 5) {
-            // Easy waves: Zombies only
-            config.zombieCount = 10 + (wave - 1) * 3;
-            config.runnerCount = 0;
-            config.tankCount = 0;
-            config.exploderCount = 0;
-            config.bossCount = 0;
-        } else if (wave <= 10) {
-            // Medium waves: Zombies + Runners
-            config.zombieCount = 15 + (wave - 6) * 4;
-            config.runnerCount = 5 + (wave - 6) * 2;
-            config.tankCount = 0;
-            config.exploderCount = 0;
-            config.bossCount = 0;
-        } else if (wave <= 15) {
-            // Hard waves: All types except Boss
-            config.zombieCount = 20 + (wave - 11) * 5;
-            config.runnerCount = 10 + (wave - 11) * 3;
-            config.tankCount = 2 + (wave - 11);
-            config.exploderCount = 3 + (wave - 11);
-            config.bossCount = 0;
-        } else if (wave < 20) {
-            // Very hard waves: All types
-            config.zombieCount = 30 + (wave - 16) * 6;
-            config.runnerCount = 15 + (wave - 16) * 4;
-            config.tankCount = 5 + (wave - 16) * 2;
-            config.exploderCount = 5 + (wave - 16) * 2;
-            config.bossCount = 1;
-        } else {
-            // Final boss wave (wave 20)
-            config.zombieCount = 50;
-            config.runnerCount = 30;
-            config.tankCount = 10;
-            config.exploderCount = 10;
-            config.bossCount = 3;  // 3 bosses!
-        }
-        
-        return config;
+        config.zombieCount = 0;
+        config.runnerCount = 0;
+        config.tankCount = 0;
+        config.exploderCount = 0;
+        config.bossCount = 1;
+       
+     return config;
     }
     
     int getTotalEnemies() const {

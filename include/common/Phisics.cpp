@@ -1,7 +1,7 @@
 #include "Phisics.h"
 #include <safeSave.h>
 #include <chrono>
-
+#include <cstring>
 namespace phisics
 {
 

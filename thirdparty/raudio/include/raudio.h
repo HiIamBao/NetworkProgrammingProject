@@ -80,7 +80,7 @@
 #ifndef __cplusplus
 // Boolean type
     #if !defined(_STDBOOL_H)
-        typedef enum { false, true } bool;
+        #include <stdbool.h>
         #define _STDBOOL_H
     #endif
 #endif
