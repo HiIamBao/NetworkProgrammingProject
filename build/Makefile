@@ -57,10 +57,17 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
+<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
+=======
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
+
+# The top-level build directory on which CMake was run.
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +94,15 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
+<<<<<<< HEAD
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles /home/hung1fps/NetworkProgrammingProject/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles 0
+=======
+	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame-2/build//CMakeFiles/progress.marks"
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" 0
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : all
 
 # The main clean target
@@ -113,7 +126,11 @@ preinstall/fast:
 
 # clear depends
 depend:
+<<<<<<< HEAD
 	$(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
+=======
+	$(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
@@ -942,7 +959,11 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
+<<<<<<< HEAD
 	$(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
+=======
+	$(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

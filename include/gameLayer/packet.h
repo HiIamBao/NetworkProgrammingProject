@@ -106,6 +106,23 @@ enum
 	headerHordeMatchEnd,            // Server -> All: match ended (victory/defeat)
 	headerHordeBulletHitEnemy,      // Client -> Server: bullet hit enemy (for damage)
 	headerHordeEnemyAttack,         // Server -> All: enemy attacks player (deal damage)
+	headerHordeDamageUpdate,        // Server -> All: lightweight damage leaderboard update (batched)
+	
+	// Boss Fight mode packets
+	headerBossFightStateUpdate,     // Server -> Client: Game state update
+	headerBossFightBossSpawn,       // Server -> Client: Boss spawn notification
+	headerBossFightBossUpdate,      // Server -> Client: Boss position/health update (10Hz)
+	headerBossFightBossAttack,      // Server -> Client: Boss attack notification
+	headerBossFightBossDeath,       // Server -> Client: Boss defeated
+	headerBossFightMinionSpawn,     // Server -> Client: Minion spawn
+	headerBossFightMinionUpdate,    // Server -> Client: Minion updates (10Hz)
+	headerBossFightMinionDeath,     // Server -> Client: Minion death
+	headerBossFightPlayerRespawn,   // Server -> Client: Player respawn
+	headerBossFightMatchEnd,        // Server -> Client: Match end (victory/defeat)
+	headerBossFightPlayerDamage,    // Server -> Client: Player took damage from boss
+	
+	// Boss Fight DEBUG packets
+	headerBossFightDebugRespawnBoss, // Client -> Server: Request to respawn boss at player position (DEBUG)
 };
 
 constexpr int SERVER_CHANNELS = 2;
@@ -249,6 +266,7 @@ struct MatchStartData {
     int gameMode;
     int matchDuration;  // in seconds, 0 = infinite
     int scoreLimit;     // 0 = no limit
+    int mapId;          // Map selection (0=default, 1=industrial, 2=warehouse, 3=boss arena)
 };
 
 struct MatchEndData {
@@ -398,4 +416,102 @@ struct HordeEnemyAttackData {
     int32_t targetCid;         // Player being attacked
     int damage;                // Damage dealt to player
     int enemyType;             // Type of enemy (for animation/effects)
+};
+
+// Lightweight damage update for leaderboard (batched to reduce network traffic)
+struct HordeDamageUpdate {
+    int32_t cid;               // Player ID
+    int totalDamageDealt;      // Total damage dealt
+    int enemiesKilled;         // Total enemies killed
+};
+
+// ============================================================================
+// BOSS FIGHT MODE - Network Data Structures
+// ============================================================================
+
+struct BossFightStateUpdateData {
+    int gameState;             // BossFightState as int
+    float bossHealth;          // Current boss health
+    float bossMaxHealth;       // Boss max health
+    int bossPhase;             // BossPhase as int
+    int playersAlive;          // Number of players alive
+    float matchTime;           // Time elapsed since match start
+};
+
+struct BossFightBossSpawnData {
+    int32_t bossId;
+    int bossType;              // BossType as int
+    float posX, posY;          // Spawn position
+    float health;
+    float maxHealth;
+    float speed;
+};
+
+struct BossFightBossUpdateData {
+    int32_t bossId;
+    float posX, posY;
+    float velX, velY;
+    float health;
+    int currentPhase;          // BossPhase as int
+    int32_t targetPlayerId;    // Current target (-1 = no target)
+};
+
+struct BossFightBossAttackData {
+    int32_t bossId;
+    int attackType;            // BossAttackType as int
+    float attackPosX, attackPosY; // Attack position (for AOE center)
+    int32_t targetCid;         // Primary target CID (-1 for AOE)
+    int damage;                // Base damage of attack
+};
+
+struct BossFightBossDeathData {
+    int32_t bossId;
+    int32_t lastHitPlayerCid;  // Player who landed killing blow
+    float posX, posY;          // Death position for effects
+};
+
+struct BossFightMinionSpawnData {
+    int32_t minionId;
+    float posX, posY;
+    float health;
+    float maxHealth;
+};
+
+struct BossFightMinionUpdateData {
+    int32_t minionId;
+    float posX, posY;
+    float health;
+    int32_t targetPlayerId;
+};
+
+struct BossFightMinionDeathData {
+    int32_t minionId;
+    int32_t killerCid;
+    float posX, posY;
+};
+
+struct BossFightPlayerRespawnData {
+    int32_t cid;
+    float posX, posY;
+};
+
+struct BossFightMatchEndData {
+    bool victory;              // true = boss defeated, false = all players dead
+    float matchDuration;       // Time to complete (or fail)
+    int32_t mvpPlayerId;       // Most damage dealt
+    char mvpPlayerName[32];
+    int mvpDamage;             // Total damage dealt by MVP
+    int totalPlayerDeaths;     // Total deaths across all players
+};
+
+struct BossFightPlayerDamageData {
+    int32_t cid;               // Player who took damage
+    int damage;                // Damage amount
+    int attackType;            // BossAttackType as int
+    float knockbackX, knockbackY; // Knockback vector
+};
+
+// DEBUG: Request to respawn boss at specific position
+struct BossFightDebugRespawnBossData {
+    float posX, posY;          // Position to spawn boss at
 };

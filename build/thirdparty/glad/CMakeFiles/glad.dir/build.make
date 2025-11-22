@@ -53,10 +53,17 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
+<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
+=======
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
+
+# The top-level build directory on which CMake was run.
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Include any dependencies generated for this target.
 include thirdparty/glad/CMakeFiles/glad.dir/depend.make
@@ -73,6 +80,7 @@ thirdparty/glad/CMakeFiles/glad.dir/codegen:
 .PHONY : thirdparty/glad/CMakeFiles/glad.dir/codegen
 
 thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o: thirdparty/glad/CMakeFiles/glad.dir/flags.make
+<<<<<<< HEAD
 thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o: /home/hung1fps/NetworkProgrammingProject/thirdparty/glad/src/glad.c
 thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o: thirdparty/glad/CMakeFiles/glad.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o"
@@ -85,6 +93,20 @@ thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.i: cmake_force
 thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/glad.dir/src/glad.c.s"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad && /usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/hung1fps/NetworkProgrammingProject/thirdparty/glad/src/glad.c -o CMakeFiles/glad.dir/src/glad.c.s
+=======
+thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/thirdparty/glad/src/glad.c
+thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o: thirdparty/glad/CMakeFiles/glad.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building C object thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad" && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o -MF CMakeFiles/glad.dir/src/glad.c.o.d -o CMakeFiles/glad.dir/src/glad.c.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad/src/glad.c"
+
+thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/glad.dir/src/glad.c.i"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad" && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad/src/glad.c" > CMakeFiles/glad.dir/src/glad.c.i
+
+thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/glad.dir/src/glad.c.s"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad" && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad/src/glad.c" -o CMakeFiles/glad.dir/src/glad.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Object files for target glad
 glad_OBJECTS = \
@@ -96,19 +118,33 @@ glad_EXTERNAL_OBJECTS =
 thirdparty/glad/libglad.a: thirdparty/glad/CMakeFiles/glad.dir/src/glad.c.o
 thirdparty/glad/libglad.a: thirdparty/glad/CMakeFiles/glad.dir/build.make
 thirdparty/glad/libglad.a: thirdparty/glad/CMakeFiles/glad.dir/link.txt
+<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C static library libglad.a"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad && $(CMAKE_COMMAND) -P CMakeFiles/glad.dir/cmake_clean_target.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/glad.dir/link.txt --verbose=$(VERBOSE)
+=======
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking C static library libglad.a"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad" && $(CMAKE_COMMAND) -P CMakeFiles/glad.dir/cmake_clean_target.cmake
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad" && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/glad.dir/link.txt --verbose=$(VERBOSE)
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Rule to build all files generated by this target.
 thirdparty/glad/CMakeFiles/glad.dir/build: thirdparty/glad/libglad.a
 .PHONY : thirdparty/glad/CMakeFiles/glad.dir/build
 
 thirdparty/glad/CMakeFiles/glad.dir/clean:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad && $(CMAKE_COMMAND) -P CMakeFiles/glad.dir/cmake_clean.cmake
 .PHONY : thirdparty/glad/CMakeFiles/glad.dir/clean
 
 thirdparty/glad/CMakeFiles/glad.dir/depend:
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/hung1fps/NetworkProgrammingProject /home/hung1fps/NetworkProgrammingProject/thirdparty/glad /home/hung1fps/NetworkProgrammingProject/build /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad/CMakeFiles/glad.dir/DependInfo.cmake "--color=$(COLOR)"
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad" && $(CMAKE_COMMAND) -P CMakeFiles/glad.dir/cmake_clean.cmake
+.PHONY : thirdparty/glad/CMakeFiles/glad.dir/clean
+
+thirdparty/glad/CMakeFiles/glad.dir/depend:
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" "/home/bao/Network Programming/Project/multiPlayerGame-2" "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad" "/home/bao/Network Programming/Project/multiPlayerGame-2/build" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad/CMakeFiles/glad.dir/DependInfo.cmake" "--color=$(COLOR)"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/glad/CMakeFiles/glad.dir/depend
 

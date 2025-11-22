@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+<<<<<<< HEAD
   "/home/hung1fps/NetworkProgrammingProject/thirdparty/imgui-docking/imgui/backends/imgui_impl_glfw.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/thirdparty/imgui-docking/imgui/backends/imgui_impl_opengl3.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/thirdparty/imgui-docking/imgui/imgui.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.o.d"
@@ -15,6 +16,15 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/hung1fps/NetworkProgrammingProject/thirdparty/imgui-docking/imgui/imgui_draw.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/thirdparty/imgui-docking/imgui/imgui_tables.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/thirdparty/imgui-docking/imgui/imgui_widgets.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.o.d"
+=======
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui/backends/imgui_impl_glfw.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui/backends/imgui_impl_opengl3.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui/imgui.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui/imgui_demo.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui/imgui_draw.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui/imgui_tables.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui/imgui_widgets.cpp" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.o" "gcc" "thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.o.d"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
   )
 
 # Targets to which this target links which contain Fortran sources.

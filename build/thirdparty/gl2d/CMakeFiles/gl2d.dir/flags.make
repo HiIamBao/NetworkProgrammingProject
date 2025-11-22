@@ -4,7 +4,11 @@
 # compile CXX with /usr/bin/g++
 CXX_DEFINES = 
 
+<<<<<<< HEAD
 CXX_INCLUDES = -I/home/hung1fps/NetworkProgrammingProject/thirdparty/gl2d/include -I/home/hung1fps/NetworkProgrammingProject/thirdparty/glm/include -I/home/hung1fps/NetworkProgrammingProject/thirdparty/glm -I/home/hung1fps/NetworkProgrammingProject/thirdparty/glad/include -I/home/hung1fps/NetworkProgrammingProject/thirdparty/stb_image/include -I/home/hung1fps/NetworkProgrammingProject/thirdparty/stb_truetype/include
+=======
+CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/gl2d/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glm/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glm" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/stb_image/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/stb_truetype/include"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 CXX_FLAGS = 
 

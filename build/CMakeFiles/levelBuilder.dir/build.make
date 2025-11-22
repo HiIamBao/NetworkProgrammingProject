@@ -53,10 +53,17 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
+<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
+=======
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
+
+# The top-level build directory on which CMake was run.
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Include any dependencies generated for this target.
 include CMakeFiles/levelBuilder.dir/depend.make
@@ -73,6 +80,7 @@ CMakeFiles/levelBuilder.dir/codegen:
 .PHONY : CMakeFiles/levelBuilder.dir/codegen
 
 CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o: CMakeFiles/levelBuilder.dir/flags.make
+<<<<<<< HEAD
 CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o: /home/hung1fps/NetworkProgrammingProject/levelBuilder/src/gameLayerBuilder.cpp
 CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o"
@@ -169,6 +177,104 @@ CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.i: cmake_force
 CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.s"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hung1fps/NetworkProgrammingProject/include/common/tiles.cpp -o CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.s
+=======
+CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/levelBuilder/src/gameLayerBuilder.cpp
+CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o -MF CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o.d -o CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/levelBuilder/src/gameLayerBuilder.cpp"
+
+CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/levelBuilder/src/gameLayerBuilder.cpp" > CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.i
+
+CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/levelBuilder/src/gameLayerBuilder.cpp" -o CMakeFiles/levelBuilder.dir/levelBuilder/src/gameLayerBuilder.cpp.s
+
+CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.o: CMakeFiles/levelBuilder.dir/flags.make
+CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/src/platform/glfwMain.cpp
+CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.o -MF CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.o.d -o CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/glfwMain.cpp"
+
+CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/glfwMain.cpp" > CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.i
+
+CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/glfwMain.cpp" -o CMakeFiles/levelBuilder.dir/src/platform/glfwMain.cpp.s
+
+CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.o: CMakeFiles/levelBuilder.dir/flags.make
+CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/src/platform/headerOnly.cpp
+CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.o -MF CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.o.d -o CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/headerOnly.cpp"
+
+CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/headerOnly.cpp" > CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.i
+
+CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/headerOnly.cpp" -o CMakeFiles/levelBuilder.dir/src/platform/headerOnly.cpp.s
+
+CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.o: CMakeFiles/levelBuilder.dir/flags.make
+CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/src/platform/opterPlatformFunctions.cpp
+CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.o -MF CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.o.d -o CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/opterPlatformFunctions.cpp"
+
+CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/opterPlatformFunctions.cpp" > CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.i
+
+CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/opterPlatformFunctions.cpp" -o CMakeFiles/levelBuilder.dir/src/platform/opterPlatformFunctions.cpp.s
+
+CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.o: CMakeFiles/levelBuilder.dir/flags.make
+CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/src/platform/platformInput.cpp
+CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.o -MF CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.o.d -o CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/platformInput.cpp"
+
+CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/platformInput.cpp" > CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.i
+
+CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/platformInput.cpp" -o CMakeFiles/levelBuilder.dir/src/platform/platformInput.cpp.s
+
+CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.o: CMakeFiles/levelBuilder.dir/flags.make
+CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/include/common/Phisics.cpp
+CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.o -MF CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.o.d -o CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/Phisics.cpp"
+
+CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/Phisics.cpp" > CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.i
+
+CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/Phisics.cpp" -o CMakeFiles/levelBuilder.dir/include/common/Phisics.cpp.s
+
+CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.o: CMakeFiles/levelBuilder.dir/flags.make
+CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/include/common/tiles.cpp
+CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.o: CMakeFiles/levelBuilder.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.o -MF CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.o.d -o CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/tiles.cpp"
+
+CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/tiles.cpp" > CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.i
+
+CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/tiles.cpp" -o CMakeFiles/levelBuilder.dir/include/common/tiles.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Object files for target levelBuilder
 levelBuilder_OBJECTS = \
@@ -207,7 +313,11 @@ levelBuilder: /usr/lib/aarch64-linux-gnu/libX11.so
 levelBuilder: thirdparty/gl2d/libgl2d.a
 levelBuilder: thirdparty/glad/libglad.a
 levelBuilder: CMakeFiles/levelBuilder.dir/link.txt
+<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable levelBuilder"
+=======
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable levelBuilder"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/levelBuilder.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -219,6 +329,10 @@ CMakeFiles/levelBuilder.dir/clean:
 .PHONY : CMakeFiles/levelBuilder.dir/clean
 
 CMakeFiles/levelBuilder.dir/depend:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/hung1fps/NetworkProgrammingProject /home/hung1fps/NetworkProgrammingProject /home/hung1fps/NetworkProgrammingProject/build /home/hung1fps/NetworkProgrammingProject/build /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/levelBuilder.dir/DependInfo.cmake "--color=$(COLOR)"
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" "/home/bao/Network Programming/Project/multiPlayerGame-2" "/home/bao/Network Programming/Project/multiPlayerGame-2" "/home/bao/Network Programming/Project/multiPlayerGame-2/build" "/home/bao/Network Programming/Project/multiPlayerGame-2/build" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/levelBuilder.dir/DependInfo.cmake" "--color=$(COLOR)"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : CMakeFiles/levelBuilder.dir/depend
 

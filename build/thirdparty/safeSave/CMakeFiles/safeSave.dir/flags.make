@@ -4,7 +4,11 @@
 # compile CXX with /usr/bin/g++
 CXX_DEFINES = 
 
+<<<<<<< HEAD
 CXX_INCLUDES = -I/home/hung1fps/NetworkProgrammingProject/thirdparty/safeSave/include
+=======
+CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/safeSave/include"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 CXX_FLAGS = 
 

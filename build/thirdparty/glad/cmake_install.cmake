@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Install script for directory: /home/hung1fps/NetworkProgrammingProject/thirdparty/glad
+=======
+# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

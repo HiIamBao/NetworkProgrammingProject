@@ -57,10 +57,17 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
+<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
+=======
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
+
+# The top-level build directory on which CMake was run.
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,14 +94,24 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glfw-3.3.2/src//CMakeFiles/progress.marks
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles 0
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glfw-3.3.2/src//CMakeFiles/progress.marks"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" 0
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : all
 
 # The main clean target
 clean:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/clean
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/clean
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : clean
 
 # The main clean target
@@ -103,23 +120,40 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/preinstall
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/preinstall
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/preinstall
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/preinstall
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : depend
 
 # Convenience name for target.
 thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/rule:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/rule
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/rule
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/rule
 
 # Convenience name for target.
@@ -128,7 +162,11 @@ glfw: thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/rule
 
 # fast build rule for target.
 glfw/fast:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : glfw/fast
 
 context.o: context.c.o
@@ -136,7 +174,11 @@ context.o: context.c.o
 
 # target to build an object file
 context.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/context.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/context.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : context.c.o
 
 context.i: context.c.i
@@ -144,7 +186,11 @@ context.i: context.c.i
 
 # target to preprocess a source file
 context.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/context.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/context.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : context.c.i
 
 context.s: context.c.s
@@ -152,7 +198,11 @@ context.s: context.c.s
 
 # target to generate assembly for a file
 context.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/context.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/context.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : context.c.s
 
 egl_context.o: egl_context.c.o
@@ -160,7 +210,11 @@ egl_context.o: egl_context.c.o
 
 # target to build an object file
 egl_context.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/egl_context.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/egl_context.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : egl_context.c.o
 
 egl_context.i: egl_context.c.i
@@ -168,7 +222,11 @@ egl_context.i: egl_context.c.i
 
 # target to preprocess a source file
 egl_context.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/egl_context.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/egl_context.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : egl_context.c.i
 
 egl_context.s: egl_context.c.s
@@ -176,7 +234,11 @@ egl_context.s: egl_context.c.s
 
 # target to generate assembly for a file
 egl_context.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/egl_context.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/egl_context.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : egl_context.c.s
 
 glx_context.o: glx_context.c.o
@@ -184,7 +246,11 @@ glx_context.o: glx_context.c.o
 
 # target to build an object file
 glx_context.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/glx_context.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/glx_context.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : glx_context.c.o
 
 glx_context.i: glx_context.c.i
@@ -192,7 +258,11 @@ glx_context.i: glx_context.c.i
 
 # target to preprocess a source file
 glx_context.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/glx_context.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/glx_context.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : glx_context.c.i
 
 glx_context.s: glx_context.c.s
@@ -200,7 +270,11 @@ glx_context.s: glx_context.c.s
 
 # target to generate assembly for a file
 glx_context.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/glx_context.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/glx_context.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : glx_context.c.s
 
 init.o: init.c.o
@@ -208,7 +282,11 @@ init.o: init.c.o
 
 # target to build an object file
 init.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/init.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/init.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : init.c.o
 
 init.i: init.c.i
@@ -216,7 +294,11 @@ init.i: init.c.i
 
 # target to preprocess a source file
 init.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/init.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/init.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : init.c.i
 
 init.s: init.c.s
@@ -224,7 +306,11 @@ init.s: init.c.s
 
 # target to generate assembly for a file
 init.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/init.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/init.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : init.c.s
 
 input.o: input.c.o
@@ -232,7 +318,11 @@ input.o: input.c.o
 
 # target to build an object file
 input.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/input.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/input.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : input.c.o
 
 input.i: input.c.i
@@ -240,7 +330,11 @@ input.i: input.c.i
 
 # target to preprocess a source file
 input.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/input.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/input.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : input.c.i
 
 input.s: input.c.s
@@ -248,7 +342,11 @@ input.s: input.c.s
 
 # target to generate assembly for a file
 input.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/input.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/input.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : input.c.s
 
 linux_joystick.o: linux_joystick.c.o
@@ -256,7 +354,11 @@ linux_joystick.o: linux_joystick.c.o
 
 # target to build an object file
 linux_joystick.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/linux_joystick.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/linux_joystick.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : linux_joystick.c.o
 
 linux_joystick.i: linux_joystick.c.i
@@ -264,7 +366,11 @@ linux_joystick.i: linux_joystick.c.i
 
 # target to preprocess a source file
 linux_joystick.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/linux_joystick.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/linux_joystick.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : linux_joystick.c.i
 
 linux_joystick.s: linux_joystick.c.s
@@ -272,7 +378,11 @@ linux_joystick.s: linux_joystick.c.s
 
 # target to generate assembly for a file
 linux_joystick.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/linux_joystick.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/linux_joystick.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : linux_joystick.c.s
 
 monitor.o: monitor.c.o
@@ -280,7 +390,11 @@ monitor.o: monitor.c.o
 
 # target to build an object file
 monitor.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/monitor.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/monitor.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : monitor.c.o
 
 monitor.i: monitor.c.i
@@ -288,7 +402,11 @@ monitor.i: monitor.c.i
 
 # target to preprocess a source file
 monitor.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/monitor.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/monitor.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : monitor.c.i
 
 monitor.s: monitor.c.s
@@ -296,7 +414,11 @@ monitor.s: monitor.c.s
 
 # target to generate assembly for a file
 monitor.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/monitor.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/monitor.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : monitor.c.s
 
 osmesa_context.o: osmesa_context.c.o
@@ -304,7 +426,11 @@ osmesa_context.o: osmesa_context.c.o
 
 # target to build an object file
 osmesa_context.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/osmesa_context.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/osmesa_context.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : osmesa_context.c.o
 
 osmesa_context.i: osmesa_context.c.i
@@ -312,7 +438,11 @@ osmesa_context.i: osmesa_context.c.i
 
 # target to preprocess a source file
 osmesa_context.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/osmesa_context.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/osmesa_context.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : osmesa_context.c.i
 
 osmesa_context.s: osmesa_context.c.s
@@ -320,7 +450,11 @@ osmesa_context.s: osmesa_context.c.s
 
 # target to generate assembly for a file
 osmesa_context.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/osmesa_context.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/osmesa_context.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : osmesa_context.c.s
 
 posix_thread.o: posix_thread.c.o
@@ -328,7 +462,11 @@ posix_thread.o: posix_thread.c.o
 
 # target to build an object file
 posix_thread.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_thread.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_thread.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : posix_thread.c.o
 
 posix_thread.i: posix_thread.c.i
@@ -336,7 +474,11 @@ posix_thread.i: posix_thread.c.i
 
 # target to preprocess a source file
 posix_thread.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_thread.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_thread.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : posix_thread.c.i
 
 posix_thread.s: posix_thread.c.s
@@ -344,7 +486,11 @@ posix_thread.s: posix_thread.c.s
 
 # target to generate assembly for a file
 posix_thread.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_thread.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_thread.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : posix_thread.c.s
 
 posix_time.o: posix_time.c.o
@@ -352,7 +498,11 @@ posix_time.o: posix_time.c.o
 
 # target to build an object file
 posix_time.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_time.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_time.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : posix_time.c.o
 
 posix_time.i: posix_time.c.i
@@ -360,7 +510,11 @@ posix_time.i: posix_time.c.i
 
 # target to preprocess a source file
 posix_time.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_time.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_time.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : posix_time.c.i
 
 posix_time.s: posix_time.c.s
@@ -368,7 +522,11 @@ posix_time.s: posix_time.c.s
 
 # target to generate assembly for a file
 posix_time.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_time.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/posix_time.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : posix_time.c.s
 
 vulkan.o: vulkan.c.o
@@ -376,7 +534,11 @@ vulkan.o: vulkan.c.o
 
 # target to build an object file
 vulkan.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/vulkan.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/vulkan.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : vulkan.c.o
 
 vulkan.i: vulkan.c.i
@@ -384,7 +546,11 @@ vulkan.i: vulkan.c.i
 
 # target to preprocess a source file
 vulkan.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/vulkan.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/vulkan.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : vulkan.c.i
 
 vulkan.s: vulkan.c.s
@@ -392,7 +558,11 @@ vulkan.s: vulkan.c.s
 
 # target to generate assembly for a file
 vulkan.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/vulkan.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/vulkan.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : vulkan.c.s
 
 window.o: window.c.o
@@ -400,7 +570,11 @@ window.o: window.c.o
 
 # target to build an object file
 window.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/window.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/window.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : window.c.o
 
 window.i: window.c.i
@@ -408,7 +582,11 @@ window.i: window.c.i
 
 # target to preprocess a source file
 window.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/window.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/window.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : window.c.i
 
 window.s: window.c.s
@@ -416,7 +594,11 @@ window.s: window.c.s
 
 # target to generate assembly for a file
 window.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/window.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/window.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : window.c.s
 
 x11_init.o: x11_init.c.o
@@ -424,7 +606,11 @@ x11_init.o: x11_init.c.o
 
 # target to build an object file
 x11_init.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_init.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_init.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_init.c.o
 
 x11_init.i: x11_init.c.i
@@ -432,7 +618,11 @@ x11_init.i: x11_init.c.i
 
 # target to preprocess a source file
 x11_init.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_init.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_init.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_init.c.i
 
 x11_init.s: x11_init.c.s
@@ -440,7 +630,11 @@ x11_init.s: x11_init.c.s
 
 # target to generate assembly for a file
 x11_init.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_init.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_init.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_init.c.s
 
 x11_monitor.o: x11_monitor.c.o
@@ -448,7 +642,11 @@ x11_monitor.o: x11_monitor.c.o
 
 # target to build an object file
 x11_monitor.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_monitor.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_monitor.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_monitor.c.o
 
 x11_monitor.i: x11_monitor.c.i
@@ -456,7 +654,11 @@ x11_monitor.i: x11_monitor.c.i
 
 # target to preprocess a source file
 x11_monitor.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_monitor.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_monitor.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_monitor.c.i
 
 x11_monitor.s: x11_monitor.c.s
@@ -464,7 +666,11 @@ x11_monitor.s: x11_monitor.c.s
 
 # target to generate assembly for a file
 x11_monitor.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_monitor.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_monitor.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_monitor.c.s
 
 x11_window.o: x11_window.c.o
@@ -472,7 +678,11 @@ x11_window.o: x11_window.c.o
 
 # target to build an object file
 x11_window.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_window.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_window.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_window.c.o
 
 x11_window.i: x11_window.c.i
@@ -480,7 +690,11 @@ x11_window.i: x11_window.c.i
 
 # target to preprocess a source file
 x11_window.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_window.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_window.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_window.c.i
 
 x11_window.s: x11_window.c.s
@@ -488,7 +702,11 @@ x11_window.s: x11_window.c.s
 
 # target to generate assembly for a file
 x11_window.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_window.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/x11_window.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : x11_window.c.s
 
 xkb_unicode.o: xkb_unicode.c.o
@@ -496,7 +714,11 @@ xkb_unicode.o: xkb_unicode.c.o
 
 # target to build an object file
 xkb_unicode.c.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/xkb_unicode.c.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/xkb_unicode.c.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : xkb_unicode.c.o
 
 xkb_unicode.i: xkb_unicode.c.i
@@ -504,7 +726,11 @@ xkb_unicode.i: xkb_unicode.c.i
 
 # target to preprocess a source file
 xkb_unicode.c.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/xkb_unicode.c.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/xkb_unicode.c.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : xkb_unicode.c.i
 
 xkb_unicode.s: xkb_unicode.c.s
@@ -512,7 +738,11 @@ xkb_unicode.s: xkb_unicode.c.s
 
 # target to generate assembly for a file
 xkb_unicode.c.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/xkb_unicode.c.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/build.make thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/xkb_unicode.c.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : xkb_unicode.c.s
 
 # Help Target
@@ -583,7 +813,12 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : cmake_check_build_system
 

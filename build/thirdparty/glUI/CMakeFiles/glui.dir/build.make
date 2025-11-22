@@ -53,10 +53,17 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
+<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
+=======
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
+
+# The top-level build directory on which CMake was run.
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Include any dependencies generated for this target.
 include thirdparty/glUI/CMakeFiles/glui.dir/depend.make
@@ -73,6 +80,7 @@ thirdparty/glUI/CMakeFiles/glui.dir/codegen:
 .PHONY : thirdparty/glUI/CMakeFiles/glui.dir/codegen
 
 thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o: thirdparty/glUI/CMakeFiles/glui.dir/flags.make
+<<<<<<< HEAD
 thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o: /home/hung1fps/NetworkProgrammingProject/thirdparty/glUI/src/glui.cpp
 thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o: thirdparty/glUI/CMakeFiles/glui.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o"
@@ -85,6 +93,20 @@ thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.i: cmake_force
 thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/glui.dir/src/glui.cpp.s"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hung1fps/NetworkProgrammingProject/thirdparty/glUI/src/glui.cpp -o CMakeFiles/glui.dir/src/glui.cpp.s
+=======
+thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/thirdparty/glUI/src/glui.cpp
+thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o: thirdparty/glUI/CMakeFiles/glui.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o -MF CMakeFiles/glui.dir/src/glui.cpp.o.d -o CMakeFiles/glui.dir/src/glui.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glUI/src/glui.cpp"
+
+thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/glui.dir/src/glui.cpp.i"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glUI/src/glui.cpp" > CMakeFiles/glui.dir/src/glui.cpp.i
+
+thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/glui.dir/src/glui.cpp.s"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glUI/src/glui.cpp" -o CMakeFiles/glui.dir/src/glui.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Object files for target glui
 glui_OBJECTS = \
@@ -96,19 +118,33 @@ glui_EXTERNAL_OBJECTS =
 thirdparty/glUI/libglui.a: thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o
 thirdparty/glUI/libglui.a: thirdparty/glUI/CMakeFiles/glui.dir/build.make
 thirdparty/glUI/libglui.a: thirdparty/glUI/CMakeFiles/glui.dir/link.txt
+<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libglui.a"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI && $(CMAKE_COMMAND) -P CMakeFiles/glui.dir/cmake_clean_target.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/glui.dir/link.txt --verbose=$(VERBOSE)
+=======
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libglui.a"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI" && $(CMAKE_COMMAND) -P CMakeFiles/glui.dir/cmake_clean_target.cmake
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI" && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/glui.dir/link.txt --verbose=$(VERBOSE)
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Rule to build all files generated by this target.
 thirdparty/glUI/CMakeFiles/glui.dir/build: thirdparty/glUI/libglui.a
 .PHONY : thirdparty/glUI/CMakeFiles/glui.dir/build
 
 thirdparty/glUI/CMakeFiles/glui.dir/clean:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI && $(CMAKE_COMMAND) -P CMakeFiles/glui.dir/cmake_clean.cmake
 .PHONY : thirdparty/glUI/CMakeFiles/glui.dir/clean
 
 thirdparty/glUI/CMakeFiles/glui.dir/depend:
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/hung1fps/NetworkProgrammingProject /home/hung1fps/NetworkProgrammingProject/thirdparty/glUI /home/hung1fps/NetworkProgrammingProject/build /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI /home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI/CMakeFiles/glui.dir/DependInfo.cmake "--color=$(COLOR)"
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI" && $(CMAKE_COMMAND) -P CMakeFiles/glui.dir/cmake_clean.cmake
+.PHONY : thirdparty/glUI/CMakeFiles/glui.dir/clean
+
+thirdparty/glUI/CMakeFiles/glui.dir/depend:
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" "/home/bao/Network Programming/Project/multiPlayerGame-2" "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glUI" "/home/bao/Network Programming/Project/multiPlayerGame-2/build" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI/CMakeFiles/glui.dir/DependInfo.cmake" "--color=$(COLOR)"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/glUI/CMakeFiles/glui.dir/depend
 

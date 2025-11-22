@@ -242,7 +242,7 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     glui::Space(10);
     
     glui::Text("Game Mode:", RoomUIColors::White);
-    const char* modeOptions[] = {"Deathmatch (FFA)", "Team Battle", "Cooperative", "Horde Defense"};
+    const char* modeOptions[] = {"Deathmatch (FFA)", "Team Battle", "Boss Fight", "Horde Defense"};
     
     // Render buttons with visual selection indicator
     for (int i = 0; i < 4; i++) {
@@ -265,17 +265,17 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     const char* modeDescriptions[] = {
         "Free-for-all combat - Last player standing!",
         "Team vs Team - Coordinate with teammates!",
-        "Work together vs AI - Coming soon!",
+        "Cooperative boss battle - Defeat the giant demon!",
         "Survive 20 waves of enemies - Buy upgrades!"
     };
     glui::Text(modeDescriptions[selectedGameMode], RoomUIColors::Gray);
     glui::Space(10);
     
     glui::Text("Map:", RoomUIColors::White);
-    const char* mapOptions[] = {"Default Map", "Industrial", "Warehouse"};
+    const char* mapOptions[] = {"Default Map", "Industrial", "Warehouse", "Boss Arena"};
     
     // Render buttons with visual selection indicator  
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         char buttonLabel[64];
         // Add visual indicator to show selection
         if (selectedMapId == i) {
@@ -310,9 +310,9 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             createData.maxPlayers = maxPlayersValues[selectedMaxPlayers];
             
             // Map UI selection to GameMode enum
-            // UI: 0=Deathmatch, 1=Team Battle, 2=Cooperative, 3=Horde Defense
-            // Enum: 0=DEATHMATCH, 1=TEAM_BATTLE, 2=COOPERATIVE, 3=TOWER_DEFENSE(deprecated), 4=HORDE_DEFENSE
-            int gameModeMapping[] = {0, 1, 2, 4};  // Skip TOWER_DEFENSE(3), use HORDE_DEFENSE(4) for button 3
+            // UI: 0=Deathmatch, 1=Team Battle, 2=Boss Fight, 3=Horde Defense
+            // Enum: 0=DEATHMATCH, 1=TEAM_BATTLE, 2=COOPERATIVE(deprecated), 3=TOWER_DEFENSE(deprecated), 4=HORDE_DEFENSE, 5=BOSS_FIGHT
+            int gameModeMapping[] = {0, 1, 5, 4};  // Map UI button 2 to BOSS_FIGHT(5), button 3 to HORDE_DEFENSE(4)
             createData.gameMode = gameModeMapping[selectedGameMode];
             
             createData.mapId = selectedMapId;
@@ -577,6 +577,7 @@ const char* RoomUI::getGameModeName(int mode) {
         case 2: return "Cooperative";
         case 3: return "Tower Defense";
         case 4: return "Horde Defense";
+        case 5: return "Boss Fight";
         default: return "Unknown";
     }
 }

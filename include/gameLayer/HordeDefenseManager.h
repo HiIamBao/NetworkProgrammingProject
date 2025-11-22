@@ -69,7 +69,7 @@ public:
     const std::vector<HordeDefense::Enemy>& getEnemies() const { return enemies; }
     
     // Called when player shoots an enemy
-    bool damageEnemy(int32_t enemyId, int damage, int32_t attackerCid);
+    bool damageEnemy(int32_t enemyId, int damage, int32_t attackerCid, phisics::Entity* attacker = nullptr);
     
     // ========================================================================
     // Player Management

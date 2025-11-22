@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+<<<<<<< HEAD
   "/home/hung1fps/NetworkProgrammingProject/include/common/Phisics.cpp" "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/include/common/tiles.cpp" "CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/src/gameLayer/AccountManager.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountManager.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountManager.cpp.o.d"
@@ -32,6 +33,31 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/hung1fps/NetworkProgrammingProject/src/platform/opterPlatformFunctions.cpp" "CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/src/platform/platformInput.cpp" "CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o.d"
   "" "multyPlayer" "gcc" "CMakeFiles/multyPlayer.dir/link.d"
+=======
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/Phisics.cpp" "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/tiles.cpp" "CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/AccountManager.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountManager.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountManager.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/AccountUI.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountUI.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountUI.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/AuthenticationHandler.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/GameRoom.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/HordeDefenseManager.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/LANDiscovery.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/LANDiscovery.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/MultiRoomManager.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/MultiRoomManager.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/RoomHandler.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomHandler.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/RoomManager.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomManager.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/RoomUI.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/RoomUI.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/SessionManager.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/SessionManager.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/TowerDefense.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/TowerDefense.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/Ui.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/Ui.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/client.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/client.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/gameLayer.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/gameLayer.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/packet.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/packet.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/server.cpp" "CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/gameLayer/server.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/glfwMain.cpp" "CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/glfwMain.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/headerOnly.cpp" "CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/opterPlatformFunctions.cpp" "CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o.d"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/platformInput.cpp" "CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o.d"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
   )
 
 # Targets to which this target links which contain Fortran sources.

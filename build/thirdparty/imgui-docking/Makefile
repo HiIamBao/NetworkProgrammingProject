@@ -57,10 +57,17 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
+<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
+=======
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
+
+# The top-level build directory on which CMake was run.
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,14 +94,24 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles /home/hung1fps/NetworkProgrammingProject/build/thirdparty/imgui-docking//CMakeFiles/progress.marks
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles 0
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/imgui-docking//CMakeFiles/progress.marks"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" 0
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : all
 
 # The main clean target
 clean:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/clean
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/clean
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : clean
 
 # The main clean target
@@ -103,23 +120,40 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/preinstall
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/preinstall
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/preinstall
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/preinstall
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : depend
 
 # Convenience name for target.
 thirdparty/imgui-docking/CMakeFiles/imgui.dir/rule:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/CMakeFiles/imgui.dir/rule
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/imgui-docking/CMakeFiles/imgui.dir/rule
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/imgui-docking/CMakeFiles/imgui.dir/rule
 
 # Convenience name for target.
@@ -128,7 +162,11 @@ imgui: thirdparty/imgui-docking/CMakeFiles/imgui.dir/rule
 
 # fast build rule for target.
 imgui/fast:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/build
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/build
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/fast
 
 imgui/backends/imgui_impl_glfw.o: imgui/backends/imgui_impl_glfw.cpp.o
@@ -136,7 +174,11 @@ imgui/backends/imgui_impl_glfw.o: imgui/backends/imgui_impl_glfw.cpp.o
 
 # target to build an object file
 imgui/backends/imgui_impl_glfw.cpp.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/backends/imgui_impl_glfw.cpp.o
 
 imgui/backends/imgui_impl_glfw.i: imgui/backends/imgui_impl_glfw.cpp.i
@@ -144,7 +186,11 @@ imgui/backends/imgui_impl_glfw.i: imgui/backends/imgui_impl_glfw.cpp.i
 
 # target to preprocess a source file
 imgui/backends/imgui_impl_glfw.cpp.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/backends/imgui_impl_glfw.cpp.i
 
 imgui/backends/imgui_impl_glfw.s: imgui/backends/imgui_impl_glfw.cpp.s
@@ -152,7 +198,11 @@ imgui/backends/imgui_impl_glfw.s: imgui/backends/imgui_impl_glfw.cpp.s
 
 # target to generate assembly for a file
 imgui/backends/imgui_impl_glfw.cpp.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_glfw.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/backends/imgui_impl_glfw.cpp.s
 
 imgui/backends/imgui_impl_opengl3.o: imgui/backends/imgui_impl_opengl3.cpp.o
@@ -160,7 +210,11 @@ imgui/backends/imgui_impl_opengl3.o: imgui/backends/imgui_impl_opengl3.cpp.o
 
 # target to build an object file
 imgui/backends/imgui_impl_opengl3.cpp.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/backends/imgui_impl_opengl3.cpp.o
 
 imgui/backends/imgui_impl_opengl3.i: imgui/backends/imgui_impl_opengl3.cpp.i
@@ -168,7 +222,11 @@ imgui/backends/imgui_impl_opengl3.i: imgui/backends/imgui_impl_opengl3.cpp.i
 
 # target to preprocess a source file
 imgui/backends/imgui_impl_opengl3.cpp.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/backends/imgui_impl_opengl3.cpp.i
 
 imgui/backends/imgui_impl_opengl3.s: imgui/backends/imgui_impl_opengl3.cpp.s
@@ -176,7 +234,11 @@ imgui/backends/imgui_impl_opengl3.s: imgui/backends/imgui_impl_opengl3.cpp.s
 
 # target to generate assembly for a file
 imgui/backends/imgui_impl_opengl3.cpp.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/backends/imgui_impl_opengl3.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/backends/imgui_impl_opengl3.cpp.s
 
 imgui/imgui.o: imgui/imgui.cpp.o
@@ -184,7 +246,11 @@ imgui/imgui.o: imgui/imgui.cpp.o
 
 # target to build an object file
 imgui/imgui.cpp.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui.cpp.o
 
 imgui/imgui.i: imgui/imgui.cpp.i
@@ -192,7 +258,11 @@ imgui/imgui.i: imgui/imgui.cpp.i
 
 # target to preprocess a source file
 imgui/imgui.cpp.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui.cpp.i
 
 imgui/imgui.s: imgui/imgui.cpp.s
@@ -200,7 +270,11 @@ imgui/imgui.s: imgui/imgui.cpp.s
 
 # target to generate assembly for a file
 imgui/imgui.cpp.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui.cpp.s
 
 imgui/imgui_demo.o: imgui/imgui_demo.cpp.o
@@ -208,7 +282,11 @@ imgui/imgui_demo.o: imgui/imgui_demo.cpp.o
 
 # target to build an object file
 imgui/imgui_demo.cpp.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_demo.cpp.o
 
 imgui/imgui_demo.i: imgui/imgui_demo.cpp.i
@@ -216,7 +294,11 @@ imgui/imgui_demo.i: imgui/imgui_demo.cpp.i
 
 # target to preprocess a source file
 imgui/imgui_demo.cpp.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_demo.cpp.i
 
 imgui/imgui_demo.s: imgui/imgui_demo.cpp.s
@@ -224,7 +306,11 @@ imgui/imgui_demo.s: imgui/imgui_demo.cpp.s
 
 # target to generate assembly for a file
 imgui/imgui_demo.cpp.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_demo.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_demo.cpp.s
 
 imgui/imgui_draw.o: imgui/imgui_draw.cpp.o
@@ -232,7 +318,11 @@ imgui/imgui_draw.o: imgui/imgui_draw.cpp.o
 
 # target to build an object file
 imgui/imgui_draw.cpp.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_draw.cpp.o
 
 imgui/imgui_draw.i: imgui/imgui_draw.cpp.i
@@ -240,7 +330,11 @@ imgui/imgui_draw.i: imgui/imgui_draw.cpp.i
 
 # target to preprocess a source file
 imgui/imgui_draw.cpp.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_draw.cpp.i
 
 imgui/imgui_draw.s: imgui/imgui_draw.cpp.s
@@ -248,7 +342,11 @@ imgui/imgui_draw.s: imgui/imgui_draw.cpp.s
 
 # target to generate assembly for a file
 imgui/imgui_draw.cpp.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_draw.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_draw.cpp.s
 
 imgui/imgui_tables.o: imgui/imgui_tables.cpp.o
@@ -256,7 +354,11 @@ imgui/imgui_tables.o: imgui/imgui_tables.cpp.o
 
 # target to build an object file
 imgui/imgui_tables.cpp.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_tables.cpp.o
 
 imgui/imgui_tables.i: imgui/imgui_tables.cpp.i
@@ -264,7 +366,11 @@ imgui/imgui_tables.i: imgui/imgui_tables.cpp.i
 
 # target to preprocess a source file
 imgui/imgui_tables.cpp.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_tables.cpp.i
 
 imgui/imgui_tables.s: imgui/imgui_tables.cpp.s
@@ -272,7 +378,11 @@ imgui/imgui_tables.s: imgui/imgui_tables.cpp.s
 
 # target to generate assembly for a file
 imgui/imgui_tables.cpp.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_tables.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_tables.cpp.s
 
 imgui/imgui_widgets.o: imgui/imgui_widgets.cpp.o
@@ -280,7 +390,11 @@ imgui/imgui_widgets.o: imgui/imgui_widgets.cpp.o
 
 # target to build an object file
 imgui/imgui_widgets.cpp.o:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.o
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.o
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_widgets.cpp.o
 
 imgui/imgui_widgets.i: imgui/imgui_widgets.cpp.i
@@ -288,7 +402,11 @@ imgui/imgui_widgets.i: imgui/imgui_widgets.cpp.i
 
 # target to preprocess a source file
 imgui/imgui_widgets.cpp.i:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.i
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.i
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_widgets.cpp.i
 
 imgui/imgui_widgets.s: imgui/imgui_widgets.cpp.s
@@ -296,7 +414,11 @@ imgui/imgui_widgets.s: imgui/imgui_widgets.cpp.s
 
 # target to generate assembly for a file
 imgui/imgui_widgets.cpp.s:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.s
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/imgui-docking/CMakeFiles/imgui.dir/build.make thirdparty/imgui-docking/CMakeFiles/imgui.dir/imgui/imgui_widgets.cpp.s
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : imgui/imgui_widgets.cpp.s
 
 # Help Target
@@ -340,7 +462,12 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
+<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+=======
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : cmake_check_build_system
 

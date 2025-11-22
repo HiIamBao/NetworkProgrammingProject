@@ -4,7 +4,11 @@
 # compile C with /usr/bin/gcc
 C_DEFINES = -D_GLFW_USE_CONFIG_H
 
+<<<<<<< HEAD
 C_INCLUDES = -I/home/hung1fps/NetworkProgrammingProject/thirdparty/glfw-3.3.2/include -I/home/hung1fps/NetworkProgrammingProject/thirdparty/glfw-3.3.2/src -I/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glfw-3.3.2/src
+=======
+C_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glfw-3.3.2/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glfw-3.3.2/src" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glfw-3.3.2/src"
+>>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 C_FLAGS = -std=gnu99 -fPIC -Wall
 
