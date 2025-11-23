@@ -50,7 +50,7 @@ struct ServerInstance {
 	
 	ServerInstance() : pids(1), changedData(false), serverOpen(false), 
 	                   gameMode(GameMode::DEATHMATCH), matchState(MatchState::MATCH_WAITING),
-	                   matchStartTime(0), matchDuration(300), scoreLimit(25),
+	                   matchStartTime(30), matchDuration(300), scoreLimit(25),
 	                   leadingPlayerCid(0), leadingPlayerKills(0),
 	                   hordeDefenseManager(nullptr), damageUpdateTimer(0) {
 		itemSpawnPosition = {
@@ -238,11 +238,12 @@ void addConnection(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 	
 	// Auto-start match if this is the first player (for testing)
 	// Or start when 2+ players join
-	if (instance->connections.size() >= 1 && instance->matchState == MatchState::MATCH_WAITING)
+	if (instance->connections.size() >= 2 && instance->matchState == MatchState::MATCH_WAITING)
 	{
 		instance->matchState = MatchState::MATCH_IN_PROGRESS;
-		instance->matchStartTime = 0;  // Will be set properly with a timer
-		
+		instance->matchStartTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now()
+		.time_since_epoch()).count(); // Will be set properly with a timer
+
 		MatchStartData startData;
 		startData.gameMode = static_cast<int>(instance->gameMode);
 		startData.matchDuration = instance->matchDuration;
