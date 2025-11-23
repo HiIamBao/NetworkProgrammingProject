@@ -1342,7 +1342,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					// Money display (top right) - moved down to avoid overlap with health icons
 					char moneyText[64];
 					snprintf(moneyText, sizeof(moneyText), "Money: $%d", playerMoney);
-					glm::vec2 moneyPos = glm::vec2(renderer.windowW - 250.0f, 120.0f);
+					glm::vec2 moneyPos = glm::vec2(renderer.windowW - 350.0f, 120.0f);
 					renderer.renderText(moneyPos, moneyText, textures.font, glm::vec4(1.0f, 0.9f, 0.2f, 1.0f), 0.8f, 4.f, 3.f, false);
 				}
 				
