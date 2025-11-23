@@ -7,6 +7,7 @@
 #include "HordeDefenseManager.h"
 #include <atomic>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <chrono>
 #include <iostream>
@@ -19,7 +20,7 @@ struct Client
 	bool changed = 1;
 	int kills = 0;
 	int deaths = 0;
-	//char clientName[56] = {};
+	char clientName[56] = {};  // Store the client's username
 };
 
 // Per-server instance state
@@ -43,11 +44,15 @@ struct ServerInstance {
 	// Horde Defense manager (only used for HORDE_DEFENSE mode)
 	HordeDefenseManager* hordeDefenseManager;
 	
+	// Damage update batching (for performance optimization)
+	std::map<int32_t, bool> damageUpdatesPending;  // Track which players have damage updates
+	float damageUpdateTimer;  // Timer for batched damage updates
+	
 	ServerInstance() : pids(1), changedData(false), serverOpen(false), 
 	                   gameMode(GameMode::DEATHMATCH), matchState(MatchState::MATCH_WAITING),
 	                   matchStartTime(0), matchDuration(300), scoreLimit(25),
 	                   leadingPlayerCid(0), leadingPlayerKills(0),
-	                   hordeDefenseManager(nullptr) {
+	                   hordeDefenseManager(nullptr), damageUpdateTimer(0) {
 		itemSpawnPosition = {
 			{22,12}, {44,17}, {31,32}, {16,45}, {39,28},
 			{11,23}, {25,5}, {27,46}, {22,27}
@@ -156,6 +161,12 @@ void addConnection(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 	phisics::Entity entity = {};
 	glm::vec3 color = getRandomColor();
 	entity.color = color;
+	
+	// Set player name (Player 1, Player 2, etc.)
+	char playerName[playerNameSize];
+	snprintf(playerName, sizeof(playerName), "Player %d", instance->pids + 1);
+	strncpy(entity.name, playerName, playerNameSize - 1);
+	entity.name[playerNameSize - 1] = '\0';  // Ensure null termination
 
 	instance->connections.insert({instance->pids, Client{event.peer, entity}});
 
@@ -305,6 +316,9 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			phisics::Entity clientData = *(phisics::Entity*)(data);
 			phisics::Entity& serverData = instance->connections[p.cid].entityData;
 			
+			// Check if name is being updated (from default "Player X" to actual username)
+			bool nameChanged = (strcmp(serverData.name, clientData.name) != 0);
+			
 			// Only update client-controlled fields (position, input)
 			serverData.pos = clientData.pos;
 			serverData.lastPos = clientData.lastPos;
@@ -312,8 +326,23 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			serverData.moving = clientData.moving;
 			serverData.movingRight = clientData.movingRight;
 			
+			// Update player name (for username display)
+			memcpy(serverData.name, clientData.name, playerNameSize);
+			
 			// Server controls: life, money, upgrades, buffs
 			// (Don't copy these from client)
+			
+			// If name changed (initial connection with username), immediately broadcast to all clients
+			if (nameChanged)
+			{
+				std::cout << "[HordeDefense] Player " << p.cid << " name updated to: " << serverData.name << std::endl;
+				
+				// Immediately broadcast updated entity with correct username
+				Packet namePacket;
+				namePacket.header = headerUpdateConnection;
+				namePacket.cid = p.cid;
+				broadCast(instance, namePacket, &serverData, sizeof(phisics::Entity), nullptr, true, 0);
+			}
 		}
 		else
 		{
@@ -565,13 +594,20 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			{
 				damageMultiplier += 1.0f;  // +100% from damage amplifier
 			}
-				
-				int actualDamage = (int)(baseDamage * damageMultiplier);
-				
-				// Apply damage to enemy
-				instance->hordeDefenseManager->damageEnemy(hitData->enemyId, actualDamage, p.cid);
-				
-				// Server will broadcast enemy update/death automatically via its update loop
+						int actualDamage = (int)(baseDamage * damageMultiplier);
+			
+			// Apply damage to enemy and track damage stats
+			instance->hordeDefenseManager->damageEnemy(hitData->enemyId, actualDamage, p.cid, &playerEntity);
+			
+			// Mark player for batched damage update (instead of immediate broadcast)
+			// This significantly reduces network traffic and server load
+			instance->damageUpdatesPending[p.cid] = true;
+			
+			// Mark entity as changed for position updates (handled separately at lower frequency)
+			playerIt->second.changed = true;
+			instance->changedData = true;
+			
+			// Server will broadcast enemy update/death automatically via its update loop
 			}
 		}
 	}
@@ -798,6 +834,48 @@ void serverFunction(int port, int gameMode, int mapId)
 	#pragma region Horde Defense Update
 		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
 		{
+			// Batched damage leaderboard updates (for performance)
+			// Send updates every 200ms instead of every bullet hit
+			const float DAMAGE_UPDATE_INTERVAL = 0.2f;  // 5 times per second
+			instance->damageUpdateTimer += deltaTime;
+			
+			if (instance->damageUpdateTimer >= DAMAGE_UPDATE_INTERVAL && !instance->damageUpdatesPending.empty())
+			{
+				instance->damageUpdateTimer = 0;
+				
+				// Collect all pending damage updates
+				std::vector<HordeDamageUpdate> updates;
+				for (const auto& [cid, pending] : instance->damageUpdatesPending)
+				{
+					if (pending)
+					{
+						auto it = instance->connections.find(cid);
+						if (it != instance->connections.end())
+						{
+							HordeDamageUpdate update;
+							update.cid = cid;
+							update.totalDamageDealt = it->second.entityData.totalDamageDealt;
+							update.enemiesKilled = it->second.entityData.enemiesKilled;
+							updates.push_back(update);
+						}
+					}
+				}
+				
+				// Broadcast batched damage updates (unreliable for better performance)
+				if (!updates.empty())
+				{
+					Packet damagePacket;
+					damagePacket.header = headerHordeDamageUpdate;
+					damagePacket.cid = 0;
+					broadCast(instance, damagePacket, updates.data(), 
+					         sizeof(HordeDamageUpdate) * updates.size(), nullptr, false, 0);
+					
+					// Clear pending updates
+					instance->damageUpdatesPending.clear();
+				}
+			}
+			
+
 			// Update Horde Defense game logic
 			std::map<int32_t, phisics::Entity> playerEntities;
 			for (const auto& conn : instance->connections)

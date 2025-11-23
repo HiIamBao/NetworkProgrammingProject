@@ -330,11 +330,16 @@ Enemy* HordeDefenseManager::getEnemy(int32_t enemyId) {
     return nullptr;
 }
 
-bool HordeDefenseManager::damageEnemy(int32_t enemyId, int damage, int32_t attackerCid) {
+bool HordeDefenseManager::damageEnemy(int32_t enemyId, int damage, int32_t attackerCid, phisics::Entity* attacker) {
     Enemy* enemy = getEnemy(enemyId);
     if (!enemy) return false;
     
     enemy->health -= damage;
+    
+    // Track damage dealt for leaderboard
+    if (attacker) {
+        attacker->totalDamageDealt += damage;
+    }
     
     if (enemy->health <= 0) {
         enemy->isAlive = false;
@@ -347,6 +352,11 @@ bool HordeDefenseManager::damageEnemy(int32_t enemyId, int damage, int32_t attac
         // Track kills
         playerKills[attackerCid]++;
         totalEnemiesKilled++;
+        
+        // Track enemies killed for leaderboard
+        if (attacker) {
+            attacker->enemiesKilled++;
+        }
         
         // Broadcast death
         if (broadcastCallback) {

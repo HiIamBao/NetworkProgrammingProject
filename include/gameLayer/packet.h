@@ -106,6 +106,7 @@ enum
 	headerHordeMatchEnd,            // Server -> All: match ended (victory/defeat)
 	headerHordeBulletHitEnemy,      // Client -> Server: bullet hit enemy (for damage)
 	headerHordeEnemyAttack,         // Server -> All: enemy attacks player (deal damage)
+	headerHordeDamageUpdate,        // Server -> All: lightweight damage leaderboard update (batched)
 };
 
 constexpr int SERVER_CHANNELS = 2;
@@ -398,4 +399,11 @@ struct HordeEnemyAttackData {
     int32_t targetCid;         // Player being attacked
     int damage;                // Damage dealt to player
     int enemyType;             // Type of enemy (for animation/effects)
+};
+
+// Lightweight damage update for leaderboard (batched to reduce network traffic)
+struct HordeDamageUpdate {
+    int32_t cid;               // Player ID
+    int totalDamageDealt;      // Total damage dealt
+    int enemiesKilled;         // Total enemies killed
 };

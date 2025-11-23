@@ -3,65 +3,65 @@
 cmake_policy(SET CMP0009 NEW)
 
 # MY_SOURCES_COMMON at CMakeLists.txt:29 (file)
-file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame/include/common/*.cpp")
+file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/*.cpp")
 set(OLD_GLOB
-  "/home/bao/Network Programming/Project/multiPlayerGame/include/common/Phisics.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/include/common/tiles.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/Phisics.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/include/common/tiles.cpp"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/cmake.verify_globs")
+  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/cmake.verify_globs")
 endif()
 
 # MY_SOURCES_LEVEL_BUILDER at CMakeLists.txt:98 (file)
-file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame/levelBuilder/src/*.cpp")
+file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame-2/levelBuilder/src/*.cpp")
 set(OLD_GLOB
-  "/home/bao/Network Programming/Project/multiPlayerGame/levelBuilder/src/gameLayerBuilder.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/levelBuilder/src/gameLayerBuilder.cpp"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/cmake.verify_globs")
+  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/cmake.verify_globs")
 endif()
 
 # MY_SOURCES at CMakeLists.txt:28 (file)
-file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame/src/*.cpp")
+file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame-2/src/*.cpp")
 set(OLD_GLOB
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/AccountManager.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/AccountUI.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/AuthenticationHandler.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/GameRoom.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/HordeDefenseManager.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/LANDiscovery.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/MultiRoomManager.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/RoomHandler.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/RoomManager.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/RoomUI.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/SessionManager.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/TowerDefense.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/Ui.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/client.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/gameLayer.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/packet.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/gameLayer/server.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/glfwMain.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/headerOnly.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/opterPlatformFunctions.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/platformInput.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/AccountManager.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/AccountUI.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/AuthenticationHandler.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/GameRoom.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/HordeDefenseManager.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/LANDiscovery.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/MultiRoomManager.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/RoomHandler.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/RoomManager.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/RoomUI.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/SessionManager.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/TowerDefense.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/Ui.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/client.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/gameLayer.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/packet.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/gameLayer/server.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/glfwMain.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/headerOnly.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/opterPlatformFunctions.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/platformInput.cpp"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/cmake.verify_globs")
+  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/cmake.verify_globs")
 endif()
 
 # MY_SOURCES_PLATFORM_CPPS at CMakeLists.txt:99 (file)
-file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/*.cpp")
+file(GLOB_RECURSE NEW_GLOB LIST_DIRECTORIES false "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/*.cpp")
 set(OLD_GLOB
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/glfwMain.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/headerOnly.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/opterPlatformFunctions.cpp"
-  "/home/bao/Network Programming/Project/multiPlayerGame/src/platform/platformInput.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/glfwMain.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/headerOnly.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/opterPlatformFunctions.cpp"
+  "/home/bao/Network Programming/Project/multiPlayerGame-2/src/platform/platformInput.cpp"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/cmake.verify_globs")
+  file(TOUCH_NOCREATE "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/cmake.verify_globs")
 endif()

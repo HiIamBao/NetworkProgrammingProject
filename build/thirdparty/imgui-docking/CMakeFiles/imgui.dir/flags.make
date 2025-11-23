@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/imgui-docking/imgui" -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/glfw-3.3.2/include"
+CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking/imgui" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glfw-3.3.2/include"
 
 CXX_FLAGS = 
 

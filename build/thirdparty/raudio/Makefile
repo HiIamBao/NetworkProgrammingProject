@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame"
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame/build"
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame/build/thirdparty/raudio//CMakeFiles/progress.marks"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" 0
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio//CMakeFiles/progress.marks"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/clean
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,23 +103,23 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/preinstall
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/preinstall
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/VerifyGlobs.cmake"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 thirdparty/raudio/CMakeFiles/raudio.dir/rule:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/CMakeFiles/raudio.dir/rule
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/raudio/CMakeFiles/raudio.dir/rule
 .PHONY : thirdparty/raudio/CMakeFiles/raudio.dir/rule
 
 # Convenience name for target.
@@ -128,7 +128,7 @@ raudio: thirdparty/raudio/CMakeFiles/raudio.dir/rule
 
 # fast build rule for target.
 raudio/fast:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/build
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/build
 .PHONY : raudio/fast
 
 src/raudio.o: src/raudio.c.o
@@ -136,7 +136,7 @@ src/raudio.o: src/raudio.c.o
 
 # target to build an object file
 src/raudio.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o
 .PHONY : src/raudio.c.o
 
 src/raudio.i: src/raudio.c.i
@@ -144,7 +144,7 @@ src/raudio.i: src/raudio.c.i
 
 # target to preprocess a source file
 src/raudio.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.i
 .PHONY : src/raudio.c.i
 
 src/raudio.s: src/raudio.c.s
@@ -152,7 +152,7 @@ src/raudio.s: src/raudio.c.s
 
 # target to generate assembly for a file
 src/raudio.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/raudio/CMakeFiles/raudio.dir/build.make thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.s
 .PHONY : src/raudio.c.s
 
 # Help Target
@@ -178,7 +178,7 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/VerifyGlobs.cmake"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

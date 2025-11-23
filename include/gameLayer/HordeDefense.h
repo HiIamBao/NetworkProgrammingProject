@@ -50,6 +50,9 @@ enum class UpgradeType {
     BULLET_SPEED = 4    // Increase bullet velocity
 };
 
+// Total number of upgrade types
+constexpr int UPGRADE_COUNT = 5;
+
 // ============================================================================
 // SHOP ITEM TYPES (Consumables & temporary buffs)
 // ============================================================================
@@ -60,6 +63,9 @@ enum class ShopItemType {
     DAMAGE_AMPLIFIER = 2,   // +100% damage for 1 wave
     MULTI_SHOT = 3          // Shoot 3 bullets at once for 1 wave
 };
+
+// Total number of shop item types
+constexpr int SHOP_ITEM_COUNT = 4;
 
 // ============================================================================
 // ENEMY DATA STRUCTURE

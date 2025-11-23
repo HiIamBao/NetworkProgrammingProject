@@ -1,4 +1,4 @@
-# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame/thirdparty/enet-1.3.17
+# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/enet-1.3.17
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

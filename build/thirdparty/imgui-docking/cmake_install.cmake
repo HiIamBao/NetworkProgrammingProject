@@ -1,4 +1,4 @@
-# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame/thirdparty/imgui-docking
+# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/imgui-docking
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

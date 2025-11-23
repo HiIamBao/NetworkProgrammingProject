@@ -1,4 +1,4 @@
-# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame/thirdparty/raudio
+# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/raudio
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

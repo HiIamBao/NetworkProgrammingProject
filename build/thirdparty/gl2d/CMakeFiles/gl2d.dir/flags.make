@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/gl2d/include" -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/glm/include" -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/glm" -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/glad/include" -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/stb_image/include" -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/stb_truetype/include"
+CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/gl2d/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glm/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glm" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/stb_image/include" -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/stb_truetype/include"
 
 CXX_FLAGS = 
 

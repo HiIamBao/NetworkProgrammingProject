@@ -246,13 +246,25 @@ void msgLoop(ENetHost *client)
 				{
 					phisics::Entity updatedEntity = *(phisics::Entity *)data;
 					
-					// Log HP updates for our player
-					if (p.cid == cid && currentGameMode == GameMode::HORDE_DEFENSE)
+					// Log updates in Horde Defense mode
+					if (currentGameMode == GameMode::HORDE_DEFENSE)
 					{
-						auto oldHP = players[cid].life;
-						auto oldMaxHP = players[cid].maxLife;
-						std::cout << "[ClientUpdate] Received entity update: HP " << oldHP << "->" << updatedEntity.life 
-						          << ", MaxHP " << oldMaxHP << "->" << updatedEntity.maxLife << std::endl;
+						auto it = players.find(p.cid);
+						if (it != players.end()) {
+							// Log HP changes for our player
+							if (p.cid == cid) {
+								auto oldHP = it->second.life;
+								auto oldMaxHP = it->second.maxLife;
+								std::cout << "[ClientUpdate] Received entity update: HP " << oldHP << "->" << updatedEntity.life 
+								          << ", MaxHP " << oldMaxHP << "->" << updatedEntity.maxLife << std::endl;
+							}
+							
+							// Log damage changes for all players
+							if (it->second.totalDamageDealt != updatedEntity.totalDamageDealt) {
+								std::cout << "[ClientUpdate] Player " << p.cid << " (" << updatedEntity.name 
+								          << ") damage: " << it->second.totalDamageDealt << "->" << updatedEntity.totalDamageDealt << std::endl;
+							}
+						}
 					}
 					
 					players[p.cid] = updatedEntity;
@@ -431,6 +443,60 @@ void msgLoop(ENetHost *client)
 					{
 						playerMoney += deathData.moneyReward;
 						std::cout << "Enemy killed! +$" << deathData.moneyReward << " (Total: $" << playerMoney << ")" << std::endl;
+					}
+				}
+				else if (p.header == headerHordeEnemyAttack)
+				{
+					auto attackData = *(HordeEnemyAttackData*)data;
+							// Find the target player and apply damage
+				auto playerIt = players.find(attackData.targetCid);
+				if (playerIt != players.end())
+				{
+					phisics::Entity& targetPlayer = playerIt->second;
+					
+					int remainingDamage = attackData.damage;
+					
+					// Check if player has shield first
+					if (targetPlayer.shieldHealth > 0)
+					{
+						// Shield absorbs damage
+						int shieldDamage = std::min((int)targetPlayer.shieldHealth, remainingDamage);
+						targetPlayer.shieldHealth -= shieldDamage;
+						remainingDamage -= shieldDamage;
+						
+						if (attackData.targetCid == cid)
+						{
+							std::cout << "Shield absorbed " << shieldDamage << " damage! Shield remaining: " << targetPlayer.shieldHealth << std::endl;
+						}
+					}
+					
+					// Apply remaining damage to health
+					if (remainingDamage > 0)
+					{
+						targetPlayer.life -= remainingDamage;
+						if (targetPlayer.life < 0) targetPlayer.life = 0;
+						
+						if (attackData.targetCid == cid)
+						{
+							std::cout << "Enemy hit you for " << remainingDamage << " damage! Health: " << targetPlayer.life << "/" << targetPlayer.maxLife << std::endl;					}
+				}
+			}
+				}
+				else if (p.header == headerHordeDamageUpdate)
+				{
+					// Handle batched damage leaderboard updates (lightweight, high frequency)
+					int updateCount = size / sizeof(HordeDamageUpdate);
+					HordeDamageUpdate* updates = (HordeDamageUpdate*)data;
+					
+					for (int i = 0; i < updateCount; i++)
+					{
+						auto playerIt = players.find(updates[i].cid);
+						if (playerIt != players.end())
+						{
+							// Only update damage stats, not position or other fields
+							playerIt->second.totalDamageDealt = updates[i].totalDamageDealt;
+							playerIt->second.enemiesKilled = updates[i].enemiesKilled;
+						}
 					}
 				}
 				else if (p.header == headerHordeEnemyAttack)
@@ -753,12 +819,12 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				if (platform::isKeyPressedOn(platform::Button::Up) || platform::isKeyPressedOn(platform::Button::W))
 				{
 					selectedUpgradeIndex--;
-					if (selectedUpgradeIndex < 0) selectedUpgradeIndex = 4;  // 5 upgrades (0-4)
+					if (selectedUpgradeIndex < 0) selectedUpgradeIndex = HordeDefense::UPGRADE_COUNT - 1;
 				}
 				if (platform::isKeyPressedOn(platform::Button::Down) || platform::isKeyPressedOn(platform::Button::S))
 				{
 					selectedUpgradeIndex++;
-					if (selectedUpgradeIndex > 4) selectedUpgradeIndex = 0;
+					if (selectedUpgradeIndex >= HordeDefense::UPGRADE_COUNT) selectedUpgradeIndex = 0;
 				}
 				
 				// Purchase upgrade (Space/E key or A button)
@@ -784,12 +850,12 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				if (platform::isKeyPressedOn(platform::Button::Up) || platform::isKeyPressedOn(platform::Button::W))
 				{
 					selectedItemIndex--;
-					if (selectedItemIndex < 0) selectedItemIndex = 6;  // 7 items (0-6)
+					if (selectedItemIndex < 0) selectedItemIndex = HordeDefense::SHOP_ITEM_COUNT - 1;
 				}
 				if (platform::isKeyPressedOn(platform::Button::Down) || platform::isKeyPressedOn(platform::Button::S))
 				{
 					selectedItemIndex++;
-					if (selectedItemIndex > 6) selectedItemIndex = 0;
+					if (selectedItemIndex >= HordeDefense::SHOP_ITEM_COUNT) selectedItemIndex = 0;
 				}
 				
 				// Purchase item (Space/E key or A button)
@@ -1320,6 +1386,98 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					}
 				}
 				
+				// Damage Leaderboard (top-left corner) - Real-time ranking by damage dealt
+				{
+					// Create sorted list of players by damage dealt
+					std::vector<std::pair<int32_t, phisics::Entity*>> sortedPlayers;
+					for (auto& playerPair : players)
+					{
+						sortedPlayers.push_back({playerPair.first, &playerPair.second});
+					}
+					
+					// Sort by damage dealt (descending order)
+					std::sort(sortedPlayers.begin(), sortedPlayers.end(), 
+						[](const auto& a, const auto& b) {
+							return a.second->totalDamageDealt > b.second->totalDamageDealt;
+						});
+					
+					// Leaderboard background
+					float leaderboardX = 20.0f;
+					float leaderboardY = 50.0f;
+					float leaderboardW = 460.0f;
+					float leaderboardH = 50.0f + (sortedPlayers.size() * 32.0f);
+					
+					auto leaderboardBox = Ui::Box()
+						.xLeft(leaderboardX)
+						.yTop(leaderboardY)
+						.xDimensionPixels(leaderboardW)
+						.yDimensionPixels(leaderboardH);
+					renderer.renderRectangle(leaderboardBox, {0.0f, 0.0f, 0.0f, 0.7f});
+					
+					// Header
+					glm::vec2 headerPos(leaderboardX + 10.0f, leaderboardY + 10.0f);
+					renderer.renderText(headerPos, "DAMAGE LEADERBOARD", textures.font, 
+						glm::vec4(1.0f, 0.8f, 0.2f, 1.0f), 0.65f, 4.f, 3.f, false);
+					
+					// Column headers
+					glm::vec2 colHeaderPos(leaderboardX + 10.0f, leaderboardY + 38.0f);
+					renderer.renderText(colHeaderPos, "Rank  Player   Damage", textures.font, 
+						glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), 0.45f, 4.f, 3.f, false);
+					
+					// Player rankings
+					float rankY = leaderboardY + 62.0f;
+					int rank = 1;
+					for (const auto& playerPair : sortedPlayers)
+					{
+						const auto& player = *playerPair.second;
+						bool isLocalPlayer = (playerPair.first == cid);
+						
+						// Rank-based color
+						glm::vec4 rankColor;
+						if (rank == 1)
+							rankColor = glm::vec4(1.0f, 0.85f, 0.0f, 1.0f);  // Gold for 1st
+						else if (rank == 2)
+							rankColor = glm::vec4(0.85f, 0.85f, 0.85f, 1.0f);  // Silver for 2nd
+						else if (rank == 3)
+							rankColor = glm::vec4(0.8f, 0.5f, 0.3f, 1.0f);  // Bronze for 3rd
+						else
+							rankColor = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);  // Gray for others
+						
+						// Local player highlight
+						if (isLocalPlayer)
+						{
+							auto highlightBox = Ui::Box()
+								.xLeft(leaderboardX + 5.0f)
+								.yTop(rankY - 3.0f)
+								.xDimensionPixels(leaderboardW - 10.0f)
+								.yDimensionPixels(28.0f);
+							renderer.renderRectangle(highlightBox, {0.2f, 0.4f, 0.6f, 0.4f});
+							rankColor = glm::vec4(0.3f, 1.0f, 0.5f, 1.0f);  // Bright green for local player
+						}
+								// Rank number
+					char rankText[8];
+					snprintf(rankText, sizeof(rankText), "%d.", rank);
+					renderer.renderText(glm::vec2(leaderboardX + 15.0f, rankY), rankText, 
+						textures.font, rankColor, 0.52f, 4.f, 3.f, false);
+					
+					// Player name (truncate if too long) - smaller font size
+					char nameText[20];
+					strncpy(nameText, player.name, 14);
+					nameText[14] = '\0';
+					renderer.renderText(glm::vec2(leaderboardX + 130.0f, rankY), nameText, 
+						textures.font, rankColor, 0.4f, 4.f, 3.f, false);
+					
+					// Damage dealt
+					char damageText[16];
+					snprintf(damageText, sizeof(damageText), "%d", player.totalDamageDealt);
+					renderer.renderText(glm::vec2(leaderboardX + 300.0f, rankY), damageText, 
+						textures.font, rankColor, 0.52f, 4.f, 3.f, false);
+						
+						rankY += 32.0f;
+						rank++;
+					}
+				}
+				
 				// Wave notifications (center screen)
 				if (waveNotificationTimer > 0.0f)
 				{
@@ -1391,13 +1549,12 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					
 					// Content area
 					float contentY = tabY + 50.0f;
-					
-					if (selectedShopTab == 0)  // Upgrades tab
+							if (selectedShopTab == 0)  // Upgrades tab
+				{
+					// List all upgrade types
+					for (int i = 0; i < HordeDefense::UPGRADE_COUNT; i++)
 					{
-						// List all 5 upgrade types
-						for (int i = 0; i < 5; i++)
-						{
-							auto upgradeType = static_cast<HordeDefense::UpgradeType>(i);
+						auto upgradeType = static_cast<HordeDefense::UpgradeType>(i);
 							auto upgradeInfo = HordeDefense::UpgradeInfo::getInfo(upgradeType);
 							int currentLevel = playerUpgrades.getLevel(upgradeType);
 							int cost = upgradeInfo.getCostForLevel(currentLevel + 1);
@@ -1438,13 +1595,12 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 									glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 0.6f, 4.f, 3.f, false);
 							}
 						}
-					}
-					else  // Items tab
+					}				else  // Items tab
+				{
+					// List all shop items
+					for (int i = 0; i < HordeDefense::SHOP_ITEM_COUNT; i++)
 					{
-						// List all 7 shop items
-						for (int i = 0; i < 7; i++)
-						{
-							auto itemType = static_cast<HordeDefense::ShopItemType>(i);
+						auto itemType = static_cast<HordeDefense::ShopItemType>(i);
 							auto itemInfo = HordeDefense::ShopItemInfo::getInfo(itemType);
 							
 							float itemY = contentY + i * 80.0f;

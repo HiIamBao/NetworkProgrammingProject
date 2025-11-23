@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/safeSave/include"
+CXX_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/safeSave/include"
 
 CXX_FLAGS = 
 

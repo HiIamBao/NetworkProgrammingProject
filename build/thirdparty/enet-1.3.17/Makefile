@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame"
+CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame/build"
+CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame/build/thirdparty/enet-1.3.17//CMakeFiles/progress.marks"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles" 0
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/enet-1.3.17//CMakeFiles/progress.marks"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/clean
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,23 +103,23 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/preinstall
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/preinstall
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/VerifyGlobs.cmake"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 thirdparty/enet-1.3.17/CMakeFiles/enet.dir/rule:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/CMakeFiles/enet.dir/rule
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/enet-1.3.17/CMakeFiles/enet.dir/rule
 .PHONY : thirdparty/enet-1.3.17/CMakeFiles/enet.dir/rule
 
 # Convenience name for target.
@@ -128,7 +128,7 @@ enet: thirdparty/enet-1.3.17/CMakeFiles/enet.dir/rule
 
 # fast build rule for target.
 enet/fast:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build
 .PHONY : enet/fast
 
 callbacks.o: callbacks.c.o
@@ -136,7 +136,7 @@ callbacks.o: callbacks.c.o
 
 # target to build an object file
 callbacks.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/callbacks.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/callbacks.c.o
 .PHONY : callbacks.c.o
 
 callbacks.i: callbacks.c.i
@@ -144,7 +144,7 @@ callbacks.i: callbacks.c.i
 
 # target to preprocess a source file
 callbacks.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/callbacks.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/callbacks.c.i
 .PHONY : callbacks.c.i
 
 callbacks.s: callbacks.c.s
@@ -152,7 +152,7 @@ callbacks.s: callbacks.c.s
 
 # target to generate assembly for a file
 callbacks.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/callbacks.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/callbacks.c.s
 .PHONY : callbacks.c.s
 
 compress.o: compress.c.o
@@ -160,7 +160,7 @@ compress.o: compress.c.o
 
 # target to build an object file
 compress.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/compress.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/compress.c.o
 .PHONY : compress.c.o
 
 compress.i: compress.c.i
@@ -168,7 +168,7 @@ compress.i: compress.c.i
 
 # target to preprocess a source file
 compress.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/compress.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/compress.c.i
 .PHONY : compress.c.i
 
 compress.s: compress.c.s
@@ -176,7 +176,7 @@ compress.s: compress.c.s
 
 # target to generate assembly for a file
 compress.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/compress.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/compress.c.s
 .PHONY : compress.c.s
 
 host.o: host.c.o
@@ -184,7 +184,7 @@ host.o: host.c.o
 
 # target to build an object file
 host.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/host.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/host.c.o
 .PHONY : host.c.o
 
 host.i: host.c.i
@@ -192,7 +192,7 @@ host.i: host.c.i
 
 # target to preprocess a source file
 host.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/host.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/host.c.i
 .PHONY : host.c.i
 
 host.s: host.c.s
@@ -200,7 +200,7 @@ host.s: host.c.s
 
 # target to generate assembly for a file
 host.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/host.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/host.c.s
 .PHONY : host.c.s
 
 list.o: list.c.o
@@ -208,7 +208,7 @@ list.o: list.c.o
 
 # target to build an object file
 list.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/list.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/list.c.o
 .PHONY : list.c.o
 
 list.i: list.c.i
@@ -216,7 +216,7 @@ list.i: list.c.i
 
 # target to preprocess a source file
 list.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/list.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/list.c.i
 .PHONY : list.c.i
 
 list.s: list.c.s
@@ -224,7 +224,7 @@ list.s: list.c.s
 
 # target to generate assembly for a file
 list.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/list.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/list.c.s
 .PHONY : list.c.s
 
 packet.o: packet.c.o
@@ -232,7 +232,7 @@ packet.o: packet.c.o
 
 # target to build an object file
 packet.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/packet.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/packet.c.o
 .PHONY : packet.c.o
 
 packet.i: packet.c.i
@@ -240,7 +240,7 @@ packet.i: packet.c.i
 
 # target to preprocess a source file
 packet.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/packet.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/packet.c.i
 .PHONY : packet.c.i
 
 packet.s: packet.c.s
@@ -248,7 +248,7 @@ packet.s: packet.c.s
 
 # target to generate assembly for a file
 packet.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/packet.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/packet.c.s
 .PHONY : packet.c.s
 
 peer.o: peer.c.o
@@ -256,7 +256,7 @@ peer.o: peer.c.o
 
 # target to build an object file
 peer.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/peer.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/peer.c.o
 .PHONY : peer.c.o
 
 peer.i: peer.c.i
@@ -264,7 +264,7 @@ peer.i: peer.c.i
 
 # target to preprocess a source file
 peer.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/peer.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/peer.c.i
 .PHONY : peer.c.i
 
 peer.s: peer.c.s
@@ -272,7 +272,7 @@ peer.s: peer.c.s
 
 # target to generate assembly for a file
 peer.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/peer.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/peer.c.s
 .PHONY : peer.c.s
 
 protocol.o: protocol.c.o
@@ -280,7 +280,7 @@ protocol.o: protocol.c.o
 
 # target to build an object file
 protocol.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/protocol.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/protocol.c.o
 .PHONY : protocol.c.o
 
 protocol.i: protocol.c.i
@@ -288,7 +288,7 @@ protocol.i: protocol.c.i
 
 # target to preprocess a source file
 protocol.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/protocol.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/protocol.c.i
 .PHONY : protocol.c.i
 
 protocol.s: protocol.c.s
@@ -296,7 +296,7 @@ protocol.s: protocol.c.s
 
 # target to generate assembly for a file
 protocol.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/protocol.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/protocol.c.s
 .PHONY : protocol.c.s
 
 unix.o: unix.c.o
@@ -304,7 +304,7 @@ unix.o: unix.c.o
 
 # target to build an object file
 unix.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/unix.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/unix.c.o
 .PHONY : unix.c.o
 
 unix.i: unix.c.i
@@ -312,7 +312,7 @@ unix.i: unix.c.i
 
 # target to preprocess a source file
 unix.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/unix.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/unix.c.i
 .PHONY : unix.c.i
 
 unix.s: unix.c.s
@@ -320,7 +320,7 @@ unix.s: unix.c.s
 
 # target to generate assembly for a file
 unix.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/unix.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/unix.c.s
 .PHONY : unix.c.s
 
 win32.o: win32.c.o
@@ -328,7 +328,7 @@ win32.o: win32.c.o
 
 # target to build an object file
 win32.c.o:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/win32.c.o
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/win32.c.o
 .PHONY : win32.c.o
 
 win32.i: win32.c.i
@@ -336,7 +336,7 @@ win32.i: win32.c.i
 
 # target to preprocess a source file
 win32.c.i:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/win32.c.i
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/win32.c.i
 .PHONY : win32.c.i
 
 win32.s: win32.c.s
@@ -344,7 +344,7 @@ win32.s: win32.c.s
 
 # target to generate assembly for a file
 win32.c.s:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/win32.c.s
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/enet-1.3.17/CMakeFiles/enet.dir/build.make thirdparty/enet-1.3.17/CMakeFiles/enet.dir/win32.c.s
 .PHONY : win32.c.s
 
 # Help Target
@@ -394,7 +394,7 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame/build/CMakeFiles/VerifyGlobs.cmake"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
+	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

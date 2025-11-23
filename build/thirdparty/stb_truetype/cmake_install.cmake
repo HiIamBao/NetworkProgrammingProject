@@ -1,4 +1,4 @@
-# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame/thirdparty/stb_truetype
+# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/stb_truetype
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

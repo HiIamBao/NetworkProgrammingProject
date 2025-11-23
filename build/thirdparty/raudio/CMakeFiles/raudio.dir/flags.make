@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/raudio/include"
+C_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/raudio/include"
 
 C_FLAGS = 
 

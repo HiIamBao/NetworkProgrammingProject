@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame/thirdparty/glad/include"
+C_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glad/include"
 
 C_FLAGS = 
 

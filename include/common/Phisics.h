@@ -9,7 +9,7 @@
 #undef max
 
 constexpr float worldMagnification = 48;
-constexpr int playerNameSize = 10;
+constexpr int playerNameSize = 16;  // Increased to fit longer usernames
 
 namespace phisics
 {
@@ -68,13 +68,17 @@ namespace phisics
 		int speedUpgradeLevel = 0;      // 0-5: Speed upgrade level
 		int bulletSpeedUpgradeLevel = 0; // 0-5: Bullet speed upgrade level
 		
-		// Active buffs (temporary effects) - now wave-based instead of time-based
-		int speedBoostWaves = 0;              // Remaining waves for speed boost
-		int damageBoostWaves = 0;             // Remaining waves for damage boost
-		int multiShotWaves = 0;               // Remaining waves for multi-shot
-		float shieldHealth = 0.0f;            // Shield HP (absorbs damage) - kept for compatibility
+	// Active buffs (temporary effects) - now wave-based instead of time-based
+	int speedBoostWaves = 0;              // Remaining waves for speed boost
+	int damageBoostWaves = 0;             // Remaining waves for damage boost
+	int multiShotWaves = 0;               // Remaining waves for multi-shot
+	float shieldHealth = 0.0f;            // Shield HP (absorbs damage) - kept for compatibility
+	
+	// Damage tracking for leaderboard (Horde Defense mode)
+	int totalDamageDealt = 0;             // Total damage dealt to enemies
+	int enemiesKilled = 0;                // Total enemies killed
 
-		static constexpr float invincibilityTime = 0.10;  // Hit invincibility frames
+	static constexpr float invincibilityTime = 0.10;  // Hit invincibility frames
 
 		void resolveConstrains(MapData& mapData);
 	
