@@ -8,11 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-<<<<<<< HEAD
   "/home/hung1fps/NetworkProgrammingProject/thirdparty/glUI/src/glui.cpp" "thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o" "gcc" "thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o.d"
-=======
-  "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glUI/src/glui.cpp" "thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o" "gcc" "thirdparty/glUI/CMakeFiles/glui.dir/src/glui.cpp.o.d"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
   )
 
 # Targets to which this target links which contain Fortran sources.

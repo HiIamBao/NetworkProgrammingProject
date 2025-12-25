@@ -53,17 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
-=======
-CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
-
-# The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Include any dependencies generated for this target.
 include thirdparty/gl2d/CMakeFiles/gl2d.dir/depend.make
@@ -80,7 +73,6 @@ thirdparty/gl2d/CMakeFiles/gl2d.dir/codegen:
 .PHONY : thirdparty/gl2d/CMakeFiles/gl2d.dir/codegen
 
 thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o: thirdparty/gl2d/CMakeFiles/gl2d.dir/flags.make
-<<<<<<< HEAD
 thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o: /home/hung1fps/NetworkProgrammingProject/thirdparty/gl2d/src/gl2d.cpp
 thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o: thirdparty/gl2d/CMakeFiles/gl2d.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o"
@@ -93,20 +85,6 @@ thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.i: cmake_force
 thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/gl2d.dir/src/gl2d.cpp.s"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hung1fps/NetworkProgrammingProject/thirdparty/gl2d/src/gl2d.cpp -o CMakeFiles/gl2d.dir/src/gl2d.cpp.s
-=======
-thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/thirdparty/gl2d/src/gl2d.cpp
-thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o: thirdparty/gl2d/CMakeFiles/gl2d.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o -MF CMakeFiles/gl2d.dir/src/gl2d.cpp.o.d -o CMakeFiles/gl2d.dir/src/gl2d.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/gl2d/src/gl2d.cpp"
-
-thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/gl2d.dir/src/gl2d.cpp.i"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/gl2d/src/gl2d.cpp" > CMakeFiles/gl2d.dir/src/gl2d.cpp.i
-
-thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/gl2d.dir/src/gl2d.cpp.s"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/gl2d/src/gl2d.cpp" -o CMakeFiles/gl2d.dir/src/gl2d.cpp.s
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Object files for target gl2d
 gl2d_OBJECTS = \
@@ -118,33 +96,19 @@ gl2d_EXTERNAL_OBJECTS =
 thirdparty/gl2d/libgl2d.a: thirdparty/gl2d/CMakeFiles/gl2d.dir/src/gl2d.cpp.o
 thirdparty/gl2d/libgl2d.a: thirdparty/gl2d/CMakeFiles/gl2d.dir/build.make
 thirdparty/gl2d/libgl2d.a: thirdparty/gl2d/CMakeFiles/gl2d.dir/link.txt
-<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libgl2d.a"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d && $(CMAKE_COMMAND) -P CMakeFiles/gl2d.dir/cmake_clean_target.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gl2d.dir/link.txt --verbose=$(VERBOSE)
-=======
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libgl2d.a"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d" && $(CMAKE_COMMAND) -P CMakeFiles/gl2d.dir/cmake_clean_target.cmake
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d" && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gl2d.dir/link.txt --verbose=$(VERBOSE)
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Rule to build all files generated by this target.
 thirdparty/gl2d/CMakeFiles/gl2d.dir/build: thirdparty/gl2d/libgl2d.a
 .PHONY : thirdparty/gl2d/CMakeFiles/gl2d.dir/build
 
 thirdparty/gl2d/CMakeFiles/gl2d.dir/clean:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d && $(CMAKE_COMMAND) -P CMakeFiles/gl2d.dir/cmake_clean.cmake
 .PHONY : thirdparty/gl2d/CMakeFiles/gl2d.dir/clean
 
 thirdparty/gl2d/CMakeFiles/gl2d.dir/depend:
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/hung1fps/NetworkProgrammingProject /home/hung1fps/NetworkProgrammingProject/thirdparty/gl2d /home/hung1fps/NetworkProgrammingProject/build /home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d /home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d/CMakeFiles/gl2d.dir/DependInfo.cmake "--color=$(COLOR)"
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d" && $(CMAKE_COMMAND) -P CMakeFiles/gl2d.dir/cmake_clean.cmake
-.PHONY : thirdparty/gl2d/CMakeFiles/gl2d.dir/clean
-
-thirdparty/gl2d/CMakeFiles/gl2d.dir/depend:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" "/home/bao/Network Programming/Project/multiPlayerGame-2" "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/gl2d" "/home/bao/Network Programming/Project/multiPlayerGame-2/build" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d/CMakeFiles/gl2d.dir/DependInfo.cmake" "--color=$(COLOR)"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/gl2d/CMakeFiles/gl2d.dir/depend
 

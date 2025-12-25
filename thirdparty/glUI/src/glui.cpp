@@ -433,11 +433,12 @@ namespace glui
 					auto aabbTransform = computedPos;
 					bool hovered = 0;
 					bool clicked = 0;
-					auto textColor = Colors_White;
+					auto textColor = Colors_Yellow;
 
 					if (widget.colors.a <= 0.01f)
 					{
 						auto p = determineTextPos(renderer, j.first, font, transformDrawn, true);
+						std::cout << "p value " << p.x << " " << p.y << " " << p.z << " " << p.w << std::endl; 
 						aabbTransform = p;
 					}
 
@@ -467,13 +468,56 @@ namespace glui
 
 					renderFancyBox(renderer, transformDrawn, widget.colors, widget.texture, hovered, clicked);
 
-					if ((widget.colors.a <= 0.01f || i.second.texture.id == 0))
+					// Compute visible content rect (remove outline and bottom shadow), then add 5% padding
+					glm::vec4 contentRect = transformDrawn;
 					{
-						renderText(renderer, j.first, font, transformDrawn, textColor, true, !hovered);
+						float minDim = std::min(contentRect.w, contentRect.z);
+						float calculatedOutline = outlineSize * minDim;
+						contentRect.x += calculatedOutline;
+						contentRect.y += calculatedOutline;
+						contentRect.z -= calculatedOutline * 2.0f;
+						contentRect.w -= calculatedOutline * 2.0f;
+
+						float border = shadowSize * std::min(contentRect.w, contentRect.z);
+						contentRect.w -= border; // exclude bottom shadow from visible area
+
+						// 5% padding on all sides
+						float padX = contentRect.z * 0.1f;
+						float padY = contentRect.w * 0.05f;
+						contentRect.x += padX;
+						contentRect.y += padY;
+						contentRect.z -= padX * 2.0f;
+						contentRect.w -= padY * 2.0f;
+						// Ensure positive dimensions
+						contentRect.z = std::max(contentRect.z, 1.0f);
+						contentRect.w = std::max(contentRect.w, 1.0f);
 					}
-					else
+
+					// CSS-like centering: center text within contentRect container
 					{
-						renderText(renderer, j.first, font, transformDrawn, textColor, false, hovered);
+						auto newStr = getString(j.first);
+						
+						// 1. Measure text at reference scale (like measuring a DOM element)
+						float refScale = 1.5f;
+						auto refSize = renderer.getTextSize(newStr.c_str(), font, refScale);
+						
+						// 2. Calculate scale to fit container (like CSS object-fit: contain)
+						float scaleX = (refSize.x > 0.0f) ? (contentRect.z / refSize.x) * refScale : 1.0f;
+						float scaleY = (refSize.y > 0.0f) ? (contentRect.w / refSize.y) * refScale : 1.0f;
+						float finalScale = std::min(scaleX, scaleY);
+						finalScale = std::min(finalScale, 1.0f); // Don't upscale beyond 1.0
+						
+						// 3. Get actual text dimensions at final scale
+						auto textSize = renderer.getTextSize(newStr.c_str(), font, finalScale);
+						
+						// 4. Center horizontally and vertically (like CSS: display:flex, justify-content:center, align-items:center)
+						glm::vec2 pos;
+						pos.x = contentRect.x + (contentRect.z - textSize.x) / 2.0f;  // Horizontal center
+						pos.y = contentRect.y + (contentRect.w - textSize.y) / 2.0f + contentRect.w * 0.8f;  // Vertical center, shifted down 10%
+						
+						// 5. Render without built-in centering (we already centered it)
+						renderer.renderText(pos, newStr.c_str(), font, textColor, finalScale, 
+							4.0f, 3.0f, false); // showInCenter = false
 					}
 
 					return widget.returnFromUpdate;
@@ -631,6 +675,15 @@ namespace glui
 							}
 						}
 
+						// Draw white outline for distinction
+						float outlineThickness = 3.0f;
+						glm::vec4 outlineRect = computedPos;
+						outlineRect.x -= outlineThickness;
+						outlineRect.y -= outlineThickness;
+						outlineRect.z += outlineThickness * 2.0f;
+						outlineRect.w += outlineThickness * 2.0f;
+						renderer.renderRectangle(outlineRect, Colors_White);
+
 						// Render the input box with different color if focused
 						if (i.second.texture.id != 0)
 						{
@@ -642,7 +695,14 @@ namespace glui
 							gl2d::Color4f focusColor = {0.3f, 0.6f, 1.0f, 0.3f};
 							renderFancyBox(renderer, computedPos, focusColor, widget.texture, false, false);
 						}
+						else
+						{
+							// Default dark background for unfocused input
+							gl2d::Color4f inputBgColor = {0.15f, 0.15f, 0.2f, 0.95f};
+							renderFancyBox(renderer, computedPos, inputBgColor, widget.texture, false, false);
+						}
 						
+
 						std::string textCopy = text;
 						// Show cursor only when focused
 						if (isFocused && (int)timer % 2)
@@ -650,7 +710,34 @@ namespace glui
 							textCopy += "|";
 						}
 
-						renderText(renderer, textCopy, font, computedPos, Colors_White, true);
+						// Center text (and cursor) inside the input box, similar to buttons
+						{
+							// Use a padded content rect to avoid touching edges/outline
+							glm::vec4 contentRect = computedPos;
+							float padX = contentRect.z * 0.06f; // 6% horizontal padding
+							float padY = contentRect.w * 0.12f; // 12% vertical padding for nicer centering
+							contentRect.x += padX;
+							contentRect.y += padY;
+							contentRect.z -= padX * 2.0f;
+							contentRect.w -= padY * 2.0f;
+							contentRect.z = std::max(contentRect.z, 1.0f);
+							contentRect.w = std::max(contentRect.w, 1.0f);
+
+							// Measure and scale to fit (contain)
+							float refScale = 1.5f;
+							auto refSize = renderer.getTextSize(textCopy.c_str(), font, refScale);
+							float scaleX = (refSize.x > 0.0f) ? (contentRect.z / refSize.x) * refScale : 1.0f;
+							float scaleY = (refSize.y > 0.0f) ? (contentRect.w / refSize.y) * refScale : 1.0f;
+							float finalScale = std::min(scaleX, scaleY);
+							finalScale = std::min(finalScale, 1.0f); // avoid upscaling beyond native
+
+							auto textSize = renderer.getTextSize(textCopy.c_str(), font, finalScale);
+							glm::vec2 pos;
+							pos.x = contentRect.x + (contentRect.z - textSize.x) / 2.0f;
+							pos.y = contentRect.y + (contentRect.w - textSize.y) / 2.0f;
+
+							renderer.renderText(pos, textCopy.c_str(), font, Colors_White, finalScale, 4.0f, 3.0f, false);
+						}
 
 
 						break;

@@ -57,17 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
-=======
-CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
-
-# The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -94,24 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles /home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave//CMakeFiles/progress.marks
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles 0
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave//CMakeFiles/progress.marks"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" 0
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : all
 
 # The main clean target
 clean:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/clean
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/clean
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : clean
 
 # The main clean target
@@ -120,40 +103,23 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/preinstall
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/preinstall
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/preinstall
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/preinstall
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : depend
 
 # Convenience name for target.
 thirdparty/safeSave/CMakeFiles/safeSave.dir/rule:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/CMakeFiles/safeSave.dir/rule
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 thirdparty/safeSave/CMakeFiles/safeSave.dir/rule
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/safeSave/CMakeFiles/safeSave.dir/rule
 
 # Convenience name for target.
@@ -162,11 +128,7 @@ safeSave: thirdparty/safeSave/CMakeFiles/safeSave.dir/rule
 
 # fast build rule for target.
 safeSave/fast:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/build
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/build
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : safeSave/fast
 
 src/safeSave.o: src/safeSave.cpp.o
@@ -174,11 +136,7 @@ src/safeSave.o: src/safeSave.cpp.o
 
 # target to build an object file
 src/safeSave.cpp.o:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : src/safeSave.cpp.o
 
 src/safeSave.i: src/safeSave.cpp.i
@@ -186,11 +144,7 @@ src/safeSave.i: src/safeSave.cpp.i
 
 # target to preprocess a source file
 src/safeSave.cpp.i:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.i
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.i
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : src/safeSave.cpp.i
 
 src/safeSave.s: src/safeSave.cpp.s
@@ -198,11 +152,7 @@ src/safeSave.s: src/safeSave.cpp.s
 
 # target to generate assembly for a file
 src/safeSave.cpp.s:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.s
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(MAKE) $(MAKESILENT) -f thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.s
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : src/safeSave.cpp.s
 
 # Help Target
@@ -228,12 +178,7 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : cmake_check_build_system
 

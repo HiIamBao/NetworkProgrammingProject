@@ -53,17 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
-=======
-CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
-
-# The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Include any dependencies generated for this target.
 include thirdparty/safeSave/CMakeFiles/safeSave.dir/depend.make
@@ -80,7 +73,6 @@ thirdparty/safeSave/CMakeFiles/safeSave.dir/codegen:
 .PHONY : thirdparty/safeSave/CMakeFiles/safeSave.dir/codegen
 
 thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o: thirdparty/safeSave/CMakeFiles/safeSave.dir/flags.make
-<<<<<<< HEAD
 thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o: /home/hung1fps/NetworkProgrammingProject/thirdparty/safeSave/src/safeSave.cpp
 thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o: thirdparty/safeSave/CMakeFiles/safeSave.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o"
@@ -93,20 +85,6 @@ thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.i: cmake_force
 thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/safeSave.dir/src/safeSave.cpp.s"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hung1fps/NetworkProgrammingProject/thirdparty/safeSave/src/safeSave.cpp -o CMakeFiles/safeSave.dir/src/safeSave.cpp.s
-=======
-thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/thirdparty/safeSave/src/safeSave.cpp
-thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o: thirdparty/safeSave/CMakeFiles/safeSave.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o -MF CMakeFiles/safeSave.dir/src/safeSave.cpp.o.d -o CMakeFiles/safeSave.dir/src/safeSave.cpp.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/safeSave/src/safeSave.cpp"
-
-thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/safeSave.dir/src/safeSave.cpp.i"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/safeSave/src/safeSave.cpp" > CMakeFiles/safeSave.dir/src/safeSave.cpp.i
-
-thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/safeSave.dir/src/safeSave.cpp.s"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave" && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/safeSave/src/safeSave.cpp" -o CMakeFiles/safeSave.dir/src/safeSave.cpp.s
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Object files for target safeSave
 safeSave_OBJECTS = \
@@ -118,33 +96,19 @@ safeSave_EXTERNAL_OBJECTS =
 thirdparty/safeSave/libsafeSave.a: thirdparty/safeSave/CMakeFiles/safeSave.dir/src/safeSave.cpp.o
 thirdparty/safeSave/libsafeSave.a: thirdparty/safeSave/CMakeFiles/safeSave.dir/build.make
 thirdparty/safeSave/libsafeSave.a: thirdparty/safeSave/CMakeFiles/safeSave.dir/link.txt
-<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libsafeSave.a"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave && $(CMAKE_COMMAND) -P CMakeFiles/safeSave.dir/cmake_clean_target.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/safeSave.dir/link.txt --verbose=$(VERBOSE)
-=======
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libsafeSave.a"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave" && $(CMAKE_COMMAND) -P CMakeFiles/safeSave.dir/cmake_clean_target.cmake
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave" && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/safeSave.dir/link.txt --verbose=$(VERBOSE)
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Rule to build all files generated by this target.
 thirdparty/safeSave/CMakeFiles/safeSave.dir/build: thirdparty/safeSave/libsafeSave.a
 .PHONY : thirdparty/safeSave/CMakeFiles/safeSave.dir/build
 
 thirdparty/safeSave/CMakeFiles/safeSave.dir/clean:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave && $(CMAKE_COMMAND) -P CMakeFiles/safeSave.dir/cmake_clean.cmake
 .PHONY : thirdparty/safeSave/CMakeFiles/safeSave.dir/clean
 
 thirdparty/safeSave/CMakeFiles/safeSave.dir/depend:
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/hung1fps/NetworkProgrammingProject /home/hung1fps/NetworkProgrammingProject/thirdparty/safeSave /home/hung1fps/NetworkProgrammingProject/build /home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave /home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave/CMakeFiles/safeSave.dir/DependInfo.cmake "--color=$(COLOR)"
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave" && $(CMAKE_COMMAND) -P CMakeFiles/safeSave.dir/cmake_clean.cmake
-.PHONY : thirdparty/safeSave/CMakeFiles/safeSave.dir/clean
-
-thirdparty/safeSave/CMakeFiles/safeSave.dir/depend:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" "/home/bao/Network Programming/Project/multiPlayerGame-2" "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/safeSave" "/home/bao/Network Programming/Project/multiPlayerGame-2/build" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave/CMakeFiles/safeSave.dir/DependInfo.cmake" "--color=$(COLOR)"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/safeSave/CMakeFiles/safeSave.dir/depend
 

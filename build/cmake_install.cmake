@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Install script for directory: /home/hung1fps/NetworkProgrammingProject
-=======
-# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame-2
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -48,117 +44,63 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glfw-3.3.2/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glfw-3.3.2/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glad/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/stb_image/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/stb_image/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/stb_truetype/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/stb_truetype/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/gl2d/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glm/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glm/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/imgui-docking/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/imgui-docking/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glUI/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/enet-1.3.17/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/enet-1.3.17/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/safeSave/cmake_install.cmake")
-endif()
-
-if(CMAKE_INSTALL_COMPONENT)
-  set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")
-else()
-  set(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-<<<<<<< HEAD
 if(CMAKE_INSTALL_LOCAL_ONLY)
   file(WRITE "/home/hung1fps/NetworkProgrammingProject/build/install_local_manifest.txt"
-=======
-file(WRITE "/home/bao/Network Programming/Project/multiPlayerGame-2/build/${CMAKE_INSTALL_MANIFEST}"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)

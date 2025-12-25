@@ -10,6 +10,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountUI.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o.d"
+  "CMakeFiles/multyPlayer.dir/src/gameLayer/BossFightManager.cpp.o"
+  "CMakeFiles/multyPlayer.dir/src/gameLayer/BossFightManager.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.o"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/GameRoom.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/HordeDefenseManager.cpp.o"

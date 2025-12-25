@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Install script for directory: /home/hung1fps/NetworkProgrammingProject/thirdparty/glfw-3.3.2
-=======
-# Install script for directory: /home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/glfw-3.3.2
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -48,11 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-<<<<<<< HEAD
   include("/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glfw-3.3.2/src/cmake_install.cmake")
-=======
-  include("/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/glfw-3.3.2/src/cmake_install.cmake")
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 endif()
 

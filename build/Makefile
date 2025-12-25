@@ -57,17 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
-=======
-CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
-
-# The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -94,15 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-<<<<<<< HEAD
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles /home/hung1fps/NetworkProgrammingProject/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles 0
-=======
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" "/home/bao/Network Programming/Project/multiPlayerGame-2/build//CMakeFiles/progress.marks"
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" 0
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : all
 
 # The main clean target
@@ -126,11 +113,7 @@ preinstall/fast:
 
 # clear depends
 depend:
-<<<<<<< HEAD
 	$(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
-=======
-	$(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
@@ -413,6 +396,30 @@ src/gameLayer/AuthenticationHandler.s: src/gameLayer/AuthenticationHandler.cpp.s
 src/gameLayer/AuthenticationHandler.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.s
 .PHONY : src/gameLayer/AuthenticationHandler.cpp.s
+
+src/gameLayer/BossFightManager.o: src/gameLayer/BossFightManager.cpp.o
+.PHONY : src/gameLayer/BossFightManager.o
+
+# target to build an object file
+src/gameLayer/BossFightManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/BossFightManager.cpp.o
+.PHONY : src/gameLayer/BossFightManager.cpp.o
+
+src/gameLayer/BossFightManager.i: src/gameLayer/BossFightManager.cpp.i
+.PHONY : src/gameLayer/BossFightManager.i
+
+# target to preprocess a source file
+src/gameLayer/BossFightManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/BossFightManager.cpp.i
+.PHONY : src/gameLayer/BossFightManager.cpp.i
+
+src/gameLayer/BossFightManager.s: src/gameLayer/BossFightManager.cpp.s
+.PHONY : src/gameLayer/BossFightManager.s
+
+# target to generate assembly for a file
+src/gameLayer/BossFightManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multyPlayer.dir/build.make CMakeFiles/multyPlayer.dir/src/gameLayer/BossFightManager.cpp.s
+.PHONY : src/gameLayer/BossFightManager.cpp.s
 
 src/gameLayer/GameRoom.o: src/gameLayer/GameRoom.cpp.o
 .PHONY : src/gameLayer/GameRoom.o
@@ -894,6 +901,9 @@ help:
 	@echo "... src/gameLayer/AuthenticationHandler.o"
 	@echo "... src/gameLayer/AuthenticationHandler.i"
 	@echo "... src/gameLayer/AuthenticationHandler.s"
+	@echo "... src/gameLayer/BossFightManager.o"
+	@echo "... src/gameLayer/BossFightManager.i"
+	@echo "... src/gameLayer/BossFightManager.s"
 	@echo "... src/gameLayer/GameRoom.o"
 	@echo "... src/gameLayer/GameRoom.i"
 	@echo "... src/gameLayer/GameRoom.s"
@@ -959,11 +969,7 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-<<<<<<< HEAD
 	$(CMAKE_COMMAND) -P /home/hung1fps/NetworkProgrammingProject/build/CMakeFiles/VerifyGlobs.cmake
-=======
-	$(CMAKE_COMMAND) -P "/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles/VerifyGlobs.cmake"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

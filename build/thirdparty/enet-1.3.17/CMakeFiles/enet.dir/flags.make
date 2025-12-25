@@ -4,11 +4,7 @@
 # compile C with /usr/bin/gcc
 C_DEFINES = -DHAS_FCNTL=1 -DHAS_GETADDRINFO=1 -DHAS_GETHOSTBYADDR_R=1 -DHAS_GETHOSTBYNAME_R=1 -DHAS_GETNAMEINFO=1 -DHAS_INET_NTOP=1 -DHAS_INET_PTON=1 -DHAS_MSGHDR_FLAGS=1 -DHAS_POLL=1 -DHAS_SOCKLEN_T=1
 
-<<<<<<< HEAD
 C_INCLUDES = -I/home/hung1fps/NetworkProgrammingProject/thirdparty/enet-1.3.17/include
-=======
-C_INCLUDES = -I"/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/enet-1.3.17/include"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 C_FLAGS =   -Wno-error
 

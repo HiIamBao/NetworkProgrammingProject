@@ -53,17 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-<<<<<<< HEAD
 CMAKE_SOURCE_DIR = /home/hung1fps/NetworkProgrammingProject
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/hung1fps/NetworkProgrammingProject/build
-=======
-CMAKE_SOURCE_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2"
-
-# The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/bao/Network Programming/Project/multiPlayerGame-2/build"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Include any dependencies generated for this target.
 include thirdparty/raudio/CMakeFiles/raudio.dir/depend.make
@@ -80,7 +73,6 @@ thirdparty/raudio/CMakeFiles/raudio.dir/codegen:
 .PHONY : thirdparty/raudio/CMakeFiles/raudio.dir/codegen
 
 thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o: thirdparty/raudio/CMakeFiles/raudio.dir/flags.make
-<<<<<<< HEAD
 thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o: /home/hung1fps/NetworkProgrammingProject/thirdparty/raudio/src/raudio.c
 thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o: thirdparty/raudio/CMakeFiles/raudio.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o"
@@ -93,20 +85,6 @@ thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.i: cmake_force
 thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/raudio.dir/src/raudio.c.s"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio && /usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/hung1fps/NetworkProgrammingProject/thirdparty/raudio/src/raudio.c -o CMakeFiles/raudio.dir/src/raudio.c.s
-=======
-thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o: /home/bao/Network\ Programming/Project/multiPlayerGame-2/thirdparty/raudio/src/raudio.c
-thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o: thirdparty/raudio/CMakeFiles/raudio.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building C object thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio" && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o -MF CMakeFiles/raudio.dir/src/raudio.c.o.d -o CMakeFiles/raudio.dir/src/raudio.c.o -c "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/raudio/src/raudio.c"
-
-thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/raudio.dir/src/raudio.c.i"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio" && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/raudio/src/raudio.c" > CMakeFiles/raudio.dir/src/raudio.c.i
-
-thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/raudio.dir/src/raudio.c.s"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio" && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/raudio/src/raudio.c" -o CMakeFiles/raudio.dir/src/raudio.c.s
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Object files for target raudio
 raudio_OBJECTS = \
@@ -118,33 +96,19 @@ raudio_EXTERNAL_OBJECTS =
 thirdparty/raudio/libraudio.a: thirdparty/raudio/CMakeFiles/raudio.dir/src/raudio.c.o
 thirdparty/raudio/libraudio.a: thirdparty/raudio/CMakeFiles/raudio.dir/build.make
 thirdparty/raudio/libraudio.a: thirdparty/raudio/CMakeFiles/raudio.dir/link.txt
-<<<<<<< HEAD
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/hung1fps/NetworkProgrammingProject/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C static library libraudio.a"
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio && $(CMAKE_COMMAND) -P CMakeFiles/raudio.dir/cmake_clean_target.cmake
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/raudio.dir/link.txt --verbose=$(VERBOSE)
-=======
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/home/bao/Network Programming/Project/multiPlayerGame-2/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking C static library libraudio.a"
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio" && $(CMAKE_COMMAND) -P CMakeFiles/raudio.dir/cmake_clean_target.cmake
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio" && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/raudio.dir/link.txt --verbose=$(VERBOSE)
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 
 # Rule to build all files generated by this target.
 thirdparty/raudio/CMakeFiles/raudio.dir/build: thirdparty/raudio/libraudio.a
 .PHONY : thirdparty/raudio/CMakeFiles/raudio.dir/build
 
 thirdparty/raudio/CMakeFiles/raudio.dir/clean:
-<<<<<<< HEAD
 	cd /home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio && $(CMAKE_COMMAND) -P CMakeFiles/raudio.dir/cmake_clean.cmake
 .PHONY : thirdparty/raudio/CMakeFiles/raudio.dir/clean
 
 thirdparty/raudio/CMakeFiles/raudio.dir/depend:
 	cd /home/hung1fps/NetworkProgrammingProject/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/hung1fps/NetworkProgrammingProject /home/hung1fps/NetworkProgrammingProject/thirdparty/raudio /home/hung1fps/NetworkProgrammingProject/build /home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio /home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio/CMakeFiles/raudio.dir/DependInfo.cmake "--color=$(COLOR)"
-=======
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio" && $(CMAKE_COMMAND) -P CMakeFiles/raudio.dir/cmake_clean.cmake
-.PHONY : thirdparty/raudio/CMakeFiles/raudio.dir/clean
-
-thirdparty/raudio/CMakeFiles/raudio.dir/depend:
-	cd "/home/bao/Network Programming/Project/multiPlayerGame-2/build" && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" "/home/bao/Network Programming/Project/multiPlayerGame-2" "/home/bao/Network Programming/Project/multiPlayerGame-2/thirdparty/raudio" "/home/bao/Network Programming/Project/multiPlayerGame-2/build" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio" "/home/bao/Network Programming/Project/multiPlayerGame-2/build/thirdparty/raudio/CMakeFiles/raudio.dir/DependInfo.cmake" "--color=$(COLOR)"
->>>>>>> b7eeb9867cb4506085dd558086c7f63b90a84bd7
 .PHONY : thirdparty/raudio/CMakeFiles/raudio.dir/depend
 
