@@ -13,6 +13,7 @@
 #include "BossFight.h"
 #include <map>
 #include <cstring>
+#include <AccountManager.h>
 
 phisics::MapData map;
 
@@ -21,7 +22,7 @@ int32_t cid = {};
 bool joined = false;
 ENetHost *client;
 
-
+#pragma region Player & Game State
 std::unordered_map<int32_t, phisics::Entity> players;
 
 static std::vector<phisics::Bullet> bullets;
@@ -29,6 +30,9 @@ static std::vector<phisics::Bullet> ownBullets;
 static std::vector<phisics::Item> items;
 static bool hasBatery = 0;
 
+#pragma endregion
+
+#pragma region Game Mode State
 // Game mode state
 static GameMode currentGameMode = GameMode::DEATHMATCH;
 static MatchState currentMatchState = MatchState::MATCH_WAITING;
@@ -38,6 +42,9 @@ static int matchWinnerKills = 0;
 static std::string lastKillMessage = "";
 static float killMessageTimer = 0.0f;
 
+#pragma endregion
+
+#pragma region Horde Defense State
 // Horde Defense client-side state
 static std::map<int32_t, HordeDefense::Enemy> hordeEnemies;
 static HordeDefense::HordeDefenseState hordeState = HordeDefense::HordeDefenseState::WAITING;
@@ -60,6 +67,9 @@ static float shopMessageTimer = 0.0f;
 // Player's current upgrade levels (for UI display)
 static HordeDefense::PlayerUpgrades playerUpgrades;
 
+#pragma endregion
+
+#pragma region Boss Fight State
 // Boss Fight client-side state
 static BossFight::Boss clientBoss;
 static std::map<int32_t, BossFight::Minion> clientMinions;
@@ -70,6 +80,8 @@ static std::string bossNotification = "";
 static float bossNotificationTimer = 0.0f;
 static glm::vec2 aoeAttackPos = glm::vec2(0, 0);
 static float aoeAttackRadius = 0.0f;
+
+#pragma endregion
 
 glm::ivec2 spawnPositions[] =
 {
@@ -259,12 +271,12 @@ void msgLoop(ENetHost *client)
 		{
 			case ENET_EVENT_TYPE_RECEIVE:
 			{
-				//std::cout << event.packet->dataLength << "\n";
-				//std::cout << "recieved: " << event.packet->data << "\n";
-				//std::cout << event.peer->data << "\n"; //recieved from
-				//std::cout << event.peer->address.host << "\n"; //recieved from
-				//std::cout << event.peer->address.port << "\n"; //recieved from
-				//std::cout << event.channelID << "\n";
+				// std::cout << event.packet->dataLength << "\n";
+				// std::cout << "recieved: " << event.packet->data << "\n";
+				// std::cout << event.peer->data << "\n"; //recieved from
+				// std::cout << event.peer->address.host << "\n"; //recieved from
+				// std::cout << event.peer->address.port << "\n"; //recieved from
+				// std::cout << event.channelID << "\n";
 				Packet p = {};
 				size_t size = {};
 				auto data = parsePacket(event, p, size);
@@ -404,7 +416,7 @@ void msgLoop(ENetHost *client)
 					currentGameMode = static_cast<GameMode>(startData.gameMode);
 					currentMatchState = MatchState::MATCH_IN_PROGRESS;
 					matchEnded = false;
-					
+					// startData.mapId=3;
 					// Load correct map based on mapId or game mode
 					const char* mapFile;
 					if (startData.mapId == 3 || currentGameMode == GameMode::BOSS_FIGHT) {
@@ -867,12 +879,26 @@ void msgLoop(ENetHost *client)
 	}
 
 }
-
-void closeFunction()
+#include <AccountManager.h>
+void closeFunction(AccountManager &accountManager)
 {
 	if (!server) { return; }
-
+	
 	ENetEvent event;
+
+	Packet p;
+	p.header = gameEndHeader;
+	p.cid = cid;
+
+				// If you want to send some data (e.g., final score)
+
+	auto& player = players[cid];
+	int32_t finalScore = players[cid].kills; // Example: using kills as final score
+	Account* account = accountManager.getAccount(player.name);
+	account->totalScore += finalScore;
+	accountManager.updateAccount(*account);
+	std::cout << "Account old info" << account->username << " " << account->email << " total score: " << account->totalScore - finalScore << "\n";
+	sendPacket(server, p, (const char*)&finalScore, sizeof(int32_t), true, 1);
 
 	enet_peer_disconnect(server, 0);
 	//wait for disconect

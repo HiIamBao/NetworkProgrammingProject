@@ -20,11 +20,10 @@
 #include <ctime>
 #include <GLFW/glfw3.h>  // For GLFW_KEY_ESCAPE
 #include <cstring>
-
+#include <packet.h>
 gl2d::Renderer2D renderer;
 
 Textures textures;
-
 // Global account management
 static AccountManager* g_accountManager = nullptr;
 static SessionManager* g_sessionManager = nullptr;
@@ -436,7 +435,9 @@ bool gameLogic(float deltaTime)
 				std::cout << "Leave Match button clicked" << std::endl;
 				
 				// Disconnect from server
-				closeFunction();
+				// Example with data
+				
+				closeFunction(*g_accountManager);
 				resetClient();
 				
 				// Stop broadcasting if hosting
@@ -502,7 +503,7 @@ void closeGame()
 {
 	closeServer();
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
-	closeFunction();
+	closeFunction(*g_accountManager);
 	
 	// Cleanup account system
 	if (g_accountUI) {

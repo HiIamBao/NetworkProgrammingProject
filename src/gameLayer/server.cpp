@@ -13,7 +13,6 @@
 #include <chrono>
 #include <iostream>
 #include <mutex>
-#include <cstring>
 
 struct Client
 {

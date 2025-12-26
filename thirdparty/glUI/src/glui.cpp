@@ -714,12 +714,12 @@ namespace glui
 						{
 							// Use a padded content rect to avoid touching edges/outline
 							glm::vec4 contentRect = computedPos;
-							float padX = contentRect.z * 0.06f; // 6% horizontal padding
-							float padY = contentRect.w * 0.12f; // 12% vertical padding for nicer centering
-							contentRect.x += padX;
-							contentRect.y += padY;
-							contentRect.z -= padX * 2.0f;
-							contentRect.w -= padY * 2.0f;
+							// float padX = contentRect.z * 0.f; // 6% horizontal padding
+							// float padY = contentRect.w * 0.06f; // 12% vertical padding for nicer centering
+							// contentRect.x += padX;
+							// contentRect.y += padY;
+							// contentRect.z -= padX * 2.0f;
+							// contentRect.w -= padY * 2.0f;
 							contentRect.z = std::max(contentRect.z, 1.0f);
 							contentRect.w = std::max(contentRect.w, 1.0f);
 
@@ -734,7 +734,7 @@ namespace glui
 							auto textSize = renderer.getTextSize(textCopy.c_str(), font, finalScale);
 							glm::vec2 pos;
 							pos.x = contentRect.x + (contentRect.z - textSize.x) / 2.0f;
-							pos.y = contentRect.y + (contentRect.w - textSize.y) / 2.0f;
+							pos.y = contentRect.y + (contentRect.w + textSize.y) / 2.5f;
 
 							renderer.renderText(pos, textCopy.c_str(), font, Colors_White, finalScale, 4.0f, 3.0f, false);
 						}

@@ -119,7 +119,8 @@ enum
 	headerBossFightMinionDeath,     // Server -> Client: Minion death
 	headerBossFightPlayerRespawn,   // Server -> Client: Player respawn
 	headerBossFightMatchEnd,        // Server -> Client: Match end (victory/defeat)
-	headerBossFightPlayerDamage,    // Server -> Client: Player took damage from boss
+	headerBossFightPlayerDamage, 
+    gameEndHeader,      // Server -> Client: Player took damage from boss
 	
 	// Boss Fight DEBUG packets
 	headerBossFightDebugRespawnBoss, // Client -> Server: Request to respawn boss at player position (DEBUG)

@@ -2,7 +2,7 @@
 #include <enet/enet.h>
 #include <gl2d/gl2d.h>
 #include "Phisics.h"
-
+#include <AccountManager.h>
 struct Textures;
 
 void serverFunction(int port = 7778, int gameMode = 0, int mapId = 0);  // Now accepts port, gameMode, and mapId parameters with defaults
@@ -16,7 +16,7 @@ void closeServerByPort(int port);  // Close specific server by port
 
 void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textures, std::string ip, char *playerName, int port = 7778);
 void resetClient();
-void closeFunction();
+void closeFunction(AccountManager &accountManager);
 
 struct Textures
 {
