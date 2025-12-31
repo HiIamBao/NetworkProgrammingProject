@@ -90,14 +90,8 @@ void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             setState(UIState::BROWSE_ROOMS);
         }
         
-        if (glui::Button("Host Game", UIColors::Primary)) {
-            setState(UIState::HOST_SERVER);
-        }
-        
-        if (glui::Button("Join Game", UIColors::Primary)) {
-            setState(UIState::JOIN_SERVER);
-        }
-        
+
+
         glui::Space(20);
         
         if (glui::Button("Logout", UIColors::Error)) {

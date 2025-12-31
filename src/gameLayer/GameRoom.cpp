@@ -125,7 +125,7 @@ int GameRoom::getReadyPlayerCount() const {
 }
 
 bool GameRoom::assignPlayerToTeam(const std::string& username, int team) {
-    if (gameMode != GameMode::TEAM_BATTLE) {
+    if (gameMode != GameMode::HORDE_DEFENSE) {
         return false;
     }
     
@@ -174,7 +174,7 @@ bool GameRoom::canStart() const {
     }
     
     // For team mode, need at least 1 player per team
-    if (gameMode == GameMode::TEAM_BATTLE) {
+    if (gameMode == GameMode::HORDE_DEFENSE) {
         if (getTeamPlayerCount(0) == 0 || getTeamPlayerCount(1) == 0) {
             return false;
         }

@@ -13,11 +13,9 @@ enum class RoomStatus {
 
 enum class GameMode {
     DEATHMATCH = 0,     // Free for all
-    TEAM_BATTLE = 1,    // Team vs Team
-    COOPERATIVE = 2,    // Players vs AI
-    TOWER_DEFENSE = 3,  // Tower Defense - Cooperative wave defense (DEPRECATED)
-    HORDE_DEFENSE = 4,  // Horde Defense - Players fight waves of AI enemies directly
-    BOSS_FIGHT = 5      // Boss Fight - Cooperative boss battle
+    HORDE_DEFENSE = 1,  // Horde Defense - Players fight waves of AI enemies directly
+    BOSS_FIGHT = 2,     // Boss Fight - Cooperative boss battle
+    TEAM_BATTLE = 3     // Team Battle placeholder
 };
 
 struct PlayerInRoom {

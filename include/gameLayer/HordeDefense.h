@@ -2,6 +2,7 @@
 
 #include <glm/vec2.hpp>
 #include <cstdint>
+#include <common/BaseEntity.h>
 
 // ============================================================================
 // HORDE DEFENSE MODE - DATA STRUCTURES & ENUMS
@@ -120,22 +121,32 @@ struct EnemyStats {
     }
 };
 
-struct Enemy {
+
+
+// ...
+
+struct Enemy : public phisics::BaseEntity {
     int32_t id;                 // Unique enemy ID
     EnemyType type;             // Enemy type
-    glm::vec2 position;         // Current position
-    glm::vec2 velocity;         // Movement velocity
-    float health;               // Current health
-    float maxHealth;            // Maximum health
-    float speed;                // Movement speed multiplier
+    // pos, velocity, health, maxHealth, speed, isAlive inherited from BaseEntity
+    
     int damage;                 // Damage dealt to players
     int32_t targetPlayerId;     // Current target player CID
-    bool isAlive;               // Alive status
     float lastAttackTime;       // Time of last attack (for cooldown)
     
-    Enemy() : id(0), type(EnemyType::ZOMBIE), position(0, 0), velocity(0, 0),
-              health(0), maxHealth(0), speed(1.0f), damage(0), 
-              targetPlayerId(-1), isAlive(true), lastAttackTime(0.0f) {}
+    Enemy() {
+        id = 0;
+        type = EnemyType::ZOMBIE;
+        pos = glm::vec2(0, 0);
+        velocity = glm::vec2(0, 0);
+        health = 0;
+        maxHealth = 0;
+        speed = 1.0f;
+        damage = 0;
+        targetPlayerId = -1;
+        isAlive = true;
+        lastAttackTime = 0.0f;
+    }
 };
 
 // ============================================================================

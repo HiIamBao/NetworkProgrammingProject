@@ -286,7 +286,10 @@ void LANDiscovery::listenLoop() {
         }
         
         // Cleanup old servers periodically
-        cleanupOldServers();
+        {
+            std::lock_guard<std::mutex> lock(discoveryMutex);
+            cleanupOldServers();
+        }
         
         // Sleep a bit to avoid busy-waiting
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

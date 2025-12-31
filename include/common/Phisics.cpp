@@ -292,7 +292,12 @@ namespace phisics
 		{
 			for (int x = 0; x < w; x++)
 			{
-				renderer.renderRectangle(glm::vec4{x,y,1,1}*worldMagnification, {}, 0.f, texture, tiles::getTileUV(get(x, y).type));
+				int id = get(x, y).type;
+				if(get(x, y).isCollidable())
+				{
+					id = 1;
+				}
+				renderer.renderRectangle(glm::vec4{x,y,1,1}*worldMagnification, {}, 0.f, texture, tiles::getTileUV(id));
 			}
 		}
 

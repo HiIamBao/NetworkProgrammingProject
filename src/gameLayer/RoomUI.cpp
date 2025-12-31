@@ -1,4 +1,5 @@
 #include "gameLayer/RoomUI.h"
+#include "gameLayer/GameRoom.h"
 #include <cstring>
 #include <algorithm>
 #include <iostream>
@@ -271,24 +272,26 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     glui::Text(modeDescriptions[selectedGameMode], RoomUIColors::Gray);
     glui::Space(10);
     
-    glui::Text("Map:", RoomUIColors::White);
-    const char* mapOptions[] = {"Default Map", "Industrial", "Warehouse", "Boss Arena"};
+    selectedMapId=0;
+
+    // glui::Text("Map:", RoomUIColors::White);
+    // const char* mapOptions[] = {"Default Map", "Industrial", "Warehouse", "Boss Arena"};
     
-    // Render buttons with visual selection indicator  
-    for (int i = 0; i < 4; i++) {
-        char buttonLabel[64];
-        // Add visual indicator to show selection
-        if (selectedMapId == i) {
-            snprintf(buttonLabel, sizeof(buttonLabel), ">>> %s <<<##map%d", mapOptions[i], i);
-        } else {
-            snprintf(buttonLabel, sizeof(buttonLabel), "    %s    ##map%d", mapOptions[i], i);
-        }
+    // // Render buttons with visual selection indicator  
+    // for (int i = 0; i < 4; i++) {
+    //     char buttonLabel[64];
+    //     // Add visual indicator to show selection
+    //     if (selectedMapId == i) {
+    //         snprintf(buttonLabel, sizeof(buttonLabel), ">>> %s <<<##map%d", mapOptions[i], i);
+    //     } else {
+    //         snprintf(buttonLabel, sizeof(buttonLabel), "    %s    ##map%d", mapOptions[i], i);
+    //     }
         
-        glm::vec4 btnColor = (selectedMapId == i) ? RoomUIColors::Success : RoomUIColors::Gray;
-        if (glui::Button(buttonLabel, btnColor)) {
-            selectedMapId = i;
-        }
-    }
+    //     glm::vec4 btnColor = (selectedMapId == i) ? RoomUIColors::Success : RoomUIColors::Gray;
+    //     if (glui::Button(buttonLabel, btnColor)) {
+    //         selectedMapId = i;
+    //     }
+    // }
     
     glui::Space(20);
     
@@ -311,8 +314,7 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             
             // Map UI selection to GameMode enum
             // UI: 0=Deathmatch, 1=Team Battle, 2=Boss Fight, 3=Horde Defense
-            // Enum: 0=DEATHMATCH, 1=TEAM_BATTLE, 2=COOPERATIVE(deprecated), 3=TOWER_DEFENSE(deprecated), 4=HORDE_DEFENSE, 5=BOSS_FIGHT
-            int gameModeMapping[] = {0, 1, 5, 4};  // Map UI button 2 to BOSS_FIGHT(5), button 3 to HORDE_DEFENSE(4)
+            int gameModeMapping[] = {(int)GameMode::DEATHMATCH, (int)GameMode::TEAM_BATTLE, (int)GameMode::BOSS_FIGHT, (int)GameMode::HORDE_DEFENSE};
             createData.gameMode = gameModeMapping[selectedGameMode];
             
             createData.mapId = selectedMapId;
@@ -571,13 +573,11 @@ void RoomUI::clearJoinInputs() {
 }
 
 const char* RoomUI::getGameModeName(int mode) {
-    switch (mode) {
-        case 0: return "Deathmatch";
-        case 1: return "Team Battle";
-        case 2: return "Cooperative";
-        case 3: return "Tower Defense";
-        case 4: return "Horde Defense";
-        case 5: return "Boss Fight";
+    switch (static_cast<GameMode>(mode)) {
+        case GameMode::DEATHMATCH: return "Deathmatch";
+        case GameMode::TEAM_BATTLE: return "Team Battle";
+        case GameMode::BOSS_FIGHT: return "Boss Fight";
+        case GameMode::HORDE_DEFENSE: return "Horde Defense";
         default: return "Unknown";
     }
 }

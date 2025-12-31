@@ -192,6 +192,13 @@ void addConnection(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 	snprintf(playerName, sizeof(playerName), "Player %d", instance->pids + 1);
 	strncpy(entity.name, playerName, playerNameSize - 1);
 	entity.name[playerNameSize - 1] = '\0';  // Ensure null termination
+    
+    // Initialize default stats
+    entity.health = 100;
+    entity.maxHealth = 100;
+    entity.speed = 10.0f;
+    entity.dimensions = {0.9f, 0.9f};
+    entity.isAlive = true;
 
 	instance->connections.insert({instance->pids, Client{event.peer, entity}});
 
@@ -404,7 +411,7 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		auto playerIt = instance->connections.find(p.cid);
 		if (playerIt != instance->connections.end())
 		{
-			if (playerIt->second.entityData.life <= 0)
+			if (playerIt->second.entityData.health <= 0)
 			{
 				// Dead players can't shoot
 				std::cout << "Rejected bullet from dead player CID " << p.cid << std::endl;
@@ -427,8 +434,8 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			if (boss && boss->isAlive)
 			{
 				// Simple AABB collision check (boss size ~2x2 tiles)
-				glm::vec2 bossMin = boss->position - glm::vec2(1.0f, 1.0f);
-				glm::vec2 bossMax = boss->position + glm::vec2(1.0f, 1.0f);
+				glm::vec2 bossMin = boss->pos - glm::vec2(1.0f, 1.0f);
+				glm::vec2 bossMax = boss->pos + glm::vec2(1.0f, 1.0f);
 				glm::vec2 bulletPos = bullet->pos;
 				
 				if (bulletPos.x >= bossMin.x && bulletPos.x <= bossMax.x &&
@@ -454,8 +461,8 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 				if (!minion.isAlive) continue;
 				
 				// Simple AABB collision (minion size ~1x1 tile)
-				glm::vec2 minionMin = minion.position - glm::vec2(0.5f, 0.5f);
-				glm::vec2 minionMax = minion.position + glm::vec2(0.5f, 0.5f);
+				glm::vec2 minionMin = minion.pos - glm::vec2(0.5f, 0.5f);
+				glm::vec2 minionMax = minion.pos + glm::vec2(0.5f, 0.5f);
 				glm::vec2 bulletPos = bullet->pos;
 				
 				if (bulletPos.x >= minionMin.x && bulletPos.x <= minionMax.x &&
@@ -490,7 +497,7 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		if (victimIt != instance->connections.end() && killerIt != instance->connections.end())
 		{
 			// Check if victim died (life <= 0)
-			if (victimIt->second.entityData.life <= 1)  // Will be 0 after this hit
+			if (victimIt->second.entityData.health <= 1)  // Will be 0 after this hit
 			{
 				// Update kill/death stats
 				killerIt->second.kills++;
@@ -598,8 +605,8 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 				
 				std::cout << "[HordeDefense] Broadcasted upgrade for player " << p.cid 
 				          << " - Health Level: " << statsUpdate.healthLevel 
-				          << ", MaxHP: " << playerIt->second.entityData.maxLife 
-				          << ", CurrentHP: " << playerIt->second.entityData.life << std::endl;
+				          << ", MaxHP: " << playerIt->second.entityData.maxHealth 
+				          << ", CurrentHP: " << playerIt->second.entityData.health << std::endl;
 				
 				// Also mark entity for next frame broadcast
 				playerIt->second.changed = true;
@@ -640,8 +647,8 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 				broadCast(instance, entityPacket, &playerIt->second.entityData, sizeof(phisics::Entity), nullptr, true, 0);
 				
 				std::cout << "[HordeDefense] Broadcasted item purchase for player " << p.cid 
-				          << " - HP: " << playerIt->second.entityData.life 
-				          << "/" << playerIt->second.entityData.maxLife << std::endl;
+				          << " - HP: " << playerIt->second.entityData.health 
+				          << "/" << playerIt->second.entityData.maxHealth << std::endl;
 				
 				// Also mark entity for next frame broadcast
 				playerIt->second.changed = true;
@@ -675,7 +682,7 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			if (playerIt != instance->connections.end())
 			{
 				// Check if player is alive - dead players can't damage enemies
-				if (playerIt->second.entityData.life <= 0)
+				if (playerIt->second.entityData.health <= 0)
 				{
 					std::cout << "Rejected bullet damage from dead player CID " << p.cid << std::endl;
 					return;
@@ -827,7 +834,7 @@ void serverFunction(int port, int gameMode, int mapId)
 					phisics::Entity& player = playerIt->second.entityData;
 					
 					// Only damage alive players
-					if (player.life > 0) {
+					if (player.health > 0) {
 						// Apply shield damage first
 						if (player.shieldHealth > 0) {
 							int shieldDamage = std::min((int)player.shieldHealth, damage);
@@ -837,10 +844,10 @@ void serverFunction(int port, int gameMode, int mapId)
 						
 						// Apply remaining damage to health
 						if (damage > 0) {
-							player.life -= damage;
-							if (player.life < 0) player.life = 0;
+							player.health -= damage;
+							if (player.health < 0) player.health = 0;
 						
-							std::cout << "[ServerDamage] Player " << cid << " took " << damage << " damage. HP: " << player.life << std::endl;
+							std::cout << "[ServerDamage] Player " << cid << " took " << damage << " damage. HP: " << player.health << std::endl;
 									
 							// Mark for broadcast
 							playerIt->second.changed = true;
@@ -1056,13 +1063,13 @@ void serverFunction(int port, int gameMode, int mapId)
 				// If player needs respawn (wave just ended and they were dead)
 				if (instance->hordeDefenseManager->needsRespawn(conn.first))
 				{
-					std::cout << "[HordeDefense] Player " << conn.first << " needs respawn! Current HP: " << conn.second.entityData.life << std::endl;
+					std::cout << "[HordeDefense] Player " << conn.first << " needs respawn! Current HP: " << conn.second.entityData.health << std::endl;
 					
 					// Actually respawn the player (this will restore HP regardless of current value)
 					instance->hordeDefenseManager->respawnPlayer(conn.first, conn.second.entityData);
 					instance->hordeDefenseManager->markPlayerRespawned(conn.first);
 					
-					std::cout << "[HordeDefense] Player " << conn.first << " HP after respawn: " << conn.second.entityData.life << std::endl;
+					std::cout << "[HordeDefense] Player " << conn.first << " HP after respawn: " << conn.second.entityData.health << std::endl;
 					
 					// Immediately broadcast the respawn to all clients (critical for UI update)
 					Packet sPacket;
@@ -1072,7 +1079,7 @@ void serverFunction(int port, int gameMode, int mapId)
 					std::cout << "[HordeDefense] Broadcasted respawn update for player " << conn.first << std::endl;
 					
 					conn.second.changed = false;  // Already broadcast, don't broadcast again
-					std::cout << "[HordeDefense] Player " << conn.first << " respawned for new wave (HP: " << conn.second.entityData.life << ")" << std::endl;
+					std::cout << "[HordeDefense] Player " << conn.first << " respawned for new wave (HP: " << conn.second.entityData.health << ")" << std::endl;
 				}
 			}
 			
@@ -1080,7 +1087,7 @@ void serverFunction(int port, int gameMode, int mapId)
 			// BUT ONLY during wave phases (not during buying phase when players respawn)
 			for (auto& conn : instance->connections)
 			{
-				bool hasHP0 = (conn.second.entityData.life <= 0);
+				bool hasHP0 = (conn.second.entityData.health <= 0);
 				bool flagAlive = instance->hordeDefenseManager->isPlayerAlive(conn.first);
 				bool notWaitingRespawn = !instance->hordeDefenseManager->needsRespawn(conn.first);
 				
@@ -1121,14 +1128,14 @@ void serverFunction(int port, int gameMode, int mapId)
 				if (it != instance->connections.end())
 				{
 					// Update player life from boss attacks
-					if (it->second.entityData.life != entity.life)
+					if (it->second.entityData.health != entity.health)
 					{
-						it->second.entityData.life = entity.life;
+						it->second.entityData.health = entity.health;
 						it->second.changed = true;
 						instance->changedData = true;
 						
 						// Check if player died
-						if (entity.life <= 0)
+						if (entity.health <= 0)
 						{
 							instance->bossFightManager->markPlayerDead(cid);
 							std::cout << "[BossFight] Player " << cid << " died!" << std::endl;

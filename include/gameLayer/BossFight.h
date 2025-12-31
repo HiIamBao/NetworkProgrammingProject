@@ -2,6 +2,7 @@
 
 #include <glm/vec2.hpp>
 #include <cstdint>
+#include <common/BaseEntity.h>
 
 // ============================================================================
 // BOSS FIGHT MODE - DATA STRUCTURES & ENUMS
@@ -57,48 +58,65 @@ enum class BossPhase {
 // BOSS DATA STRUCTURE
 // ============================================================================
 
-struct Boss {
+
+
+// ...
+
+struct Boss : public phisics::BaseEntity {
     int32_t bossId;
     BossType type;
     BossPhase currentPhase;
-    glm::vec2 position;
-    glm::vec2 velocity;
-    float health;
-    float maxHealth;
-    float speed;
+    
+    // pos, velocity, health, maxHealth, speed, isAlive inherited
+    
     int baseDamage;
     int32_t currentTargetId;  // CID of targeted player
-    bool isAlive;
     float lastAttackTime;     // For attack cooldown
     float nextAttackTimer;    // Time until next attack
     BossAttackType nextAttackType; // Queued attack
     
-    Boss() : bossId(1), type(BossType::GIANT_DEMON), currentPhase(BossPhase::PHASE_1),
-             position(0, 0), velocity(0, 0), health(5000), maxHealth(5000),
-             speed(4.0f), baseDamage(30), currentTargetId(-1), isAlive(true),
-             lastAttackTime(0.0f), nextAttackTimer(2.0f), 
-             nextAttackType(BossAttackType::MELEE) {}
+    Boss() {
+         bossId = 1;
+         type = BossType::GIANT_DEMON;
+         currentPhase = BossPhase::PHASE_1;
+         pos = glm::vec2(0, 0);
+         velocity = glm::vec2(0, 0);
+         health = 5000;
+         maxHealth = 5000;
+         speed = 4.0f;
+         baseDamage = 30;
+         currentTargetId = -1;
+         isAlive = true;
+         lastAttackTime = 0.0f;
+         nextAttackTimer = 2.0f;
+         nextAttackType = BossAttackType::MELEE;
+    }
 };
 
 // ============================================================================
 // MINION DATA STRUCTURE
 // ============================================================================
 
-struct Minion {
+struct Minion : public phisics::BaseEntity {
     int32_t minionId;
-    glm::vec2 position;
-    glm::vec2 velocity;
-    float health;
-    float maxHealth;
-    float speed;
+    // pos, velocity, health, maxHealth, speed, isAlive inherited
+    
     int damage;
     int32_t targetPlayerId;
-    bool isAlive;
     float lastAttackTime;
     
-    Minion() : minionId(0), position(0, 0), velocity(0, 0), 
-               health(50), maxHealth(50), speed(6.0f), damage(10),
-               targetPlayerId(-1), isAlive(true), lastAttackTime(0.0f) {}
+    Minion() {
+        minionId = 0;
+        pos = glm::vec2(0, 0);
+        velocity = glm::vec2(0, 0);
+        health = 50;
+        maxHealth = 50;
+        speed = 6.0f;
+        damage = 10;
+        targetPlayerId = -1;
+        isAlive = true;
+        lastAttackTime = 0.0f;
+    }
 };
 
 // ============================================================================

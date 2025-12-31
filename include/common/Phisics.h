@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <gl2d/gl2d.h>
 #include "tiles.h"
+#include "BaseEntity.h"
 
 #undef min
 #undef max
@@ -25,7 +26,7 @@ namespace phisics
 	struct MapData
 	{
 
-		BlockInfo* data;
+		BlockInfo* data = nullptr;
 		BlockInfo nullBlock = {};
 	
 		int w = 0;
@@ -42,19 +43,16 @@ namespace phisics
 		void save(const char *file);
 	};
 	
-	struct Entity
+	struct Entity : public BaseEntity
 	{
 		char name[playerNameSize] = {};
-		glm::vec2 pos = {};
-		glm::vec2 lastPos = {};
+		// pos, lastPos, dimensions inherited from BaseEntity
+		
 		glm::vec2 input = {};
-
-		glm::vec2 dimensions = {0.9,0.9};
 		glm::vec3 color = {1,1,1};
 
 		float hitTime = 0.f;
-		int maxLife = 5;  // Maximum health (can be increased via upgrades)
-		int life = 5;     // Current health
+		// maxLife, life replaced by maxHealth, health from BaseEntity
 		
 		// Game mode stats
 		int kills = 0;

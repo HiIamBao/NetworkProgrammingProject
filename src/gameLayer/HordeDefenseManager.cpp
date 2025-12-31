@@ -277,7 +277,7 @@ void HordeDefenseManager::spawnEnemy(EnemyType type, glm::vec2 position) {
     Enemy enemy;
     enemy.id = nextEnemyId++;
     enemy.type = type;
-    enemy.position = position;
+    enemy.pos = position;
     enemy.velocity = glm::vec2(0, 0);
     enemy.targetPlayerId = -1;
     enemy.isAlive = true;
@@ -365,8 +365,8 @@ bool HordeDefenseManager::damageEnemy(int32_t enemyId, int damage, int32_t attac
             deathData.killerCid = attackerCid;
             deathData.moneyReward = stats.moneyReward;
             deathData.enemyType = (int)enemy->type;
-            deathData.posX = enemy->position.x;
-            deathData.posY = enemy->position.y;
+            deathData.posX = enemy->pos.x;
+            deathData.posY = enemy->pos.y;
             
             Packet p;
             p.header = headerHordeEnemyDeath;
@@ -403,14 +403,14 @@ void HordeDefenseManager::removePlayer(int32_t cid) {
 }
 
 void HordeDefenseManager::respawnPlayer(int32_t cid, phisics::Entity& player) {
-    std::cout << "[HordeDefense] respawnPlayer() called for CID " << cid << ", current HP: " << player.life << std::endl;
+    std::cout << "[HordeDefense] respawnPlayer() called for CID " << cid << ", current HP: " << player.health << std::endl;
     
     playerAlive[cid] = true;
     playerRespawned[cid] = true;  // Mark as respawned to prevent multiple respawns
     
     int newHP = getEffectiveMaxHealth(player);
     std::cout << "[HordeDefense] Calculated max HP for player " << cid << ": " << newHP << std::endl;
-    player.life = newHP;  // Respawn with full HP (including upgrades)
+    player.health = newHP;  // Respawn with full HP (including upgrades)
     
     // Reset temporary buffs (wave-based)
     player.speedBoostWaves = 0;
@@ -421,7 +421,7 @@ void HordeDefenseManager::respawnPlayer(int32_t cid, phisics::Entity& player) {
     glm::vec2 spawnPos = getRandomSpawnPosition();
     player.pos = spawnPos;
     
-    std::cout << "[HordeDefense] Player " << cid << " respawned with HP: " << player.life << " at position (" << spawnPos.x << ", " << spawnPos.y << ")" << std::endl;
+    std::cout << "[HordeDefense] Player " << cid << " respawned with HP: " << player.health << " at position (" << spawnPos.x << ", " << spawnPos.y << ")" << std::endl;
     
     // Broadcast respawn
     if (broadcastCallback) {
@@ -600,13 +600,13 @@ bool HordeDefenseManager::buyUpgrade(int32_t cid, phisics::Entity& player, Upgra
         case UpgradeType::HEALTH: {
             player.healthUpgradeLevel = nextLevel;
             // Update max health
-            int oldMaxLife = player.maxLife;
-            player.maxLife = getEffectiveMaxHealth(player);
+            int oldMaxLife = player.maxHealth;
+            player.maxHealth = getEffectiveMaxHealth(player);
             // Heal player by the amount maxLife increased
-            int healthIncrease = player.maxLife - oldMaxLife;
-            player.life = std::min(player.life + healthIncrease, player.maxLife);
-            std::cout << "[HordeDefense] Health upgrade: MaxHP " << oldMaxLife << " -> " << player.maxLife 
-                      << ", CurrentHP: " << player.life << std::endl;
+            int healthIncrease = player.maxHealth - oldMaxLife;
+            player.health = std::min(player.health + healthIncrease, player.maxHealth);
+            std::cout << "[HordeDefense] Health upgrade: MaxHP " << oldMaxLife << " -> " << player.maxHealth 
+                      << ", CurrentHP: " << player.health << std::endl;
             break;
         }
         case UpgradeType::SPEED: 
@@ -667,8 +667,8 @@ void HordeDefenseManager::applyItemEffect(phisics::Entity& player, ShopItemType 
     
     switch (type) {
         case ShopItemType::HEALTH_PACK:
-            player.life = std::min(player.life + (int)info.effectValue, player.maxLife);
-            std::cout << "[HordeDefense] Health pack used: player.life=" << player.life << "/" << player.maxLife << std::endl;
+            player.health = std::min(player.health + (int)info.effectValue, player.maxHealth);
+            std::cout << "[HordeDefense] Health pack used: player.health=" << player.health << "/" << player.maxHealth << std::endl;
             break;
             
         case ShopItemType::SPEED_BOOST:
@@ -799,7 +799,7 @@ void HordeDefenseManager::updateEnemyAI(float deltaTime, const std::map<int32_t,
         }
         
         // Find nearest ALIVE player
-        enemy.targetPlayerId = findNearestPlayer(enemy.position, players);
+        enemy.targetPlayerId = findNearestPlayer(enemy.pos, players);
         
         if (enemy.targetPlayerId != -1) {
             auto it = players.find(enemy.targetPlayerId);
@@ -807,14 +807,14 @@ void HordeDefenseManager::updateEnemyAI(float deltaTime, const std::map<int32_t,
                 const phisics::Entity& target = it->second;
                 
                 // Skip if target is dead
-                if (target.life <= 0) {
+                if (target.health <= 0) {
                     enemy.targetPlayerId = -1;
                     enemy.velocity = glm::vec2(0, 0);
                     continue;
                 }
                 
                 // Calculate distance to target
-                glm::vec2 direction = target.pos - enemy.position;
+                glm::vec2 direction = target.pos - enemy.pos;
                 float distance = glm::length(direction);
                 
                 // Check if within attack range
@@ -828,7 +828,7 @@ void HordeDefenseManager::updateEnemyAI(float deltaTime, const std::map<int32_t,
                         
                         // Check if target player is alive
                         auto playerIt = players.find(enemy.targetPlayerId);
-                        if (playerIt != players.end() && playerIt->second.life > 0) {
+                        if (playerIt != players.end() && playerIt->second.health > 0) {
                             const phisics::Entity& targetPlayer = playerIt->second;
                             
                             int remainingDamage = enemy.damage;
@@ -863,7 +863,7 @@ void HordeDefenseManager::updateEnemyAI(float deltaTime, const std::map<int32_t,
                     // Move towards player
                     direction = glm::normalize(direction);
                     enemy.velocity = direction * enemy.speed;
-                    enemy.position += enemy.velocity * deltaTime;
+                    enemy.pos += enemy.velocity * deltaTime;
                 }
             }
         }
@@ -894,7 +894,7 @@ int32_t HordeDefenseManager::findNearestPlayer(glm::vec2 enemyPos, const std::ma
     float nearestDist = FLT_MAX;
     
     for (const auto& [cid, player] : players) {
-        if (player.life <= 0) continue;  // Skip dead players
+        if (player.health <= 0) continue;  // Skip dead players
         
         float dist = glm::distance(enemyPos, player.pos);
         if (dist < nearestDist) {
@@ -932,8 +932,8 @@ void HordeDefenseManager::broadcastEnemyUpdates() {
         
         HordeEnemyUpdateData update;
         update.enemyId = enemy.id;
-        update.posX = enemy.position.x;
-        update.posY = enemy.position.y;
+        update.posX = enemy.pos.x;
+        update.posY = enemy.pos.y;
         update.health = enemy.health;
         update.targetPlayerId = enemy.targetPlayerId;
         
@@ -989,7 +989,7 @@ float HordeDefenseManager::getEffectiveBulletSpeedMultiplier(const phisics::Enti
 
 int HordeDefenseManager::getEffectiveMaxHealth(const phisics::Entity& player) const {
     UpgradeInfo info = UpgradeInfo::getInfo(UpgradeType::HEALTH);
-    int maxHP = player.maxLife + (int)(player.healthUpgradeLevel * info.effectPerLevel);
+    int maxHP = player.maxHealth + (int)(player.healthUpgradeLevel * info.effectPerLevel);
     return maxHP;
 }
 
@@ -1018,8 +1018,8 @@ void HordeDefenseManager::sendFullStateToPlayer(int32_t cid, ENetPeer* peer) {
         HordeEnemySpawnData spawnData;
         spawnData.enemyId = enemy.id;
         spawnData.enemyType = (int)enemy.type;
-        spawnData.posX = enemy.position.x;
-        spawnData.posY = enemy.position.y;
+        spawnData.posX = enemy.pos.x;
+        spawnData.posY = enemy.pos.y;
         spawnData.health = enemy.health;
         spawnData.maxHealth = enemy.maxHealth;
         
@@ -1060,7 +1060,7 @@ int HordeDefenseManager::getAlivePlayers() const {
 
 bool HordeDefenseManager::allPlayersDead(const std::map<int32_t, phisics::Entity>& players) const {
     for (const auto& [cid, player] : players) {
-        if (player.life > 0) {
+        if (player.health > 0) {
             return false;  // Found at least one alive player
         }
     }

@@ -2,6 +2,7 @@
 #include "gl2d/gl2d.h"
 #include "platformInput.h"
 #include "imgui.h"
+#include <gameLayer/ClientGame.h>
 #include <iostream>
 #include <sstream>
 #include "Phisics.h"
@@ -38,7 +39,9 @@ static RoomUI* g_roomUI = nullptr;
 static LANDiscovery* g_lanDiscovery = nullptr;
 
 // Global multi-room manager
+// Global multi-room manager
 static MultiRoomManager* g_multiRoomManager = nullptr;
+static ClientGame* g_clientGame = nullptr;
 
 bool initGame()
 {
@@ -78,7 +81,10 @@ bool initGame()
 	g_lanDiscovery = new LANDiscovery();
 	
 	// Initialize multi-room manager
+	// Initialize multi-room manager
 	g_multiRoomManager = new MultiRoomManager();
+    
+    g_clientGame = new ClientGame();
 
 	return true;
 }
@@ -132,7 +138,7 @@ bool gameLogic(float deltaTime)
 					
 					// Setup simplified callbacks for local hosting with LAN discovery
 					// When user clicks "Create Room", start a server and broadcast it
-					g_roomUI->onCreateRoom = [&name, &state, &ip, &currentPort](const CreateRoomData& data) {
+					g_roomUI->onCreateRoom = [](const CreateRoomData& data) {
 						// Use MultiRoomManager to create room
 						if (g_multiRoomManager && g_accountUI) {
 							int roomSlot = g_multiRoomManager->createRoom(
@@ -177,8 +183,13 @@ bool gameLogic(float deltaTime)
 									g_lanDiscovery->updateServerInfo(room.currentPlayers, room.maxPlayers);
 								}
 								
+								// Stop listening for other servers since we are hosting
+								if (g_lanDiscovery && g_lanDiscovery->isListening()) {
+									g_lanDiscovery->stopListening();
+								}
+								
 								// Connect client to the room's server with the correct port
-								resetClient();
+								if(g_clientGame) g_clientGame->reset(room.mapId);
 								
 								// Set IP and port for connection
 								strcpy(ip, "127.0.0.1");
@@ -195,7 +206,7 @@ bool gameLogic(float deltaTime)
 				};
 				
 				// When user clicks "Join Room", connect to discovered server
-					g_roomUI->onJoinRoom = [&state, &ip, &currentPort](const JoinRoomData& data) {
+					g_roomUI->onJoinRoom = [](const JoinRoomData& data) {
 						// Find the server by room ID in discovered servers
 						if (g_lanDiscovery) {
 							auto servers = g_lanDiscovery->getDiscoveredServers();
@@ -207,7 +218,7 @@ bool gameLogic(float deltaTime)
 								ip[16] = '\0';
 								currentPort = server.port;  // Store the port for client connection
 								
-								resetClient();
+								if(g_clientGame) g_clientGame->reset(server.mapId);
 								state = 1; // Switch to client state
 								
 								std::cout << "Connecting to server at " << ip << ":" << server.port << std::endl;
@@ -227,7 +238,7 @@ bool gameLogic(float deltaTime)
 							std::this_thread::sleep_for(std::chrono::milliseconds(200));
 						}
 						
-						resetClient();
+						if(g_clientGame) g_clientGame->reset();
 						
 						if (g_accountUI) {
 							g_accountUI->setState(UIState::MAIN_MENU);
@@ -308,7 +319,7 @@ bool gameLogic(float deltaTime)
 						// Wait a bit for server to start
 						std::this_thread::sleep_for(std::chrono::milliseconds(500));
 						
-						resetClient();
+						if(g_clientGame) g_clientGame->reset();
 						strcpy(ip, "127.0.0.1"); // Set IP to localhost
 						currentPort = 7778;  // Set port for connection
 						state = 2;
@@ -331,7 +342,7 @@ bool gameLogic(float deltaTime)
 				glui::InputText("##server_ip", ip, sizeof(ip));
 				
 				if (glui::Button("Join", glm::vec4(0.2f, 0.6f, 1.0f, 1.0f))) {
-					resetClient();
+					if(g_clientGame) g_clientGame->reset();
 					currentPort = 7778;  // Default port for manual join
 					state = 1;
 				}
@@ -364,7 +375,7 @@ bool gameLogic(float deltaTime)
 						std::thread t([](){ serverFunction(7778); });
 						t.detach();
 						std::this_thread::sleep_for(std::chrono::milliseconds(500));
-						resetClient();
+						if(g_clientGame) g_clientGame->reset();
 						strcpy(ip, "127.0.0.1");
 						currentPort = 7778;  // Set port for connection
 						state = 2;
@@ -376,7 +387,7 @@ bool gameLogic(float deltaTime)
 				glui::InputText("input ip", ip, sizeof(ip));
 				if (glui::Button("join", glm::vec4(0, 0, 0, 0)))
 				{
-					resetClient();
+					if(g_clientGame) g_clientGame->reset();
 					currentPort = 7778;  // Default port for manual join
 					state = 1;
 				}
@@ -413,12 +424,16 @@ bool gameLogic(float deltaTime)
 		
 		if (!isPaused) {
 			// Normal gameplay - just run the game
-			clientFunction(deltaTime, renderer, textures, ip, name, currentPort);
+            if (g_clientGame) {
+			    g_clientGame->update(deltaTime, renderer, textures, ip, name, currentPort);
+            }
 		} else {
 			// PAUSED STATE - Render pause menu
 			
 			// First, render game in background (frozen)
-			clientFunction(0, renderer, textures, ip, name, currentPort);
+            if (g_clientGame) {
+			    g_clientGame->update(0, renderer, textures, ip, name, currentPort);
+            }
 			
 			// Now render pause menu overlay using glui
 			glui::Text("=== GAME PAUSED ===", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -437,8 +452,8 @@ bool gameLogic(float deltaTime)
 				// Disconnect from server
 				// Example with data
 				
-				closeFunction(*g_accountManager);
-				resetClient();
+				if(g_clientGame) g_clientGame->close(*g_accountManager);
+				if(g_clientGame) g_clientGame->reset();
 				
 				// Stop broadcasting if hosting
 				if (g_lanDiscovery && g_lanDiscovery->isBroadcasting()) {
@@ -503,7 +518,7 @@ void closeGame()
 {
 	closeServer();
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
-	closeFunction(*g_accountManager);
+    if (g_clientGame) g_clientGame->close(*g_accountManager);
 	
 	// Cleanup account system
 	if (g_accountUI) {
@@ -547,8 +562,14 @@ void closeGame()
 	}
 	
 	// Cleanup multi-room manager (stops all rooms)
+	// Cleanup multi-room manager (stops all rooms)
 	if (g_multiRoomManager) {
 		delete g_multiRoomManager;
 		g_multiRoomManager = nullptr;
 	}
+    
+    if (g_clientGame) {
+        delete g_clientGame;
+        g_clientGame = nullptr;
+    }
 }
