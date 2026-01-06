@@ -158,10 +158,8 @@ char *parsePacket(ENetEvent &event, Packet &p, size_t &dataSize)
         case headerBossFightBossSpawn: std::cout << "headerBossFightBossSpawn"; break;
         case headerBossFightBossUpdate: std::cout << "headerBossFightBossUpdate"; break;
         case headerBossFightBossAttack: std::cout << "headerBossFightBossAttack"; break;
+        case headerBossFightCircleSpray: std::cout << "headerBossFightCircleSpray"; break;
         case headerBossFightBossDeath: std::cout << "headerBossFightBossDeath"; break;
-        case headerBossFightMinionSpawn: std::cout << "headerBossFightMinionSpawn"; break;
-        case headerBossFightMinionUpdate: std::cout << "headerBossFightMinionUpdate"; break;
-        case headerBossFightMinionDeath: std::cout << "headerBossFightMinionDeath"; break;
         case headerBossFightPlayerRespawn: std::cout << "headerBossFightPlayerRespawn"; break;
         case headerBossFightMatchEnd: std::cout << "headerBossFightMatchEnd"; break;
         case headerBossFightPlayerDamage: std::cout << "headerBossFightPlayerDamage"; break;

@@ -41,6 +41,8 @@ static char matchWinnerName[32] = {};
 static int matchWinnerKills = 0;
 static std::string lastKillMessage = "";
 static float killMessageTimer = 0.0f;
+// Tracks whether we've already received the initial Boss Fight mode announcement
+static bool receivedInitialBossModeInfo = false;
 
 #pragma endregion
 
@@ -72,7 +74,6 @@ static HordeDefense::PlayerUpgrades playerUpgrades;
 #pragma region Boss Fight State
 // Boss Fight client-side state
 static BossFight::Boss clientBoss;
-static std::map<int32_t, BossFight::Minion> clientMinions;
 static BossFight::BossFightState bossFightState = BossFight::BossFightState::WAITING;
 static float bossAttackAnimTimer = 0.0f;
 static BossFight::BossAttackType lastBossAttack = BossFight::BossAttackType::MELEE;
@@ -125,6 +126,8 @@ void resetClient()
 	matchWinnerKills = 0;
 	lastKillMessage = "";
 	killMessageTimer = 0.0f;
+	// Allow Boss Fight START button to appear again on fresh connections
+	receivedInitialBossModeInfo = false;
 	
 	// Reset Horde Defense state
 	hordeEnemies.clear();
@@ -149,7 +152,6 @@ void resetClient()
 	// Reset Boss Fight state
 	clientBoss = BossFight::Boss();
 	clientBoss.isAlive = false;
-	clientMinions.clear();
 	bossFightState = BossFight::BossFightState::WAITING;
 	bossAttackAnimTimer = 0.0f;
 	lastBossAttack = BossFight::BossAttackType::MELEE;
@@ -418,14 +420,28 @@ void msgLoop(ENetHost *client)
 					// Check if game mode changed - if so, we need to reload map
 					bool gameModeChanged = (currentGameMode != newGameMode);
 					currentGameMode = newGameMode;
-					
-					// Update match state - assume match is starting if we receive this
-					// (The server sends this both on connection and match start, but in both cases
-					//  we should be ready to play. If match is waiting, server will send another
-					//  packet when match actually starts)
+
+					// Distinguish initial Boss Fight mode announcement from actual start
 					bool wasWaiting = (currentMatchState == MatchState::MATCH_WAITING);
-					currentMatchState = MatchState::MATCH_IN_PROGRESS;
-					matchEnded = false;
+					bool initialBossModeAnnouncement = (
+						newGameMode == GameMode::BOSS_FIGHT &&
+						currentMatchState == MatchState::MATCH_WAITING &&
+						bossFightState == BossFight::BossFightState::WAITING &&
+						!receivedInitialBossModeInfo
+					);
+
+					if (initialBossModeAnnouncement)
+					{
+						// Keep state as WAITING so the host sees the START button
+						receivedInitialBossModeInfo = true;
+						matchEnded = false;
+					}
+					else
+					{
+						// Actual match start (or non-boss modes): move to IN_PROGRESS
+						currentMatchState = MatchState::MATCH_IN_PROGRESS;
+						matchEnded = false;
+					}
 					
 					// Load correct map based on game mode (always reload if game mode changed)
 					const char* mapFile;
@@ -470,7 +486,7 @@ void msgLoop(ENetHost *client)
 							std::cout << "Match started! Game mode: Boss Fight" << std::endl;
 							clientBoss = BossFight::Boss();
 							clientBoss.isAlive = false;
-							clientMinions.clear();
+
 							bossFightState = BossFight::BossFightState::WAITING;
 						}
 					}
@@ -774,25 +790,26 @@ void msgLoop(ENetHost *client)
 					lastBossAttack = static_cast<BossFight::BossAttackType>(attackData.attackType);
 					bossAttackAnimTimer = 1.0f;
 					
-					if (lastBossAttack == BossFight::BossAttackType::AOE_SLAM)
+					if (lastBossAttack == BossFight::BossAttackType::CIRCLE_SPRAY)
 					{
-						bossNotification = "AOE SLAM!";
-						bossNotificationTimer = 2.0f;
-						aoeAttackPos = glm::vec2(attackData.attackPosX, attackData.attackPosY);
-						aoeAttackRadius = BossFight::AOE_SLAM_RADIUS;
-					}
-					else if (lastBossAttack == BossFight::BossAttackType::CHARGE)
-					{
-						bossNotification = "BOSS CHARGING!";
+						bossNotification = "CIRCLE SPRAY!";
 						bossNotificationTimer = 2.0f;
 					}
-					else if (lastBossAttack == BossFight::BossAttackType::SUMMON_MINIONS)
+					else if (lastBossAttack == BossFight::BossAttackType::MELEE)
 					{
-						bossNotification = "MINIONS SUMMONED!";
-						bossNotificationTimer = 2.0f;
+						bossNotification = "BOSS ATTACKS!";
+						bossNotificationTimer = 1.0f;
 					}
 					
 					std::cout << "[BossFight] Boss attack: " << (int)lastBossAttack << std::endl;
+				}
+				else if (p.header == headerBossFightCircleSpray)
+				{
+					auto sprayData = *(BossFightCircleSprayData*)data;
+					bossNotification = "CIRCLE SPRAY ATTACK!";
+					bossNotificationTimer = 2.0f;
+					
+					std::cout << "[BossFight] Boss circle spray at (" << sprayData.centerX << ", " << sprayData.centerY << ")" << std::endl;
 				}
 				else if (p.header == headerBossFightBossDeath)
 				{
@@ -802,37 +819,6 @@ void msgLoop(ENetHost *client)
 					bossNotificationTimer = 5.0f;
 					
 					std::cout << "[BossFight] Boss defeated by player " << deathData.lastHitPlayerCid << std::endl;
-				}
-				else if (p.header == headerBossFightMinionSpawn)
-				{
-					auto spawnData = *(BossFightMinionSpawnData*)data;
-					BossFight::Minion minion;
-					minion.minionId = spawnData.minionId;
-					minion.position = glm::vec2(spawnData.posX, spawnData.posY);
-					minion.health = spawnData.health;
-					minion.maxHealth = spawnData.maxHealth;
-					minion.isAlive = true;
-					clientMinions[minion.minionId] = minion;
-					
-					std::cout << "[BossFight] Minion spawned: " << minion.minionId << std::endl;
-				}
-				else if (p.header == headerBossFightMinionUpdate)
-				{
-					auto updateData = *(BossFightMinionUpdateData*)data;
-					auto it = clientMinions.find(updateData.minionId);
-					if (it != clientMinions.end())
-					{
-						it->second.position = glm::vec2(updateData.posX, updateData.posY);
-						it->second.health = updateData.health;
-						it->second.targetPlayerId = updateData.targetPlayerId;
-					}
-				}
-				else if (p.header == headerBossFightMinionDeath)
-				{
-					auto deathData = *(BossFightMinionDeathData*)data;
-					clientMinions.erase(deathData.minionId);
-					
-					std::cout << "[BossFight] Minion killed: " << deathData.minionId << std::endl;
 				}
 				else if (p.header == headerBossFightPlayerRespawn)
 				{
@@ -1479,52 +1465,6 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				}
 				
 				// Draw minions
-				for (const auto& [minionId, minion] : clientMinions)
-				{
-					if (!minion.isAlive) continue;
-					
-					// Calculate minion screen position
-					glm::vec4 minionRect = {
-						minion.position.x * worldMagnification,
-						minion.position.y * worldMagnification,
-						0.8f * worldMagnification,  // Minions are smaller
-						0.8f * worldMagnification
-					};
-					
-					// Minion color - lighter red
-					glm::vec4 minionColor = {0.9f, 0.3f, 0.3f, 1.0f};
-					
-					// Draw minion body
-					renderer.renderRectangle(minionRect, minionColor);
-					
-					// Draw health bar above minion
-					float minionHealthPercent = minion.health / minion.maxHealth;
-					if (minionHealthPercent < 1.0f)
-					{
-						float mHealthBarWidth = 0.8f * worldMagnification;
-						float mHealthBarHeight = 0.08f * worldMagnification;
-						float mHealthBarY = (minion.position.y - 0.15f) * worldMagnification;
-						
-						// Background
-						glm::vec4 mBgRect = {
-							minion.position.x * worldMagnification,
-							mHealthBarY,
-							mHealthBarWidth,
-							mHealthBarHeight
-						};
-						renderer.renderRectangle(mBgRect, {0.3f, 0.0f, 0.0f, 0.8f});
-						
-						// Foreground
-						glm::vec4 mFgRect = {
-							minion.position.x * worldMagnification,
-							mHealthBarY,
-							mHealthBarWidth * minionHealthPercent,
-							mHealthBarHeight
-						};
-						renderer.renderRectangle(mFgRect, {0.0f, 1.0f, 0.0f, 0.9f});
-					}
-				}
-			}
 	#pragma endregion
 
 			static float timer = 0;
@@ -2156,48 +2096,75 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				// Show Start button at top middle (same line as health bar) when waiting for match to start
 				if (currentMatchState == MatchState::MATCH_WAITING && bossFightState == BossFight::BossFightState::WAITING)
 				{
-					// Button position: top middle, same Y as health bar (0.02 = 2% from top)
-					float centerX = 0.5f * renderer.windowW;
-					float buttonY = 0.02f * renderer.windowH;  // Same Y as health bar
-					float buttonW = 250.0f;
-					float buttonH = 50.0f;
-					float buttonX = centerX - buttonW * 0.5f;
-					
-					// Check if mouse is over button
-					glm::vec2 mousePos = platform::getRelMousePosition();
-					bool mouseOver = (mousePos.x >= buttonX && 
-									  mousePos.x <= buttonX + buttonW &&
-									  mousePos.y >= buttonY && 
-									  mousePos.y <= buttonY + buttonH);
-					
-					// Button background (change color on hover)
-					glm::vec4 buttonColor = mouseOver ? glm::vec4(0.3f, 0.7f, 0.3f, 0.95f) : glm::vec4(0.2f, 0.6f, 0.2f, 0.9f);
-					
-					// Button border (drawn first, behind button)
-					auto borderBox = Ui::Box().xLeft(buttonX - 2.0f).yTop(buttonY - 2.0f).xDimensionPixels(buttonW + 4.0f).yDimensionPixels(buttonH + 4.0f);
-					renderer.renderRectangle(borderBox, {0.0f, 0.0f, 0.0f, 0.8f});
-					
-					// Button background (drawn on top of border)
-					auto buttonBox = Ui::Box().xLeft(buttonX).yTop(buttonY).xDimensionPixels(buttonW).yDimensionPixels(buttonH);
-					renderer.renderRectangle(buttonBox, buttonColor);
-					
-					// Start button text
-					const char* startText = "START";
-					glm::vec2 startTextPos = glm::vec2(centerX - 40.0f, buttonY + 12.0f);
-					renderer.renderText(startTextPos, startText, textures.font, 
-						glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.9f, 4.f, 3.f, false);
-					
-					// Handle button click
-					if (mouseOver && platform::isLMousePressed())
+					// Determine host: assume lowest CID among connected players is host
+					bool isHostCandidate = true;
+					if (!players.empty())
 					{
-						// Send boss fight start request to server
-						if (joined && server)
+						int32_t minCid = cid;
+						for (const auto& kv : players)
 						{
-							Packet p;
-							p.header = headerBossFightStartRequest;
-							p.cid = cid;
-							sendPacket(server, p, nullptr, 0, true, 0);
-							std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+							if (kv.first < minCid) minCid = kv.first;
+						}
+						isHostCandidate = (cid == minCid);
+					}
+					
+					if (isHostCandidate)
+					{
+						// Button position: top middle, same Y as health bar (0.02 = 2% from top)
+						float centerX = 0.5f * renderer.windowW;
+						float buttonY = 0.02f * renderer.windowH;  // Same Y as health bar
+						float buttonW = 250.0f;
+						float buttonH = 50.0f;
+						float buttonX = centerX - buttonW * 0.5f;
+
+						// Check hover/pressed
+						glm::vec2 mousePos = platform::getRelMousePosition();
+						bool mouseOver = (mousePos.x >= buttonX && mousePos.x <= buttonX + buttonW &&
+										  mousePos.y >= buttonY && mousePos.y <= buttonY + buttonH);
+						bool mousePressed = platform::isLMouseHeld();
+
+						// Colors: normal/hover/pressed
+						glm::vec4 btnNormal = glm::vec4(0.20f, 0.60f, 0.20f, 0.90f);
+						glm::vec4 btnHover  = glm::vec4(0.30f, 0.70f, 0.30f, 0.95f);
+						glm::vec4 btnPress  = glm::vec4(0.15f, 0.50f, 0.15f, 0.95f);
+						glm::vec4 buttonColor = mouseOver ? (mousePressed ? btnPress : btnHover) : btnNormal;
+
+						// Border then background
+						auto borderBox = Ui::Box()
+							.xLeft(buttonX - 2.0f).yTop(buttonY - 2.0f)
+							.xDimensionPixels(buttonW + 4.0f).yDimensionPixels(buttonH + 4.0f);
+						renderer.renderRectangle(borderBox, {0.0f, 0.0f, 0.0f, 0.80f});
+
+						auto buttonBox = Ui::Box()
+							.xLeft(buttonX).yTop(buttonY)
+							.xDimensionPixels(buttonW).yDimensionPixels(buttonH);
+						renderer.renderRectangle(buttonBox, buttonColor);
+
+						// Centered text using gl2d metrics
+						const char* startText = "START";
+						float textScale = 0.9f;
+						auto textSize = renderer.getTextSize(startText, textures.font, textScale);
+						glm::vec2 startTextPos = {
+							centerX - textSize.x * 0.5f,
+							buttonY + (buttonH - textSize.y) * 0.5f
+						};
+						renderer.renderText(startTextPos, startText, textures.font,
+							glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), textScale, 4.f, 3.f, false);
+
+						// Activate on click or Enter/Controller Start
+						bool activate = (mouseOver && platform::isLMousePressed())
+							|| platform::isKeyPressedOn(platform::Button::Enter)
+							|| platform::getControllerButtons().buttons[platform::ControllerButtons::Start].pressed;
+						if (activate)
+						{
+							if (joined && server)
+							{
+								Packet p;
+								p.header = headerBossFightStartRequest; // server handles manual start for boss fight
+								p.cid = cid;
+								sendPacket(server, p, nullptr, 0, true, 0);
+								std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+							}
 						}
 					}
 				}
@@ -2408,7 +2375,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 	#pragma endregion
 
 
-
+	}
 
 	}
 
