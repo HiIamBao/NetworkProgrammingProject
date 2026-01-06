@@ -435,53 +435,26 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		sPacket.cid = p.cid;
 		broadCast(instance, sPacket, data, size, event.peer, true, 1);
 		
-		// Boss Fight: Check bullet collision with boss and minions
+		// Boss Fight: Check bullet collision with boss
 		if (instance->gameMode == GameMode::BOSS_FIGHT && instance->bossFightManager)
 		{
 			phisics::Bullet* bullet = (phisics::Bullet*)data;
 			
-			// Check collision with boss
+			// Check collision with boss (5x5 hitbox, center-based)
 			auto boss = instance->bossFightManager->getBoss();
 			if (boss && boss->isAlive)
 			{
-				// Simple AABB collision check (boss size ~2x2 tiles)
-				glm::vec2 bossMin = boss->position - glm::vec2(1.0f, 1.0f);
-				glm::vec2 bossMax = boss->position + glm::vec2(1.0f, 1.0f);
+				// AABB collision check (boss 5x5 tiles, center-based)
+				glm::vec2 bossMin = boss->position - glm::vec2(BossFight::BOSS_HITBOX_HALF, BossFight::BOSS_HITBOX_HALF);
+				glm::vec2 bossMax = boss->position + glm::vec2(BossFight::BOSS_HITBOX_HALF, BossFight::BOSS_HITBOX_HALF);
 				glm::vec2 bulletPos = bullet->pos;
 				
 				if (bulletPos.x >= bossMin.x && bulletPos.x <= bossMax.x &&
 				    bulletPos.y >= bossMin.y && bulletPos.y <= bossMax.y)
 				{
-					// Bullet hit boss - calculate damage based on player upgrades
+					// Bullet hit boss - calculate damage
 					int damage = 1;  // Base damage
-					auto playerIt = instance->connections.find(p.cid);
-					if (playerIt != instance->connections.end())
-					{
-						// Account for damage upgrades if any (future enhancement)
-						damage = 1;
-					}
-					
 					instance->bossFightManager->damageBoss(damage, p.cid);
-				}
-			}
-			
-			// Check collision with minions
-			const auto& minions = instance->bossFightManager->getMinions();
-			for (const auto& minion : minions)
-			{
-				if (!minion.isAlive) continue;
-				
-				// Simple AABB collision (minion size ~1x1 tile)
-				glm::vec2 minionMin = minion.position - glm::vec2(0.5f, 0.5f);
-				glm::vec2 minionMax = minion.position + glm::vec2(0.5f, 0.5f);
-				glm::vec2 bulletPos = bullet->pos;
-				
-				if (bulletPos.x >= minionMin.x && bulletPos.x <= minionMax.x &&
-				    bulletPos.y >= minionMin.y && bulletPos.y <= minionMax.y)
-				{
-					int damage = 1;
-					instance->bossFightManager->damageMinion(minion.minionId, damage, p.cid);
-					break;  // Bullet can only hit one minion
 				}
 			}
 		}

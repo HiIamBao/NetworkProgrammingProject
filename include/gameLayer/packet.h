@@ -113,15 +113,13 @@ enum
 	headerBossFightBossSpawn,       // Server -> Client: Boss spawn notification
 	headerBossFightBossUpdate,      // Server -> Client: Boss position/health update (10Hz)
 	headerBossFightBossAttack,      // Server -> Client: Boss attack notification
+	headerBossFightCircleSpray,     // Server -> Client: Circle spray attack visuals
 	headerBossFightBossDeath,       // Server -> Client: Boss defeated
-	headerBossFightMinionSpawn,     // Server -> Client: Minion spawn
-	headerBossFightMinionUpdate,    // Server -> Client: Minion updates (10Hz)
-	headerBossFightMinionDeath,     // Server -> Client: Minion death
 	headerBossFightPlayerRespawn,   // Server -> Client: Player respawn
 	headerBossFightMatchEnd,        // Server -> Client: Match end (victory/defeat)
-	headerBossFightPlayerDamage,
+	headerBossFightPlayerDamage,    // Server -> Client: Player took damage from boss
 	headerBossFightStartRequest,    // Client (host) -> Server: Request to start boss fight match
-    gameEndHeader,      // Server -> Client: Player took damage from boss
+    gameEndHeader,
 	
 	// Boss Fight DEBUG packets
 	headerBossFightDebugRespawnBoss, // Client -> Server: Request to respawn boss at player position (DEBUG)
@@ -472,24 +470,12 @@ struct BossFightBossDeathData {
     float posX, posY;          // Death position for effects
 };
 
-struct BossFightMinionSpawnData {
-    int32_t minionId;
-    float posX, posY;
-    float health;
-    float maxHealth;
-};
-
-struct BossFightMinionUpdateData {
-    int32_t minionId;
-    float posX, posY;
-    float health;
-    int32_t targetPlayerId;
-};
-
-struct BossFightMinionDeathData {
-    int32_t minionId;
-    int32_t killerCid;
-    float posX, posY;
+struct BossFightCircleSprayData {
+    int32_t bossId;
+    float centerX, centerY;    // Center position of spray
+    int bulletCount;           // Number of bullets (8-12)
+    float bulletSpeed;         // Speed of bullets
+    int damage;                // Damage per bullet
 };
 
 struct BossFightPlayerRespawnData {

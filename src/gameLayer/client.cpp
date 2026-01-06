@@ -72,7 +72,6 @@ static HordeDefense::PlayerUpgrades playerUpgrades;
 #pragma region Boss Fight State
 // Boss Fight client-side state
 static BossFight::Boss clientBoss;
-static std::map<int32_t, BossFight::Minion> clientMinions;
 static BossFight::BossFightState bossFightState = BossFight::BossFightState::WAITING;
 static float bossAttackAnimTimer = 0.0f;
 static BossFight::BossAttackType lastBossAttack = BossFight::BossAttackType::MELEE;
@@ -149,7 +148,6 @@ void resetClient()
 	// Reset Boss Fight state
 	clientBoss = BossFight::Boss();
 	clientBoss.isAlive = false;
-	clientMinions.clear();
 	bossFightState = BossFight::BossFightState::WAITING;
 	bossAttackAnimTimer = 0.0f;
 	lastBossAttack = BossFight::BossAttackType::MELEE;
@@ -470,7 +468,7 @@ void msgLoop(ENetHost *client)
 							std::cout << "Match started! Game mode: Boss Fight" << std::endl;
 							clientBoss = BossFight::Boss();
 							clientBoss.isAlive = false;
-							clientMinions.clear();
+
 							bossFightState = BossFight::BossFightState::WAITING;
 						}
 					}
@@ -774,25 +772,26 @@ void msgLoop(ENetHost *client)
 					lastBossAttack = static_cast<BossFight::BossAttackType>(attackData.attackType);
 					bossAttackAnimTimer = 1.0f;
 					
-					if (lastBossAttack == BossFight::BossAttackType::AOE_SLAM)
+					if (lastBossAttack == BossFight::BossAttackType::CIRCLE_SPRAY)
 					{
-						bossNotification = "AOE SLAM!";
-						bossNotificationTimer = 2.0f;
-						aoeAttackPos = glm::vec2(attackData.attackPosX, attackData.attackPosY);
-						aoeAttackRadius = BossFight::AOE_SLAM_RADIUS;
-					}
-					else if (lastBossAttack == BossFight::BossAttackType::CHARGE)
-					{
-						bossNotification = "BOSS CHARGING!";
+						bossNotification = "CIRCLE SPRAY!";
 						bossNotificationTimer = 2.0f;
 					}
-					else if (lastBossAttack == BossFight::BossAttackType::SUMMON_MINIONS)
+					else if (lastBossAttack == BossFight::BossAttackType::MELEE)
 					{
-						bossNotification = "MINIONS SUMMONED!";
-						bossNotificationTimer = 2.0f;
+						bossNotification = "BOSS ATTACKS!";
+						bossNotificationTimer = 1.0f;
 					}
 					
 					std::cout << "[BossFight] Boss attack: " << (int)lastBossAttack << std::endl;
+				}
+				else if (p.header == headerBossFightCircleSpray)
+				{
+					auto sprayData = *(BossFightCircleSprayData*)data;
+					bossNotification = "CIRCLE SPRAY ATTACK!";
+					bossNotificationTimer = 2.0f;
+					
+					std::cout << "[BossFight] Boss circle spray at (" << sprayData.centerX << ", " << sprayData.centerY << ")" << std::endl;
 				}
 				else if (p.header == headerBossFightBossDeath)
 				{
@@ -802,37 +801,6 @@ void msgLoop(ENetHost *client)
 					bossNotificationTimer = 5.0f;
 					
 					std::cout << "[BossFight] Boss defeated by player " << deathData.lastHitPlayerCid << std::endl;
-				}
-				else if (p.header == headerBossFightMinionSpawn)
-				{
-					auto spawnData = *(BossFightMinionSpawnData*)data;
-					BossFight::Minion minion;
-					minion.minionId = spawnData.minionId;
-					minion.position = glm::vec2(spawnData.posX, spawnData.posY);
-					minion.health = spawnData.health;
-					minion.maxHealth = spawnData.maxHealth;
-					minion.isAlive = true;
-					clientMinions[minion.minionId] = minion;
-					
-					std::cout << "[BossFight] Minion spawned: " << minion.minionId << std::endl;
-				}
-				else if (p.header == headerBossFightMinionUpdate)
-				{
-					auto updateData = *(BossFightMinionUpdateData*)data;
-					auto it = clientMinions.find(updateData.minionId);
-					if (it != clientMinions.end())
-					{
-						it->second.position = glm::vec2(updateData.posX, updateData.posY);
-						it->second.health = updateData.health;
-						it->second.targetPlayerId = updateData.targetPlayerId;
-					}
-				}
-				else if (p.header == headerBossFightMinionDeath)
-				{
-					auto deathData = *(BossFightMinionDeathData*)data;
-					clientMinions.erase(deathData.minionId);
-					
-					std::cout << "[BossFight] Minion killed: " << deathData.minionId << std::endl;
 				}
 				else if (p.header == headerBossFightPlayerRespawn)
 				{
@@ -1476,53 +1444,6 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						healthBarHeight
 					};
 					renderer.renderRectangle(fgRect, healthColor);
-				}
-				
-				// Draw minions
-				for (const auto& [minionId, minion] : clientMinions)
-				{
-					if (!minion.isAlive) continue;
-					
-					// Calculate minion screen position
-					glm::vec4 minionRect = {
-						minion.position.x * worldMagnification,
-						minion.position.y * worldMagnification,
-						0.8f * worldMagnification,  // Minions are smaller
-						0.8f * worldMagnification
-					};
-					
-					// Minion color - lighter red
-					glm::vec4 minionColor = {0.9f, 0.3f, 0.3f, 1.0f};
-					
-					// Draw minion body
-					renderer.renderRectangle(minionRect, minionColor);
-					
-					// Draw health bar above minion
-					float minionHealthPercent = minion.health / minion.maxHealth;
-					if (minionHealthPercent < 1.0f)
-					{
-						float mHealthBarWidth = 0.8f * worldMagnification;
-						float mHealthBarHeight = 0.08f * worldMagnification;
-						float mHealthBarY = (minion.position.y - 0.15f) * worldMagnification;
-						
-						// Background
-						glm::vec4 mBgRect = {
-							minion.position.x * worldMagnification,
-							mHealthBarY,
-							mHealthBarWidth,
-							mHealthBarHeight
-						};
-						renderer.renderRectangle(mBgRect, {0.3f, 0.0f, 0.0f, 0.8f});
-						
-						// Foreground
-						glm::vec4 mFgRect = {
-							minion.position.x * worldMagnification,
-							mHealthBarY,
-							mHealthBarWidth * minionHealthPercent,
-							mHealthBarHeight
-						};
-						renderer.renderRectangle(mFgRect, {0.0f, 1.0f, 0.0f, 0.9f});
-					}
 				}
 			}
 	#pragma endregion

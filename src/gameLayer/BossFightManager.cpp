@@ -12,14 +12,12 @@ using namespace BossFight;
 
 BossFightManager::BossFightManager() 
     : currentState(BossFightState::WAITING)
-    , nextMinionId(1)
     , matchTime(0.0f)
     , spawnTimer(0.0f)
     , bossUpdateTimer(0.0f)
-    , minionUpdateTimer(0.0f)
     , proximityDamageTimer(0.0f)
-    , proximityDamageRadius(3.0f)  // Default 3 tiles
-    , proximityDamageAmount(5)     // 5 damage per tick
+    , proximityDamageRadius(BOSS_CONTACT_RADIUS)  // Default 7 tiles
+    , proximityDamageAmount(BOSS_CONTACT_DAMAGE_PHASE1)  // Start with Phase 1 damage
     , bossPathIndex(0)
     , pathRecalcTimer(0.0f)
     , currentMap(nullptr)
@@ -42,7 +40,6 @@ void BossFightManager::initialize() {
 }
 
 void BossFightManager::cleanup() {
-    minions.clear();
     playerAlive.clear();
     playerDamageDealt.clear();
 }
@@ -51,14 +48,11 @@ void BossFightManager::reset() {
     currentState = BossFightState::WAITING;
     boss = Boss();
     boss.isAlive = false;
-    minions.clear();
-    nextMinionId = 1;
     playerAlive.clear();
     playerDamageDealt.clear();
     matchTime = 0.0f;
     spawnTimer = 0.0f;
     bossUpdateTimer = 0.0f;
-    minionUpdateTimer = 0.0f;
 }
 
 // ============================================================================
@@ -84,22 +78,14 @@ void BossFightManager::update(float deltaTime, std::map<int32_t, phisics::Entity
         case BossFightState::BOSS_ACTIVE:
             matchTime += deltaTime;
             updateBoss(deltaTime, players);
-            updateMinions(deltaTime, players);
-            updateProximityDamage(deltaTime, players);  // NEW: Proximity damage
-            checkBossPlayerCollision(players, deltaTime);  // NEW: Collision damage
-            removeDeadMinions();
+            updateProximityDamage(deltaTime, players);
+            checkBossPlayerCollision(players, deltaTime);
             
             // Broadcast updates at 10Hz
             bossUpdateTimer += deltaTime;
             if (bossUpdateTimer >= 0.1f) {
                 broadcastBossUpdate();
                 bossUpdateTimer = 0.0f;
-            }
-            
-            minionUpdateTimer += deltaTime;
-            if (minionUpdateTimer >= 0.1f && !minions.empty()) {
-                broadcastMinionUpdates();
-                minionUpdateTimer = 0.0f;
             }
             
             // Check victory condition
@@ -131,24 +117,22 @@ void BossFightManager::setState(BossFightState newState) {
 
 glm::vec2 BossFightManager::findValidBossSpawnPosition(phisics::MapData* mapData) {
     if (!mapData || !mapData->data) {
-        // No map data - use default spawn
         return getRandomSpawnPosition();
     }
     
-    // Try to find a valid spawn position within map bounds
-    // Boss is 2x2 tiles, so we need to check a 2x2 area
+    // Boss is 5x5 tiles, need to check 5x5 area
     const int maxAttempts = 100;
-    std::uniform_int_distribution<int> xDist(2, mapData->w - 4);  // Leave margin for boss size
-    std::uniform_int_distribution<int> yDist(2, mapData->h - 4);
+    std::uniform_int_distribution<int> xDist(3, mapData->w - 6);  // Leave margin for 5x boss size
+    std::uniform_int_distribution<int> yDist(3, mapData->h - 6);
     
     for (int attempt = 0; attempt < maxAttempts; attempt++) {
         int x = xDist(rng);
         int y = yDist(rng);
         
-        // Check if 2x2 area is walkable (boss size)
+        // Check if 5x5 area is walkable
         bool valid = true;
-        for (int dy = 0; dy < 2 && valid; dy++) {
-            for (int dx = 0; dx < 2 && valid; dx++) {
+        for (int dy = -2; dy <= 2 && valid; dy++) {
+            for (int dx = -2; dx <= 2 && valid; dx++) {
                 if (!isWalkable(x + dx, y + dy, mapData)) {
                     valid = false;
                 }
@@ -156,8 +140,7 @@ glm::vec2 BossFightManager::findValidBossSpawnPosition(phisics::MapData* mapData
         }
         
         if (valid) {
-            // Return center of 2x2 area
-            return glm::vec2(x + 1.0f, y + 1.0f);
+            return glm::vec2(x, y);
         }
     }
     
@@ -167,7 +150,6 @@ glm::vec2 BossFightManager::findValidBossSpawnPosition(phisics::MapData* mapData
         return centerPos;
     }
     
-    // Last resort: use random spawn position
     std::cout << "[BossFight] Warning: Could not find valid spawn position, using random position" << std::endl;
     return getRandomSpawnPosition();
 }
@@ -348,21 +330,28 @@ void BossFightManager::updateBossPhase() {
     
     BossPhase newPhase = boss.currentPhase;
     
-    if (healthPercent <= 0.4f) {
+    if (healthPercent <= PHASE_3_THRESHOLD) {
         newPhase = BossPhase::PHASE_3;
-    } else if (healthPercent <= 0.7f) {
+    } else if (healthPercent <= PHASE_2_THRESHOLD) {
         newPhase = BossPhase::PHASE_2;
     }
     
     if (newPhase != boss.currentPhase) {
+        BossPhase oldPhase = boss.currentPhase;
         boss.currentPhase = newPhase;
         std::cout << "[BossFight] Boss entered Phase " << ((int)newPhase + 1) << "!" << std::endl;
         
-        // Increase boss speed in later phases
+        // Update speed and abilities based on phase
         if (newPhase == BossPhase::PHASE_2) {
-            boss.speed *= 1.2f;
+            boss.speed = PHASE_1_SPEED * PHASE_2_SPEED_MULT;
+            boss.skillCooldown = CIRCLE_SPRAY_COOLDOWN_PHASE2;
+            boss.nextAttackTimer = 2.0f;
+            proximityDamageAmount = BOSS_CONTACT_DAMAGE_PHASE2;
         } else if (newPhase == BossPhase::PHASE_3) {
-            boss.speed *= 1.15f;  // Cumulative 1.38x speed
+            boss.speed = PHASE_1_SPEED * PHASE_2_SPEED_MULT * PHASE_3_SPEED_MULT;
+            boss.skillCooldown = CIRCLE_SPRAY_COOLDOWN_PHASE3;
+            boss.nextAttackTimer = 1.5f;
+            proximityDamageAmount = BOSS_CONTACT_DAMAGE_PHASE3;
         }
     }
 }
@@ -399,29 +388,32 @@ void BossFightManager::moveBossTowardsTarget(float deltaTime, const std::map<int
 }
 
 void BossFightManager::executeBossAttack(std::map<int32_t, phisics::Entity>& players) {
-    // Choose attack based on phase and range
     std::uniform_int_distribution<int> dist(0, 100);
     int roll = dist(rng);
     
     BossAttackType attackType = BossAttackType::MELEE;
     
     if (boss.currentPhase == BossPhase::PHASE_1) {
+        // Phase 1: Only melee attacks
         attackType = BossAttackType::MELEE;
+        boss.nextAttackTimer = 2.5f;
     } else if (boss.currentPhase == BossPhase::PHASE_2) {
-        if (roll < 60) {
+        // Phase 2: 70% melee, 30% circle spray
+        if (roll < 70) {
             attackType = BossAttackType::MELEE;
+            boss.nextAttackTimer = 2.0f;
         } else {
-            attackType = BossAttackType::AOE_SLAM;
+            attackType = BossAttackType::CIRCLE_SPRAY;
+            boss.nextAttackTimer = 2.0f;
         }
     } else if (boss.currentPhase == BossPhase::PHASE_3) {
-        if (roll < 40) {
+        // Phase 3: 50% melee, 50% circle spray
+        if (roll < 50) {
             attackType = BossAttackType::MELEE;
-        } else if (roll < 70) {
-            attackType = BossAttackType::AOE_SLAM;
-        } else if (roll < 90) {
-            attackType = BossAttackType::CHARGE;
+            boss.nextAttackTimer = 1.5f;
         } else {
-            attackType = BossAttackType::SUMMON_MINIONS;
+            attackType = BossAttackType::CIRCLE_SPRAY;
+            boss.nextAttackTimer = 1.5f;
         }
     }
     
@@ -429,19 +421,9 @@ void BossFightManager::executeBossAttack(std::map<int32_t, phisics::Entity>& pla
     switch (attackType) {
         case BossAttackType::MELEE:
             performMeleeAttack(players);
-            boss.nextAttackTimer = 2.5f;
             break;
-        case BossAttackType::AOE_SLAM:
-            performAOESlam(players);
-            boss.nextAttackTimer = 4.0f;
-            break;
-        case BossAttackType::CHARGE:
-            performCharge(players);
-            boss.nextAttackTimer = 5.0f;
-            break;
-        case BossAttackType::SUMMON_MINIONS:
-            summonMinions();
-            boss.nextAttackTimer = 8.0f;
+        case BossAttackType::CIRCLE_SPRAY:
+            performCircleSprayAttack(players);
             break;
     }
 }
@@ -479,218 +461,29 @@ void BossFightManager::performMeleeAttack(std::map<int32_t, phisics::Entity>& pl
     }
 }
 
-void BossFightManager::performAOESlam(std::map<int32_t, phisics::Entity>& players) {
-    std::cout << "[BossFight] Boss performs AOE SLAM!" << std::endl;
+void BossFightManager::performCircleSprayAttack(std::map<int32_t, phisics::Entity>& players) {
+    std::cout << "[BossFight] Boss performs CIRCLE SPRAY attack!" << std::endl;
     
-    // Broadcast attack first (for animation)
-    BossFightBossAttackData attackData;
-    attackData.bossId = boss.bossId;
-    attackData.attackType = (int)BossAttackType::AOE_SLAM;
-    attackData.attackPosX = boss.position.x;
-    attackData.attackPosY = boss.position.y;
-    attackData.targetCid = -1;
-    attackData.damage = AOE_SLAM_DAMAGE;
+    // Prepare circle spray data
+    BossFightCircleSprayData sprayData;
+    sprayData.bossId = boss.bossId;
+    sprayData.centerX = boss.position.x;
+    sprayData.centerY = boss.position.y;
+    sprayData.bulletCount = CIRCLE_SPRAY_BULLETS;
+    sprayData.bulletSpeed = CIRCLE_SPRAY_SPEED;
+    sprayData.damage = boss.baseDamage;
     
+    // Broadcast circle spray for client visualization
     if (broadcastCallback) {
         Packet p;
-        p.header = headerBossFightBossAttack;
+        p.header = headerBossFightCircleSpray;
         p.cid = 0;
-        broadcastCallback(p, &attackData, sizeof(attackData), true);
+        broadcastCallback(p, &sprayData, sizeof(sprayData), true);
     }
     
-    // Damage all players in radius
-    for (auto& pair : players) {
-        if (!isPlayerAlive(pair.first)) continue;
-        
-        float distance = distanceToPlayer(boss.position, pair.second.pos);
-        if (distance <= AOE_SLAM_RADIUS) {
-            glm::vec2 knockback = glm::normalize(pair.second.pos - boss.position) * 5.0f;
-            applyDamageToPlayer(pair.first, pair.second, AOE_SLAM_DAMAGE, BossAttackType::AOE_SLAM, knockback);
-        }
-    }
-}
-
-void BossFightManager::performCharge(std::map<int32_t, phisics::Entity>& players) {
-    if (boss.currentTargetId == -1) return;
-    
-    auto it = players.find(boss.currentTargetId);
-    if (it == players.end()) return;
-    
-    std::cout << "[BossFight] Boss performs CHARGE attack!" << std::endl;
-    
-    phisics::Entity& target = it->second;
-    glm::vec2 direction = target.pos - boss.position;
-    float distance = glm::length(direction);
-    
-    if (distance > 0.1f && distance <= CHARGE_RANGE) {
-        direction = glm::normalize(direction);
-        
-        // Move boss quickly towards target
-        boss.position += direction * 10.0f;
-        
-        // Check if hit target
-        if (distanceToPlayer(boss.position, target.pos) <= 2.0f) {
-            glm::vec2 knockback = direction * 8.0f;
-            applyDamageToPlayer(boss.currentTargetId, target, CHARGE_DAMAGE, BossAttackType::CHARGE, knockback);
-        }
-        
-        // Broadcast attack
-        BossFightBossAttackData attackData;
-        attackData.bossId = boss.bossId;
-        attackData.attackType = (int)BossAttackType::CHARGE;
-        attackData.attackPosX = target.pos.x;
-        attackData.attackPosY = target.pos.y;
-        attackData.targetCid = boss.currentTargetId;
-        attackData.damage = CHARGE_DAMAGE;
-        
-        if (broadcastCallback) {
-            Packet p;
-            p.header = headerBossFightBossAttack;
-            p.cid = 0;
-            broadcastCallback(p, &attackData, sizeof(attackData), true);
-        }
-    }
-}
-
-void BossFightManager::summonMinions() {
-    std::cout << "[BossFight] Boss summons minions!" << std::endl;
-    
-    // Spawn minions around boss
-    for (int i = 0; i < MINION_SPAWN_COUNT; i++) {
-        float angle = (3.14159f * 2.0f * i) / MINION_SPAWN_COUNT;
-        glm::vec2 offset(std::cos(angle) * 3.0f, std::sin(angle) * 3.0f);
-        spawnMinion(boss.position + offset);
-    }
-    
-    // Broadcast attack
-    BossFightBossAttackData attackData;
-    attackData.bossId = boss.bossId;
-    attackData.attackType = (int)BossAttackType::SUMMON_MINIONS;
-    attackData.attackPosX = boss.position.x;
-    attackData.attackPosY = boss.position.y;
-    attackData.targetCid = -1;
-    attackData.damage = 0;
-    
-    if (broadcastCallback) {
-        Packet p;
-        p.header = headerBossFightBossAttack;
-        p.cid = 0;
-        broadcastCallback(p, &attackData, sizeof(attackData), true);
-    }
-}
-
-// ============================================================================
-// Minion Management
-// ============================================================================
-
-void BossFightManager::spawnMinion(glm::vec2 position) {
-    Minion minion;
-    minion.minionId = nextMinionId++;
-    minion.position = position;
-    minion.velocity = glm::vec2(0, 0);
-    minion.health = 50;
-    minion.maxHealth = 50;
-    minion.speed = 6.0f;
-    minion.damage = 10;
-    minion.targetPlayerId = -1;
-    minion.isAlive = true;
-    minion.lastAttackTime = 0.0f;
-    
-    minions.push_back(minion);
-    
-    // Broadcast minion spawn
-    BossFightMinionSpawnData spawnData;
-    spawnData.minionId = minion.minionId;
-    spawnData.posX = minion.position.x;
-    spawnData.posY = minion.position.y;
-    spawnData.health = minion.health;
-    spawnData.maxHealth = minion.maxHealth;
-    
-    if (broadcastCallback) {
-        Packet p;
-        p.header = headerBossFightMinionSpawn;
-        p.cid = 0;
-        broadcastCallback(p, &spawnData, sizeof(spawnData), true);
-    }
-}
-
-void BossFightManager::updateMinions(float deltaTime, std::map<int32_t, phisics::Entity>& players) {
-    for (auto& minion : minions) {
-        if (!minion.isAlive) continue;
-        
-        // Select target if needed
-        if (minion.targetPlayerId == -1 || !isPlayerAlive(minion.targetPlayerId)) {
-            minion.targetPlayerId = findNearestPlayer(minion.position, players);
-        }
-        
-        if (minion.targetPlayerId == -1) continue;
-        
-        auto it = players.find(minion.targetPlayerId);
-        if (it == players.end()) continue;
-        
-        phisics::Entity& target = it->second;
-        glm::vec2 direction = target.pos - minion.position;
-        float distance = glm::length(direction);
-        
-        // Move towards target
-        if (distance > MINION_ATTACK_RANGE) {
-            if (distance > 0.1f) {
-                direction = glm::normalize(direction);
-                minion.velocity = direction * minion.speed;
-                minion.position += minion.velocity * deltaTime;
-            }
-        } else {
-            // Attack target
-            minion.velocity = glm::vec2(0, 0);
-            minion.lastAttackTime += deltaTime;
-            
-            if (minion.lastAttackTime >= MINION_ATTACK_COOLDOWN) {
-                applyDamageToPlayer(minion.targetPlayerId, target, minion.damage, BossAttackType::MELEE, glm::vec2(0, 0));
-                minion.lastAttackTime = 0.0f;
-            }
-        }
-    }
-}
-
-void BossFightManager::removeDeadMinions() {
-    minions.erase(
-        std::remove_if(minions.begin(), minions.end(),
-            [](const Minion& m) { return !m.isAlive; }),
-        minions.end()
-    );
-}
-
-bool BossFightManager::damageMinion(int32_t minionId, int damage, int32_t attackerCid) {
-    for (auto& minion : minions) {
-        if (minion.minionId == minionId && minion.isAlive) {
-            minion.health -= damage;
-            
-            if (minion.health <= 0) {
-                minion.health = 0;
-                minion.isAlive = false;
-                
-                std::cout << "[BossFight] Minion " << minionId << " killed by player " << attackerCid << std::endl;
-                
-                // Broadcast minion death
-                BossFightMinionDeathData deathData;
-                deathData.minionId = minionId;
-                deathData.killerCid = attackerCid;
-                deathData.posX = minion.position.x;
-                deathData.posY = minion.position.y;
-                
-                if (broadcastCallback) {
-                    Packet p;
-                    p.header = headerBossFightMinionDeath;
-                    p.cid = 0;
-                    broadcastCallback(p, &deathData, sizeof(deathData), true);
-                }
-                
-                return true;
-            }
-            return false;
-        }
-    }
-    return false;
+    // Update last skill time
+    boss.lastSkillTime = matchTime;
+    boss.isSprayingCircle = false;
 }
 
 // ============================================================================
@@ -797,26 +590,6 @@ void BossFightManager::broadcastBossUpdate() {
     }
 }
 
-void BossFightManager::broadcastMinionUpdates() {
-    for (const auto& minion : minions) {
-        if (!minion.isAlive) continue;
-        
-        BossFightMinionUpdateData updateData;
-        updateData.minionId = minion.minionId;
-        updateData.posX = minion.position.x;
-        updateData.posY = minion.position.y;
-        updateData.health = minion.health;
-        updateData.targetPlayerId = minion.targetPlayerId;
-        
-        if (broadcastCallback) {
-            Packet p;
-            p.header = headerBossFightMinionUpdate;
-            p.cid = 0;
-            broadcastCallback(p, &updateData, sizeof(updateData), false);  // Unreliable
-        }
-    }
-}
-
 // ============================================================================
 // Helper Methods
 // ============================================================================
@@ -909,11 +682,25 @@ struct PathNode {
 
 bool BossFightManager::isWalkable(int x, int y, phisics::MapData* mapData) {
     if (!mapData || !mapData->data) return true;
-    if (x < 0 || y < 0 || x >= mapData->w || y >= mapData->h) return false;
     
-    // Check if tile is collidable (wall)
-    phisics::BlockInfo& block = mapData->get(x, y);
-    return !block.isCollidable();
+    // Check 5x5 area around center for boss hitbox
+    for (int dy = -2; dy <= 2; dy++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            int checkX = x + dx;
+            int checkY = y + dy;
+            
+            if (checkX < 0 || checkY < 0 || checkX >= mapData->w || checkY >= mapData->h) {
+                return false;
+            }
+            
+            phisics::BlockInfo& block = mapData->get(checkX, checkY);
+            if (block.isCollidable()) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
 }
 
 std::vector<glm::vec2> BossFightManager::findPath(glm::vec2 start, glm::vec2 end, phisics::MapData* mapData) {
@@ -1099,34 +886,35 @@ void BossFightManager::moveBossWithPathfinding(float deltaTime, const std::map<i
 void BossFightManager::resolveBossCollision(phisics::MapData* mapData) {
     if (!mapData || !mapData->data) return;
     
-    // Boss is 2x2 tiles
-    glm::vec2 bossSize(2.0f, 2.0f);
-    
-    // Check collision with map tiles
-    int minX = (int)boss.position.x;
-    int maxX = (int)(boss.position.x + bossSize.x);
-    int minY = (int)boss.position.y;
-    int maxY = (int)(boss.position.y + bossSize.y);
+    // Boss is 5x5 tiles with center-based positioning
+    float halfSize = BOSS_HITBOX_HALF;
     
     // Clamp to map bounds
-    if (boss.position.x < 0) boss.position.x = 0;
-    if (boss.position.y < 0) boss.position.y = 0;
-    if (boss.position.x + bossSize.x > mapData->w) boss.position.x = mapData->w - bossSize.x;
-    if (boss.position.y + bossSize.y > mapData->h) boss.position.y = mapData->h - bossSize.y;
+    if (boss.position.x - halfSize < 0) boss.position.x = halfSize;
+    if (boss.position.y - halfSize < 0) boss.position.y = halfSize;
+    if (boss.position.x + halfSize > mapData->w) boss.position.x = mapData->w - halfSize;
+    if (boss.position.y + halfSize > mapData->h) boss.position.y = mapData->h - halfSize;
+    
+    // Check collision with map tiles in 5x5 area
+    int minX = (int)(boss.position.x - halfSize);
+    int maxX = (int)(boss.position.x + halfSize);
+    int minY = (int)(boss.position.y - halfSize);
+    int maxY = (int)(boss.position.y + halfSize);
     
     // Simple collision resolution - push back if colliding
     for (int y = minY; y <= maxY && y < mapData->h; y++) {
         for (int x = minX; x <= maxX && x < mapData->w; x++) {
+            if (x < 0 || y < 0) continue;
+            
             phisics::BlockInfo& block = mapData->get(x, y);
             if (block.isCollidable()) {
                 // Push boss away from wall
                 glm::vec2 blockCenter(x + 0.5f, y + 0.5f);
-                glm::vec2 bossCenter = boss.position + bossSize * 0.5f;
-                glm::vec2 pushDir = bossCenter - blockCenter;
+                glm::vec2 pushDir = boss.position - blockCenter;
                 
                 if (glm::length(pushDir) > 0.01f) {
                     pushDir = glm::normalize(pushDir);
-                    boss.position += pushDir * 0.1f;  // Push back slightly
+                    boss.position += pushDir * 0.1f;
                 }
             }
         }
@@ -1134,8 +922,9 @@ void BossFightManager::resolveBossCollision(phisics::MapData* mapData) {
 }
 
 void BossFightManager::checkBossPlayerCollision(std::map<int32_t, phisics::Entity>& players, float deltaTime) {
-    glm::vec2 bossMin = boss.position;
-    glm::vec2 bossMax = boss.position + glm::vec2(2.0f, 2.0f);
+    // Boss hitbox: 5x5 tiles, center-based
+    glm::vec2 bossMin = boss.position - glm::vec2(BOSS_HITBOX_HALF, BOSS_HITBOX_HALF);
+    glm::vec2 bossMax = boss.position + glm::vec2(BOSS_HITBOX_HALF, BOSS_HITBOX_HALF);
     
     for (auto& pair : players) {
         if (!isPlayerAlive(pair.first)) continue;
@@ -1149,9 +938,8 @@ void BossFightManager::checkBossPlayerCollision(std::map<int32_t, phisics::Entit
             bossMax.y > playerMin.y && bossMin.y < playerMax.y) {
             
             // Collision detected - push player away and deal damage
-            glm::vec2 bossCenter = boss.position + glm::vec2(1.0f, 1.0f);
             glm::vec2 playerCenter = player.pos + player.dimensions * 0.5f;
-            glm::vec2 pushDir = playerCenter - bossCenter;
+            glm::vec2 pushDir = playerCenter - boss.position;
             
             if (glm::length(pushDir) > 0.01f) {
                 pushDir = glm::normalize(pushDir);
@@ -1174,19 +962,17 @@ void BossFightManager::updateProximityDamage(float deltaTime, std::map<int32_t, 
     if (proximityDamageTimer <= 0.0f) {
         proximityDamageTimer = 1.0f;  // Damage every 1 second
         
-        glm::vec2 bossCenter = boss.position + glm::vec2(1.0f, 1.0f);
-        
         for (auto& pair : players) {
             if (!isPlayerAlive(pair.first)) continue;
             
             phisics::Entity& player = pair.second;
             glm::vec2 playerCenter = player.pos + player.dimensions * 0.5f;
-            float distance = glm::length(playerCenter - bossCenter);
+            float distance = glm::length(playerCenter - boss.position);
             
-            // Check if player is within damage radius
+            // Check if player is within damage radius (6-7 tiles)
             if (distance <= proximityDamageRadius) {
                 applyDamageToPlayer(pair.first, player, proximityDamageAmount, 
-                                   BossAttackType::AOE_SLAM, glm::vec2(0, 0));
+                                   BossAttackType::MELEE, glm::vec2(0, 0));
                 
                 std::cout << "[BossFight] Proximity damage: " << proximityDamageAmount 
                          << " to player " << pair.first 

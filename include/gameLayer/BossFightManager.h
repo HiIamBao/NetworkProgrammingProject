@@ -63,9 +63,7 @@ public:
     void selectBossTarget(const std::map<int32_t, phisics::Entity>& players);
     void executeBossAttack(std::map<int32_t, phisics::Entity>& players);
     void performMeleeAttack(std::map<int32_t, phisics::Entity>& players);
-    void performAOESlam(std::map<int32_t, phisics::Entity>& players);
-    void performCharge(std::map<int32_t, phisics::Entity>& players);
-    void summonMinions();
+    void performCircleSprayAttack(std::map<int32_t, phisics::Entity>& players);
     void updateProximityDamage(float deltaTime, std::map<int32_t, phisics::Entity>& players);
     
     // ========================================================================
@@ -84,16 +82,6 @@ public:
     
     void setProximityDamageRadius(float radius) { proximityDamageRadius = radius; }
     float getProximityDamageRadius() const { return proximityDamageRadius; }
-    
-    // ========================================================================
-    // Minion Management
-    // ========================================================================
-    
-    void spawnMinion(glm::vec2 position);
-    void updateMinions(float deltaTime, std::map<int32_t, phisics::Entity>& players);
-    void removeDeadMinions();
-    bool damageMinion(int32_t minionId, int damage, int32_t attackerCid);
-    const std::vector<BossFight::Minion>& getMinions() const { return minions; }
     
     // ========================================================================
     // Player Management
@@ -130,8 +118,6 @@ private:
     
     BossFight::BossFightState currentState;
     BossFight::Boss boss;
-    std::vector<BossFight::Minion> minions;
-    int32_t nextMinionId;
     
     std::map<int32_t, bool> playerAlive;
     std::map<int32_t, int> playerDamageDealt;
@@ -139,7 +125,6 @@ private:
     float matchTime;
     float spawnTimer;
     float bossUpdateTimer;      // For 10Hz boss updates
-    float minionUpdateTimer;    // For 10Hz minion updates
     float proximityDamageTimer; // For proximity damage ticks
     float proximityDamageRadius; // Configurable damage zone radius
     int proximityDamageAmount;   // Damage per tick
@@ -161,7 +146,6 @@ private:
     
     void broadcastStateUpdate();
     void broadcastBossUpdate();
-    void broadcastMinionUpdates();
     glm::vec2 getRandomSpawnPosition();
     glm::vec2 getSafeRespawnPosition();
     glm::vec2 findValidBossSpawnPosition(phisics::MapData* mapData);
