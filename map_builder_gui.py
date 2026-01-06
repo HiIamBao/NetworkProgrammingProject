@@ -19,6 +19,27 @@ PADDING = 20
 EMPTY = 0  # non-collidable (default)
 WALL = 1   # collidable
 
+# Collision map matching C++ tiles::collisionMap
+# This string maps tile IDs (0-79) to collision: '-' = non-collidable, 'X' = collidable
+COLLISION_MAP = (
+    "-X------"  # Tiles 0-7
+    "-----X--"  # Tiles 8-15
+    "-X-XXX--"  # Tiles 16-23
+    "-X-XXX--"  # Tiles 24-31
+    "-XXXXX-X"  # Tiles 32-39
+    "XXXXXXXX"  # Tiles 40-47
+    "------XX"  # Tiles 48-55
+    "--------"  # Tiles 56-63
+    "--------"  # Tiles 64-71
+    "--XX--XX"  # Tiles 72-79
+)
+
+def is_tile_collidable(tile_id):
+    """Check if a tile ID is collidable based on collision map"""
+    if 0 <= tile_id < len(COLLISION_MAP):
+        return COLLISION_MAP[tile_id] == 'X'
+    return False
+
 # Colors
 COLOR_EMPTY = "#E8E8E8"      # Light gray for non-collidable
 COLOR_WALL = "#2C3E50"       # Dark blue for collidable
@@ -39,6 +60,10 @@ class MapBuilder:
         
         # UI setup
         self.setup_ui()
+        
+        # Try to load existing map data on startup
+        self.load_map_on_startup()
+        
         self.draw_grid()
         
     def setup_ui(self):
@@ -143,7 +168,10 @@ class MapBuilder:
             return
             
         tile_type = self.map_data[idx]
-        color = COLOR_WALL if tile_type == WALL else COLOR_EMPTY
+        # Check if tile is collidable using collision map (for loading existing maps)
+        # or if it's explicitly set to WALL (for new maps)
+        is_collidable = (tile_type == WALL) or is_tile_collidable(tile_type)
+        color = COLOR_WALL if is_collidable else COLOR_EMPTY
         
         x1 = PADDING + x * CELL_SIZE + 1
         y1 = PADDING + y * CELL_SIZE + 1
@@ -184,8 +212,10 @@ class MapBuilder:
         if x is not None:
             idx = y * self.width + x
             tile_type = self.map_data[idx]
-            tile_name = "Wall (Collidable)" if tile_type == WALL else "Empty (Non-Collidable)"
-            self.status_label.config(text=f"Cell ({x}, {y}) - Current: {tile_name}")
+            is_collidable = (tile_type == WALL) or is_tile_collidable(tile_type)
+            tile_name = "Wall (Collidable)" if is_collidable else "Empty (Non-Collidable)"
+            tile_info = f"Tile ID: {tile_type}" if tile_type != WALL and tile_type != EMPTY else ""
+            self.status_label.config(text=f"Cell ({x}, {y}) - Current: {tile_name} {tile_info}".strip())
         else:
             self.status_label.config(text="Ready")
     
@@ -241,16 +271,62 @@ class MapBuilder:
                     f.write(bytes(self.map_data))
                 
                 size = os.path.getsize(filepath)
-                wall_count = sum(1 for t in self.map_data if t == WALL)
+                wall_count = sum(1 for t in self.map_data if (t == WALL) or is_tile_collidable(t))
                 self.status_label.config(
-                    text=f"Saved to {filepath} ({size} bytes, {wall_count} walls)"
+                    text=f"Saved to {filepath} ({size} bytes, {wall_count} collidable tiles)"
                 )
                 messagebox.showinfo("Success", f"Map saved successfully!\n{filepath}")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to save map:\n{str(e)}")
     
+    def load_map_file(self, filepath, show_error=True):
+        """Load map from binary file (internal method)"""
+        if not filepath or not os.path.exists(filepath):
+            return False
+        
+        try:
+            with open(filepath, 'rb') as f:
+                # Read width and height
+                width = struct.unpack('B', f.read(1))[0]
+                height = struct.unpack('B', f.read(1))[0]
+                # Read tile data
+                data = list(f.read(width * height))
+            
+            # Update map
+            self.width = width
+            self.height = height
+            self.map_data = data
+            
+            # Update canvas size
+            self.canvas.config(scrollregion=(0, 0,
+                                            self.width * CELL_SIZE + PADDING * 2,
+                                            self.height * CELL_SIZE + PADDING * 2))
+            
+            # Redraw
+            self.info_label.config(text=f"Size: {self.width}×{self.height}")
+            self.draw_grid()
+            
+            # Count collidable tiles (both WALL=1 and other collidable tile IDs)
+            wall_count = sum(1 for t in self.map_data if (t == WALL) or is_tile_collidable(t))
+            self.status_label.config(
+                text=f"Loaded {filepath} ({wall_count} collidable tiles)"
+            )
+            return True
+        except Exception as e:
+            if show_error:
+                messagebox.showerror("Error", f"Failed to load map:\n{str(e)}")
+            return False
+    
+    def load_map_on_startup(self):
+        """Automatically load mapData2.bin on startup if it exists"""
+        default_path = os.path.join(os.path.dirname(__file__), 
+                                   "resources", "mapData2.bin")
+        
+        if os.path.exists(default_path):
+            self.load_map_file(default_path, show_error=False)
+    
     def load_map(self):
-        """Load map from binary file"""
+        """Load map from binary file (with file dialog)"""
         default_path = os.path.join(os.path.dirname(__file__), 
                                    "resources", "mapData2.bin")
         
@@ -262,34 +338,7 @@ class MapBuilder:
         )
         
         if filepath:
-            try:
-                with open(filepath, 'rb') as f:
-                    # Read width and height
-                    width = struct.unpack('B', f.read(1))[0]
-                    height = struct.unpack('B', f.read(1))[0]
-                    # Read tile data
-                    data = list(f.read(width * height))
-                
-                # Update map
-                self.width = width
-                self.height = height
-                self.map_data = data
-                
-                # Update canvas size
-                self.canvas.config(scrollregion=(0, 0,
-                                                self.width * CELL_SIZE + PADDING * 2,
-                                                self.height * CELL_SIZE + PADDING * 2))
-                
-                # Redraw
-                self.info_label.config(text=f"Size: {self.width}×{self.height}")
-                self.draw_grid()
-                
-                wall_count = sum(1 for t in self.map_data if t == WALL)
-                self.status_label.config(
-                    text=f"Loaded {filepath} ({wall_count} walls)"
-                )
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to load map:\n{str(e)}")
+            self.load_map_file(filepath, show_error=True)
     
     def new_map(self):
         """Create a new map with custom dimensions"""
