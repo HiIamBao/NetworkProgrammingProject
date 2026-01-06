@@ -411,49 +411,68 @@ void msgLoop(ENetHost *client)
 				}
 				else if (p.header == headerMatchStart)
 				{
-					// Match started
+					// Match started OR game mode update (sent on connection)
 					auto startData = *(MatchStartData*)data;
-					currentGameMode = static_cast<GameMode>(startData.gameMode);
+					GameMode newGameMode = static_cast<GameMode>(startData.gameMode);
+					
+					// Check if game mode changed - if so, we need to reload map
+					bool gameModeChanged = (currentGameMode != newGameMode);
+					currentGameMode = newGameMode;
+					
+					// Update match state - assume match is starting if we receive this
+					// (The server sends this both on connection and match start, but in both cases
+					//  we should be ready to play. If match is waiting, server will send another
+					//  packet when match actually starts)
+					bool wasWaiting = (currentMatchState == MatchState::MATCH_WAITING);
 					currentMatchState = MatchState::MATCH_IN_PROGRESS;
 					matchEnded = false;
-					// startData.mapId=3;
-					// Load correct map based on mapId or game mode
+					
+					// Load correct map based on game mode (always reload if game mode changed)
 					const char* mapFile;
-					if (startData.mapId == 3 || currentGameMode == GameMode::BOSS_FIGHT) {
+					if (currentGameMode == GameMode::BOSS_FIGHT) {
 						mapFile = RESOURCES_PATH "bossFightArena.bin";
-						std::cout << "Loading Boss Fight Arena map..." << std::endl;
 					} else {
 						mapFile = RESOURCES_PATH "mapData2.bin";
-						std::cout << "Loading default map..." << std::endl;
 					}
 					
-					// Reload map
-					map.cleanup();
-					if (!map.load(mapFile)) {
-						std::cout << "Failed to load map: " << mapFile << std::endl;
-					} else {
-						std::cout << "Map loaded successfully: " << mapFile << std::endl;
+					// Reload map if game mode changed or if we're starting a match
+					if (gameModeChanged || wasWaiting)
+					{
+						std::cout << "Game mode: " << static_cast<int>(currentGameMode) 
+						          << (gameModeChanged ? " (changed)" : "") << std::endl;
+						std::cout << "Loading map: " << mapFile << std::endl;
+						
+						map.cleanup();
+						if (!map.load(mapFile)) {
+							std::cout << "Failed to load map: " << mapFile << std::endl;
+						} else {
+							std::cout << "Map loaded successfully: " << mapFile << std::endl;
+						}
 					}
 					
-					if (currentGameMode == GameMode::DEATHMATCH)
+					// Initialize game mode-specific state
+					if (wasWaiting || gameModeChanged)
 					{
-						std::cout << "Match started! Game mode: Free-for-All Deathmatch" << std::endl;
-					}
-					else if (currentGameMode == GameMode::HORDE_DEFENSE)
-					{
-						std::cout << "Match started! Game mode: Horde Defense" << std::endl;
-						hordeEnemies.clear();
-						hordeState = HordeDefense::HordeDefenseState::WAITING;
-						currentWave = 0;
-						playerMoney = 500;  // Starting money
-					}
-					else if (currentGameMode == GameMode::BOSS_FIGHT)
-					{
-						std::cout << "Match started! Game mode: Boss Fight" << std::endl;
-						clientBoss = BossFight::Boss();
-						clientBoss.isAlive = false;
-						clientMinions.clear();
-						bossFightState = BossFight::BossFightState::WAITING;
+						if (currentGameMode == GameMode::DEATHMATCH)
+						{
+							std::cout << "Match started! Game mode: Free-for-All Deathmatch" << std::endl;
+						}
+						else if (currentGameMode == GameMode::HORDE_DEFENSE)
+						{
+							std::cout << "Match started! Game mode: Horde Defense" << std::endl;
+							hordeEnemies.clear();
+							hordeState = HordeDefense::HordeDefenseState::WAITING;
+							currentWave = 0;
+							playerMoney = 500;  // Starting money
+						}
+						else if (currentGameMode == GameMode::BOSS_FIGHT)
+						{
+							std::cout << "Match started! Game mode: Boss Fight" << std::endl;
+							clientBoss = BossFight::Boss();
+							clientBoss.isAlive = false;
+							clientMinions.clear();
+							bossFightState = BossFight::BossFightState::WAITING;
+						}
 					}
 				}
 				// ========================================================================
@@ -1008,8 +1027,27 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			posx = 1;
 		}
 
-		if (platform::isKeyPressedOn(platform::Button::Enter))
+		// Boss Fight: Start match when Enter is pressed during waiting state
+		if (currentGameMode == GameMode::BOSS_FIGHT && 
+		    currentMatchState == MatchState::MATCH_WAITING && 
+		    bossFightState == BossFight::BossFightState::WAITING)
 		{
+			if (platform::isKeyPressedOn(platform::Button::Enter))
+			{
+				// Send boss fight start request to server
+				if (joined && server)
+				{
+					Packet p;
+					p.header = headerBossFightStartRequest;
+					p.cid = cid;
+					sendPacket(server, p, nullptr, 0, true, 0);
+					std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+				}
+			}
+		}
+		else if (platform::isKeyPressedOn(platform::Button::Enter))
+		{
+			// Fullscreen toggle (only when not in boss fight waiting state)
 			platform::setFullScreen(!platform::isFullScreen());
 		}
 		
@@ -1695,7 +1733,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						if (player.speedBoostWaves > 0)
 						{
 							char buffText[32];
-							snprintf(buffText, sizeof(buffText), "[Speed: %d]", player.speedBoostWaves, player.speedBoostWaves > 1 ? "s" : "");
+							snprintf(buffText, sizeof(buffText), "[Speed: %d wave%s]", player.speedBoostWaves, player.speedBoostWaves > 1 ? "s" : "");
 							renderer.renderText(glm::vec2(buffX, buffY), buffText, textures.font, glm::vec4(0.2f, 0.8f, 1.0f, 1.0f), 0.5f, 4.f, 3.f, false);
 							buffY += 25.0f;
 						}
@@ -2112,9 +2150,74 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				killMessageTimer -= deltaTime;
 			}
 			
-			// DEBUG: Boss Fight debug UI
+			// Boss Fight UI
 			if (currentGameMode == GameMode::BOSS_FIGHT)
 			{
+				// Show Start button at top middle (same line as health bar) when waiting for match to start
+				if (currentMatchState == MatchState::MATCH_WAITING && bossFightState == BossFight::BossFightState::WAITING)
+				{
+					// Button position: top middle, same Y as health bar (0.02 = 2% from top)
+					float centerX = 0.5f * renderer.windowW;
+					float buttonY = 0.02f * renderer.windowH;  // Same Y as health bar
+					float buttonW = 250.0f;
+					float buttonH = 50.0f;
+					float buttonX = centerX - buttonW * 0.5f;
+					
+					// Check if mouse is over button
+					glm::vec2 mousePos = platform::getRelMousePosition();
+					bool mouseOver = (mousePos.x >= buttonX && 
+									  mousePos.x <= buttonX + buttonW &&
+									  mousePos.y >= buttonY && 
+									  mousePos.y <= buttonY + buttonH);
+					
+					// Button background (change color on hover)
+					glm::vec4 buttonColor = mouseOver ? glm::vec4(0.3f, 0.7f, 0.3f, 0.95f) : glm::vec4(0.2f, 0.6f, 0.2f, 0.9f);
+					
+					// Button border (drawn first, behind button)
+					auto borderBox = Ui::Box().xLeft(buttonX - 2.0f).yTop(buttonY - 2.0f).xDimensionPixels(buttonW + 4.0f).yDimensionPixels(buttonH + 4.0f);
+					renderer.renderRectangle(borderBox, {0.0f, 0.0f, 0.0f, 0.8f});
+					
+					// Button background (drawn on top of border)
+					auto buttonBox = Ui::Box().xLeft(buttonX).yTop(buttonY).xDimensionPixels(buttonW).yDimensionPixels(buttonH);
+					renderer.renderRectangle(buttonBox, buttonColor);
+					
+					// Start button text
+					const char* startText = "START";
+					glm::vec2 startTextPos = glm::vec2(centerX - 40.0f, buttonY + 12.0f);
+					renderer.renderText(startTextPos, startText, textures.font, 
+						glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.9f, 4.f, 3.f, false);
+					
+					// Handle button click
+					if (mouseOver && platform::isLMousePressed())
+					{
+						// Send boss fight start request to server
+						if (joined && server)
+						{
+							Packet p;
+							p.header = headerBossFightStartRequest;
+							p.cid = cid;
+							sendPacket(server, p, nullptr, 0, true, 0);
+							std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+						}
+					}
+				}
+				
+				// Boss status display (when boss is active)
+				if (clientBoss.isAlive)
+				{
+					char bossStatusText[256];
+					snprintf(bossStatusText, sizeof(bossStatusText), 
+						"BOSS | HP: %.0f/%.0f | Phase: %d",
+						clientBoss.health, clientBoss.maxHealth,
+						static_cast<int>(clientBoss.currentPhase) + 1);
+					
+					glm::vec2 statusPos = glm::vec2(0.05f * renderer.windowW, 50.0f);
+					renderer.renderText(statusPos, bossStatusText, textures.font, 
+						glm::vec4(1.0f, 0.2f, 0.2f, 1.0f), 0.8f, 4.f, 3.f, false);
+				}
+				
+				// DEBUG: Boss Fight debug UI (only in debug builds or when needed)
+				#ifdef _DEBUG
 				// Boss status at top
 				char bossStatusText[256];
 				if (clientBoss.isAlive)
@@ -2220,6 +2323,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					std::cout << "[DEBUG] Requested boss respawn at player position (" 
 							  << player.pos.x << ", " << player.pos.y << ")" << std::endl;
 				}
+				#endif // _DEBUG
 			}
 			
 			// Display match end screen (Deathmatch only)

@@ -165,6 +165,7 @@ char *parsePacket(ENetEvent &event, Packet &p, size_t &dataSize)
         case headerBossFightPlayerRespawn: std::cout << "headerBossFightPlayerRespawn"; break;
         case headerBossFightMatchEnd: std::cout << "headerBossFightMatchEnd"; break;
         case headerBossFightPlayerDamage: std::cout << "headerBossFightPlayerDamage"; break;
+        case headerBossFightStartRequest: std::cout << "headerBossFightStartRequest"; break;
         case headerBossFightDebugRespawnBoss: std::cout << "headerBossFightDebugRespawnBoss"; break;
 		case gameEndHeader: std::cout << "gameEndHeader"; break;
         default: std::cout << "UNKNOWN (" << p.header << ")"; break;

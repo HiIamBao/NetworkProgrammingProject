@@ -32,15 +32,18 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/hung1fps/NetworkProgrammingProject/src/platform/headerOnly.cpp" "CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/headerOnly.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/src/platform/opterPlatformFunctions.cpp" "CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/opterPlatformFunctions.cpp.o.d"
   "/home/hung1fps/NetworkProgrammingProject/src/platform/platformInput.cpp" "CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o" "gcc" "CMakeFiles/multyPlayer.dir/src/platform/platformInput.cpp.o.d"
-  "" "multyPlayer" "gcc" "CMakeFiles/multyPlayer.dir/link.d"
   )
 
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
-  )
-
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glfw-3.3.2/src/CMakeFiles/glfw.dir/DependInfo.cmake"
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glad/CMakeFiles/glad.dir/DependInfo.cmake"
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/gl2d/CMakeFiles/gl2d.dir/DependInfo.cmake"
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/raudio/CMakeFiles/raudio.dir/DependInfo.cmake"
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/imgui-docking/CMakeFiles/imgui.dir/DependInfo.cmake"
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/glUI/CMakeFiles/glui.dir/DependInfo.cmake"
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/enet-1.3.17/CMakeFiles/enet.dir/DependInfo.cmake"
+  "/home/hung1fps/NetworkProgrammingProject/build/thirdparty/safeSave/CMakeFiles/safeSave.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

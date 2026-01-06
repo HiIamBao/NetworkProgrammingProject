@@ -40,6 +40,8 @@ int MultiRoomManager::createRoom(const std::string& roomName,
                                   int maxPlayers,
                                   int gameMode,
                                   int mapId) {
+        // mapId parameter is ignored - map is auto-selected based on gameMode
+        // BOSS_FIGHT (5) -> mapId=3, All other modes -> mapId=0
     std::lock_guard<std::mutex> lock(roomsMutex);
     
     // Find an available slot
@@ -72,16 +74,19 @@ int MultiRoomManager::createRoom(const std::string& roomName,
             rooms[i].maxPlayers = maxPlayers;
             rooms[i].currentPlayers = 1;  // Host counts as player
             rooms[i].gameMode = gameMode;
-            rooms[i].mapId = mapId;
+            // Auto-select map based on game mode
+            // BOSS_FIGHT (5) -> mapId=3, All other modes -> mapId=0
+            int autoMapId = (gameMode == 5) ? 3 : 0;  // 5 = BOSS_FIGHT
+            rooms[i].mapId = autoMapId;
             
-            // Start server thread with game mode and map
-            rooms[i].serverThread = std::make_unique<std::thread>([port, gameMode, mapId]() {
-                serverFunction(port, gameMode, mapId);
+            // Start server thread with game mode and auto-selected map
+            rooms[i].serverThread = std::make_unique<std::thread>([port, gameMode, autoMapId]() {
+                serverFunction(port, gameMode, autoMapId);
             });
             
             std::cout << "MultiRoomManager: Created room '" << roomName 
                       << "' in slot " << i << " on port " << port 
-                      << " (GameMode: " << gameMode << ", Map: " << mapId << ")" << std::endl;
+                      << " (GameMode: " << gameMode << ", Auto-selected Map: " << autoMapId << ")" << std::endl;
             
             return i;  // Return slot ID
         }

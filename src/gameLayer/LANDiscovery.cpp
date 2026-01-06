@@ -120,7 +120,7 @@ void LANDiscovery::broadcastLoop() {
                      currentPlayers,
                      maxPlayers,
                      gameMode,
-                     mapId);
+                     mapId);  // mapId is auto-selected based on gameMode
         }
         
         // Send broadcast

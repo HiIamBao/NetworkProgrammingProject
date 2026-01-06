@@ -43,6 +43,9 @@ struct ServerInstance {
 	int32_t leadingPlayerCid;
 	int leadingPlayerKills;
 	
+	// Map data (loaded for collision detection in boss fight mode)
+	phisics::MapData mapData;
+	
 	// Horde Defense manager (only used for HORDE_DEFENSE mode)
 	HordeDefenseManager* hordeDefenseManager;
 	
@@ -73,6 +76,7 @@ struct ServerInstance {
 			delete bossFightManager;
 			bossFightManager = nullptr;
 		}
+		mapData.cleanup();
 	}
 };
 
@@ -243,8 +247,23 @@ void addConnection(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		instance->bossFightManager->addPlayer(p.cid);
 	}
 	
-	// Send game mode information to the newly connected player
-	// (Important: Do this BEFORE the match start check, so joining players get the mode)
+	// Send game mode information to the newly connected player IMMEDIATELY
+	// This ensures clients know the game mode even before the match starts
+	MatchStartData gameModeData;
+	gameModeData.gameMode = static_cast<int>(instance->gameMode);
+	gameModeData.matchDuration = instance->matchDuration;
+	gameModeData.scoreLimit = instance->scoreLimit;
+	gameModeData.mapId = instance->mapId;
+	
+	Packet gameModePacket;
+	gameModePacket.header = headerMatchStart;  // Use MatchStart packet to set game mode
+	gameModePacket.cid = 0;
+	sendPacket(event.peer, gameModePacket, (const char*)&gameModeData, sizeof(gameModeData), true, 0);
+	
+	std::cout << "Sent game mode to new player: " << static_cast<int>(instance->gameMode) 
+	          << " (Match state: " << (instance->matchState == MatchState::MATCH_IN_PROGRESS ? "IN_PROGRESS" : "WAITING") << ")" << std::endl;
+	
+	// If match is already in progress, also set match state
 	if (instance->matchState == MatchState::MATCH_IN_PROGRESS)
 	{
 		// Match already started - send current game state to new player
@@ -269,41 +288,40 @@ void addConnection(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 	}
 	
 	// Auto-start match conditions:
-	// - Boss Fight: 1+ players (for testing)
+	// - Boss Fight: Manual start only (host must press START button)
 	// - Other modes: 2+ players
-	int minPlayers = (instance->gameMode == GameMode::BOSS_FIGHT) ? 1 : 2;
-	if (instance->connections.size() >= minPlayers && instance->matchState == MatchState::MATCH_WAITING)
+	if (instance->gameMode != GameMode::BOSS_FIGHT)
 	{
-		instance->matchState = MatchState::MATCH_IN_PROGRESS;
-		instance->matchStartTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now()
-		.time_since_epoch()).count(); // Will be set properly with a timer
+		int minPlayers = 2;
+		if (instance->connections.size() >= minPlayers && instance->matchState == MatchState::MATCH_WAITING)
+		{
+			instance->matchState = MatchState::MATCH_IN_PROGRESS;
+			instance->matchStartTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now()
+			.time_since_epoch()).count(); // Will be set properly with a timer
 
-		MatchStartData startData;
-		startData.gameMode = static_cast<int>(instance->gameMode);
-		startData.matchDuration = instance->matchDuration;
-		startData.scoreLimit = instance->scoreLimit;
-		startData.mapId = instance->mapId;  // Send map selection to clients
-		
-		Packet startPacket;
-		startPacket.header = headerMatchStart;
-		startPacket.cid = 0;
-		broadCast(instance, startPacket, &startData, sizeof(startData), nullptr, true, 0);
-		
-		if (instance->gameMode == GameMode::DEATHMATCH)
-		{
-			std::cout << "Match started! Mode: Free-for-All, Score limit: " << instance->scoreLimit << std::endl;
-		}
-		else if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
-		{
-			std::cout << "Match started! Mode: Horde Defense" << std::endl;
-			instance->hordeDefenseManager->startMatch();
-		}
-		else if (instance->gameMode == GameMode::BOSS_FIGHT && instance->bossFightManager)
-		{
-			std::cout << "Match started! Mode: Boss Fight" << std::endl;
-			instance->bossFightManager->startMatch();
+			MatchStartData startData;
+			startData.gameMode = static_cast<int>(instance->gameMode);
+			startData.matchDuration = instance->matchDuration;
+			startData.scoreLimit = instance->scoreLimit;
+			startData.mapId = instance->mapId;  // Send map selection to clients
+			
+			Packet startPacket;
+			startPacket.header = headerMatchStart;
+			startPacket.cid = 0;
+			broadCast(instance, startPacket, &startData, sizeof(startData), nullptr, true, 0);
+			
+			if (instance->gameMode == GameMode::DEATHMATCH)
+			{
+				std::cout << "Match started! Mode: Free-for-All, Score limit: " << instance->scoreLimit << std::endl;
+			}
+			else if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+			{
+				std::cout << "Match started! Mode: Horde Defense" << std::endl;
+				instance->hordeDefenseManager->startMatch();
+			}
 		}
 	}
+	// Boss Fight mode requires manual start via headerBossFightStartRequest packet
 
 }
 
@@ -709,6 +727,46 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			}
 		}
 	}
+	else if (p.header == headerBossFightStartRequest)
+	{
+		// Host requests to start boss fight match
+		if (instance->gameMode == GameMode::BOSS_FIGHT && instance->matchState == MatchState::MATCH_WAITING)
+		{
+			// Verify requester is a valid player (host check could be added here)
+			if (instance->connections.find(p.cid) != instance->connections.end())
+			{
+				std::cout << "[BossFight] Start requested by player " << p.cid << std::endl;
+				
+				// Start the match
+				instance->matchState = MatchState::MATCH_IN_PROGRESS;
+				instance->matchStartTime = std::chrono::duration<float>(std::chrono::high_resolution_clock::now()
+					.time_since_epoch()).count();
+				
+				// Send match start to all clients
+				MatchStartData startData;
+				startData.gameMode = static_cast<int>(instance->gameMode);
+				startData.matchDuration = instance->matchDuration;
+				startData.scoreLimit = instance->scoreLimit;
+				startData.mapId = instance->mapId;  // Use auto-selected map (already set to 3 for BOSS_FIGHT)
+				
+				Packet startPacket;
+				startPacket.header = headerMatchStart;
+				startPacket.cid = 0;
+				broadCast(instance, startPacket, &startData, sizeof(startData), nullptr, true, 0);
+				
+				// Start boss fight match (pass map data for valid spawn position)
+				if (instance->bossFightManager)
+				{
+					std::cout << "Match started! Mode: Boss Fight" << std::endl;
+					instance->bossFightManager->startMatch(&instance->mapData);
+				}
+			}
+			else
+			{
+				std::cout << "[BossFight] Invalid start request from CID " << p.cid << std::endl;
+			}
+		}
+	}
 	else if (p.header == headerBossFightDebugRespawnBoss)
 	{
 		// DEBUG: Respawn boss at requested position
@@ -796,10 +854,19 @@ void serverFunction(int port, int gameMode, int mapId)
 	ServerInstance* instance = new ServerInstance();
 	instance->serverOpen = true;
 	
-	// Set game mode and map from parameters
+	// Set game mode and auto-select map based on game mode
 	instance->gameMode = static_cast<GameMode>(gameMode);
-	instance->mapId = mapId;
-	std::cout << "Server starting on port " << port << " with GameMode: " << gameMode << ", Map: " << mapId << std::endl;
+	
+	// Automatically select map based on game mode (ignore mapId parameter)
+	// BOSS_FIGHT (5) -> bossFightArena.bin (mapId=3)
+	// All other modes -> mapData2.bin (mapId=0)
+	if (instance->gameMode == GameMode::BOSS_FIGHT) {
+		instance->mapId = 3;  // Boss arena map
+	} else {
+		instance->mapId = 0;  // Default map
+	}
+	
+	std::cout << "Server starting on port " << port << " with GameMode: " << gameMode << ", Auto-selected Map: " << instance->mapId << std::endl;
 	
 	// Initialize Horde Defense manager if needed
 	if (instance->gameMode == GameMode::HORDE_DEFENSE)
@@ -857,6 +924,19 @@ void serverFunction(int port, int gameMode, int mapId)
 	// Initialize Boss Fight manager if needed
 	if (instance->gameMode == GameMode::BOSS_FIGHT)
 	{
+		// Load boss fight arena map
+		const char* bossMapFile = "resources/bossFightArena.bin";
+		if (!instance->mapData.load(bossMapFile))
+		{
+			std::cout << "Warning: Failed to load boss fight arena map: " << bossMapFile << std::endl;
+			std::cout << "Boss fight mode may not work correctly without map data." << std::endl;
+		}
+		else
+		{
+			std::cout << "Loaded boss fight arena map: " << bossMapFile 
+			          << " (Size: " << instance->mapData.w << "x" << instance->mapData.h << ")" << std::endl;
+		}
+		
 		instance->bossFightManager = new BossFightManager();
 		instance->bossFightManager->initialize();
 		
@@ -1111,8 +1191,8 @@ void serverFunction(int port, int gameMode, int mapId)
 				playerEntities[conn.first] = conn.second.entityData;
 			}
 			
-			// Update Boss Fight game logic
-			instance->bossFightManager->update(deltaTime, playerEntities, nullptr);  // TODO: Pass map data for pathfinding
+			// Update Boss Fight game logic (pass map data for collision detection and pathfinding)
+			instance->bossFightManager->update(deltaTime, playerEntities, &instance->mapData);
 			
 			// Apply player entity changes back (e.g., damage from boss)
 			for (auto& [cid, entity] : playerEntities)

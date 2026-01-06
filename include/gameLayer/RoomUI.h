@@ -80,6 +80,7 @@ public:
     // Room state
     bool isInRoom() const { return inRoom; }
     int getCurrentRoomId() const { return currentRoomId; }
+    RoomInfoData getCurrentRoomInfo() const { return currentRoomInfo; }
     
     // Packet response handlers
     void handleCreateRoomResponse(const CreateRoomResponse& response);

@@ -41,7 +41,7 @@ public:
     
     BossFight::BossFightState getState() const { return currentState; }
     void setState(BossFight::BossFightState newState);
-    void startMatch();
+    void startMatch(phisics::MapData* mapData = nullptr);
     void endMatch(bool victory);
     float getMatchTime() const { return matchTime; }
     
@@ -164,6 +164,7 @@ private:
     void broadcastMinionUpdates();
     glm::vec2 getRandomSpawnPosition();
     glm::vec2 getSafeRespawnPosition();
+    glm::vec2 findValidBossSpawnPosition(phisics::MapData* mapData);
     int32_t findNearestPlayer(glm::vec2 position, const std::map<int32_t, phisics::Entity>& players);
     float distanceToPlayer(glm::vec2 pos1, glm::vec2 pos2);
     void moveBossTowardsTarget(float deltaTime, const std::map<int32_t, phisics::Entity>& players);

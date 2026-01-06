@@ -129,22 +129,63 @@ void BossFightManager::setState(BossFightState newState) {
     broadcastStateUpdate();
 }
 
-void BossFightManager::startMatch() {
+glm::vec2 BossFightManager::findValidBossSpawnPosition(phisics::MapData* mapData) {
+    if (!mapData || !mapData->data) {
+        // No map data - use default spawn
+        return getRandomSpawnPosition();
+    }
+    
+    // Try to find a valid spawn position within map bounds
+    // Boss is 2x2 tiles, so we need to check a 2x2 area
+    const int maxAttempts = 100;
+    std::uniform_int_distribution<int> xDist(2, mapData->w - 4);  // Leave margin for boss size
+    std::uniform_int_distribution<int> yDist(2, mapData->h - 4);
+    
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+        int x = xDist(rng);
+        int y = yDist(rng);
+        
+        // Check if 2x2 area is walkable (boss size)
+        bool valid = true;
+        for (int dy = 0; dy < 2 && valid; dy++) {
+            for (int dx = 0; dx < 2 && valid; dx++) {
+                if (!isWalkable(x + dx, y + dy, mapData)) {
+                    valid = false;
+                }
+            }
+        }
+        
+        if (valid) {
+            // Return center of 2x2 area
+            return glm::vec2(x + 1.0f, y + 1.0f);
+        }
+    }
+    
+    // Fallback: try center of map
+    glm::vec2 centerPos(mapData->w / 2.0f, mapData->h / 2.0f);
+    if (isWalkable((int)centerPos.x, (int)centerPos.y, mapData)) {
+        return centerPos;
+    }
+    
+    // Last resort: use random spawn position
+    std::cout << "[BossFight] Warning: Could not find valid spawn position, using random position" << std::endl;
+    return getRandomSpawnPosition();
+}
+
+void BossFightManager::startMatch(phisics::MapData* mapData) {
     std::cout << "[BossFight] Starting match..." << std::endl;
     
     reset();
     matchTime = 0.0f;
+    currentMap = mapData;  // Store map data for collision detection
     
     // Initialize all players as alive
     for (auto& pair : playerAlive) {
         pair.second = true;
     }
     
-    // Spawn boss near a random player spawn point (very close for debugging)
-    glm::vec2 bossSpawnPos = getRandomSpawnPosition();
-    // Offset boss just 2 tiles away from player spawn for testing
-    bossSpawnPos.x += 2.0f;
-    bossSpawnPos.y += 2.0f;
+    // Find valid spawn position (not on collidable blocks, within map bounds)
+    glm::vec2 bossSpawnPos = findValidBossSpawnPosition(mapData);
     
     setState(BossFightState::BOSS_SPAWNING);
     spawnBoss(bossSpawnPos);

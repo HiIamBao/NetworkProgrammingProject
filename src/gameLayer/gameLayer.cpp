@@ -215,6 +215,34 @@ bool gameLogic(float deltaTime)
 						}
 					};
 					
+					// Start game callback - send start request to server for boss fight mode
+					g_roomUI->onStartGame = []() {
+						// Access server and cid from client.cpp (they're global variables)
+						extern ENetPeer *server;
+						extern int32_t cid;
+						extern bool joined;
+						
+						if (!joined || !server) {
+							std::cout << "Cannot start game: Not connected to server" << std::endl;
+							return;
+						}
+						
+						// Check if we're in boss fight mode
+						if (g_roomUI) {
+							RoomInfoData roomInfo = g_roomUI->getCurrentRoomInfo();
+							if (roomInfo.gameMode == 5) {  // BOSS_FIGHT = 5
+								// Send boss fight start request packet
+								Packet p;
+								p.header = headerBossFightStartRequest;
+								p.cid = cid;
+								sendPacket(server, p, nullptr, 0, true, 0);
+								std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+							} else {
+								std::cout << "Start game requested but not in boss fight mode (mode: " << roomInfo.gameMode << ")" << std::endl;
+							}
+						}
+					};
+					
 					// Leave room = stop broadcasting and go back to menu
 					g_roomUI->onLeaveRoom = []() {
 						// Stop broadcasting if we were hosting

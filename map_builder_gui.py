@@ -10,8 +10,8 @@ import struct
 import os
 
 # Constants
-DEFAULT_WIDTH = 50
-DEFAULT_HEIGHT = 50
+DEFAULT_WIDTH = 64
+DEFAULT_HEIGHT = 64
 CELL_SIZE = 15  # pixels per grid cell
 PADDING = 20
 
@@ -285,22 +285,56 @@ class MapBuilder:
             return False
         
         try:
+            # Get file size first
+            file_size = os.path.getsize(filepath)
+            
             with open(filepath, 'rb') as f:
-                # Read width and height
-                width = struct.unpack('B', f.read(1))[0]
-                height = struct.unpack('B', f.read(1))[0]
-                # Read tile data
-                data = list(f.read(width * height))
+                # Read width and height as unsigned bytes (0-255)
+                width_byte = f.read(1)
+                height_byte = f.read(1)
+                
+                if len(width_byte) != 1 or len(height_byte) != 1:
+                    raise ValueError("Could not read width/height from file")
+                
+                width = struct.unpack('B', width_byte)[0]
+                height = struct.unpack('B', height_byte)[0]
+                
+                # Calculate expected file size: 2 bytes (width + height) + width * height bytes (tile data)
+                expected_size = 2 + (width * height)
+                
+                if file_size < expected_size:
+                    raise ValueError(f"File too small: expected {expected_size} bytes, got {file_size} bytes")
+                
+                # Read all tile data
+                expected_tile_count = width * height
+                tile_data = f.read(expected_tile_count)
+                
+                if len(tile_data) != expected_tile_count:
+                    raise ValueError(f"Incomplete tile data: expected {expected_tile_count} bytes, got {len(tile_data)} bytes")
+                
+                # Convert to list of integers (tile IDs)
+                data = list(tile_data)
+            
+            # Verify we have the correct amount of data
+            if len(data) != width * height:
+                raise ValueError(f"Data size mismatch: expected {width * height} tiles, got {len(data)}")
             
             # Update map
             self.width = width
             self.height = height
             self.map_data = data
             
-            # Update canvas size
-            self.canvas.config(scrollregion=(0, 0,
-                                            self.width * CELL_SIZE + PADDING * 2,
-                                            self.height * CELL_SIZE + PADDING * 2))
+            # Update canvas size to fit the entire map
+            canvas_width = self.width * CELL_SIZE + PADDING * 2
+            canvas_height = self.height * CELL_SIZE + PADDING * 2
+            
+            # Update canvas scroll region (this allows scrolling for large maps)
+            self.canvas.config(scrollregion=(0, 0, canvas_width, canvas_height))
+            
+            # Also update canvas viewport size if needed (but keep it scrollable)
+            viewport_width = min(800, canvas_width)
+            viewport_height = min(600, canvas_height)
+            self.canvas.config(width=viewport_width, height=viewport_height)
             
             # Redraw
             self.info_label.config(text=f"Size: {self.width}×{self.height}")
@@ -308,13 +342,17 @@ class MapBuilder:
             
             # Count collidable tiles (both WALL=1 and other collidable tile IDs)
             wall_count = sum(1 for t in self.map_data if (t == WALL) or is_tile_collidable(t))
+            empty_count = len(self.map_data) - wall_count
+            
             self.status_label.config(
-                text=f"Loaded {filepath} ({wall_count} collidable tiles)"
+                text=f"Loaded {os.path.basename(filepath)}: {self.width}×{self.height}, {wall_count} collidable, {empty_count} empty"
             )
             return True
         except Exception as e:
             if show_error:
                 messagebox.showerror("Error", f"Failed to load map:\n{str(e)}")
+            else:
+                print(f"Warning: Failed to load map {filepath}: {str(e)}")
             return False
     
     def load_map_on_startup(self):
