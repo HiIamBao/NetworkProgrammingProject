@@ -2379,5 +2379,3 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 	}
 
 	
-
-}
