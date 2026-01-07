@@ -435,28 +435,23 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 		sPacket.cid = p.cid;
 		broadCast(instance, sPacket, data, size, event.peer, true, 1);
 		
-		// Boss Fight: Check bullet collision with boss
+			// Boss Fight: Register bullet for continuous collision detection
 		if (instance->gameMode == GameMode::BOSS_FIGHT && instance->bossFightManager)
 		{
 			phisics::Bullet* bullet = (phisics::Bullet*)data;
 			
-			// Check collision with boss (5x5 hitbox, center-based)
-			auto boss = instance->bossFightManager->getBoss();
-			if (boss && boss->isAlive)
-			{
-				// AABB collision check (boss 5x5 tiles, center-based)
-				glm::vec2 bossMin = boss->position - glm::vec2(BossFight::BOSS_HITBOX_HALF, BossFight::BOSS_HITBOX_HALF);
-				glm::vec2 bossMax = boss->position + glm::vec2(BossFight::BOSS_HITBOX_HALF, BossFight::BOSS_HITBOX_HALF);
-				glm::vec2 bulletPos = bullet->pos;
+			// Calculate velocity from direction (assuming standard bullet speed)
+			// Note: Bullet struct only has direction, speed is handled by gameplay logic
+			// Standard player bullet speed is around 50.0f
+			float speed = 50.0f;
 				
-				if (bulletPos.x >= bossMin.x && bulletPos.x <= bossMax.x &&
-				    bulletPos.y >= bossMin.y && bulletPos.y <= bossMax.y)
-				{
-					// Bullet hit boss - calculate damage
-					int damage = 1;  // Base damage
-					instance->bossFightManager->damageBoss(damage, p.cid);
-				}
-			}
+			// Check if player has speed upgrades
+			// auto it = instance->connections.find(p.cid);
+			// if (it != instance->connections.end()) {
+			// 	// speed += it->second.entityData.bulletSpeedUpgradeLevel * 5.0f;
+			// }
+				
+			instance->bossFightManager->addPlayerBullet(bullet->pos, bullet->direction * speed, 1, p.cid);
 		}
 
 	}
@@ -731,7 +726,15 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 				if (instance->bossFightManager)
 				{
 					std::cout << "Match started! Mode: Boss Fight" << std::endl;
+					
 					instance->bossFightManager->startMatch(&instance->mapData);
+
+					// Register all connected players with the manager AFTER startMatch (which calls reset)
+					std::cout << "[Server] DEBUG: Registering connected players for Boss Fight..." << std::endl;
+					for (auto& conn : instance->connections) {
+						std::cout << "[Server] DEBUG: Adding player " << conn.first << std::endl;
+						instance->bossFightManager->addPlayer(conn.first);
+					}
 				}
 			}
 			else

@@ -74,6 +74,12 @@ static HordeDefense::PlayerUpgrades playerUpgrades;
 #pragma region Boss Fight State
 // Boss Fight client-side state
 static BossFight::Boss clientBoss;
+struct ClientBossBullet {
+    glm::vec2 pos;
+    glm::vec2 velocity;
+    float lifetime;
+};
+static std::vector<ClientBossBullet> clientBossBullets;
 static BossFight::BossFightState bossFightState = BossFight::BossFightState::WAITING;
 static float bossAttackAnimTimer = 0.0f;
 static BossFight::BossAttackType lastBossAttack = BossFight::BossAttackType::MELEE;
@@ -420,6 +426,11 @@ void msgLoop(ENetHost *client)
 					// Check if game mode changed - if so, we need to reload map
 					bool gameModeChanged = (currentGameMode != newGameMode);
 					currentGameMode = newGameMode;
+					
+					if (currentGameMode == GameMode::BOSS_FIGHT) {
+						clientBossBullets.clear();
+						// Reset other boss state if needed
+					}
 
 					// Distinguish initial Boss Fight mode announcement from actual start
 					bool wasWaiting = (currentMatchState == MatchState::MATCH_WAITING);
@@ -828,6 +839,17 @@ void msgLoop(ENetHost *client)
 					bossNotificationTimer = 2.0f;
 					
 					std::cout << "[BossFight] Boss circle spray at (" << sprayData.centerX << ", " << sprayData.centerY << ")" << std::endl;
+
+					// Spawn client-side bullets
+					float angleStep = 2.0f * 3.14159f / sprayData.bulletCount;
+					for (int i = 0; i < sprayData.bulletCount; i++) {
+						float angle = i * angleStep;
+						ClientBossBullet b;
+						b.pos = glm::vec2(sprayData.centerX, sprayData.centerY);
+						b.velocity = glm::vec2(std::cos(angle), std::sin(angle)) * sprayData.bulletSpeed;
+						b.lifetime = 5.0f;
+						clientBossBullets.push_back(b);
+					}
 				}
 				else if (p.header == headerBossFightBossDeath)
 				{
@@ -1444,12 +1466,16 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				// Draw boss if alive
 				if (clientBoss.isAlive)
 				{
-					// Calculate boss screen position (boss is larger - 2x2 tiles)
+					// Calculate boss screen position (boss is 5x5 tiles)
+					float bossSize = 5.0f;
+					float bossSizeScreen = bossSize * worldMagnification;
+					
+					// Server uses center position, so we need to offset for top-left rendering
 					glm::vec4 bossRect = {
-						clientBoss.position.x * worldMagnification,
-						clientBoss.position.y * worldMagnification,
-						2.0f * worldMagnification,  // Boss is 2 tiles wide
-						2.0f * worldMagnification   // Boss is 2 tiles tall
+						(clientBoss.position.x - bossSize/2.0f) * worldMagnification,
+						(clientBoss.position.y - bossSize/2.0f) * worldMagnification,
+						bossSizeScreen,
+						bossSizeScreen
 					};
 					
 					// Boss color - dark purple/red
@@ -1458,15 +1484,15 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					// Draw boss body
 					renderer.renderRectangle(bossRect, bossColor);
 					
-					// Draw boss health bar (larger)
+					// Draw boss health bar (width of boss)
 					float healthPercent = clientBoss.health / clientBoss.maxHealth;
-					float healthBarWidth = 2.0f * worldMagnification;
+					float healthBarWidth = bossSizeScreen;
 					float healthBarHeight = 0.2f * worldMagnification;
-					float healthBarY = (clientBoss.position.y - 0.3f) * worldMagnification;
+					float healthBarY = (clientBoss.position.y - bossSize/2.0f - 0.5f) * worldMagnification;
 					
 					// Background (red)
 					glm::vec4 bgRect = {
-						clientBoss.position.x * worldMagnification,
+						(clientBoss.position.x - bossSize/2.0f) * worldMagnification,
 						healthBarY,
 						healthBarWidth,
 						healthBarHeight
@@ -1476,12 +1502,36 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					// Foreground (green to red gradient based on health)
 					glm::vec4 healthColor = {1.0f - healthPercent, healthPercent, 0.0f, 1.0f};
 					glm::vec4 fgRect = {
-						clientBoss.position.x * worldMagnification,
+						(clientBoss.position.x - bossSize/2.0f) * worldMagnification,
 						healthBarY,
 						healthBarWidth * healthPercent,
 						healthBarHeight
 					};
 					renderer.renderRectangle(fgRect, healthColor);
+				}
+
+				// Update and Render Boss Bullets
+				for (auto it = clientBossBullets.begin(); it != clientBossBullets.end(); ) {
+					// Update
+					it->pos += it->velocity * deltaTime;
+					it->lifetime -= deltaTime;
+
+					if (it->lifetime <= 0) {
+						it = clientBossBullets.erase(it);
+						continue;
+					}
+
+					// Render
+					glm::vec4 bulletRect = {
+						it->pos.x * worldMagnification,
+						it->pos.y * worldMagnification,
+						0.5f * worldMagnification,
+						0.5f * worldMagnification
+					};
+					// Orange/Red bullets
+					renderer.renderRectangle(bulletRect, {1.0f, 0.5f, 0.0f, 1.0f});
+
+					++it;
 				}
 			}
 	#pragma endregion
@@ -1535,6 +1585,22 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					}
 				}
 			}
+			
+			// Visual fix: Check collision with Boss
+			if (currentGameMode == GameMode::BOSS_FIGHT && clientBoss.isAlive)
+			{
+				glm::vec2 bossCenter = clientBoss.position;
+				float hitboxHalf = 2.5f; // Boss is 5x5
+				glm::vec2 bulletPos = bullets[i].pos;
+
+				if (bulletPos.x >= bossCenter.x - hitboxHalf && bulletPos.x <= bossCenter.x + hitboxHalf &&
+					bulletPos.y >= bossCenter.y - hitboxHalf && bulletPos.y <= bossCenter.y + hitboxHalf) 
+				{
+					bullets.erase(bullets.begin() + i);
+					i--;
+					continue;
+				}
+			}
 		}
 
 		for (int i = 0; i < bullets.size(); i++)
@@ -1572,6 +1638,22 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						i--;
 						break;
 					}
+				}
+			}
+			
+			// Visual fix: Check collision with Boss (damage handled by server)
+			if (currentGameMode == GameMode::BOSS_FIGHT && clientBoss.isAlive)
+			{
+				glm::vec2 bossCenter = clientBoss.position;
+				float hitboxHalf = 2.5f; // Boss is 5x5
+				glm::vec2 bulletPos = ownBullets[i].pos;
+
+				if (bulletPos.x >= bossCenter.x - hitboxHalf && bulletPos.x <= bossCenter.x + hitboxHalf &&
+					bulletPos.y >= bossCenter.y - hitboxHalf && bulletPos.y <= bossCenter.y + hitboxHalf) 
+				{
+					ownBullets.erase(ownBullets.begin() + i);
+					i--;
+					continue;
 				}
 			}
 			
