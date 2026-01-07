@@ -16,6 +16,8 @@
     #include <arpa/inet.h>
     #include <unistd.h>
     #include <fcntl.h>
+    #include <ifaddrs.h>
+    #include <net/if.h>
     #define SOCKET int
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
@@ -120,12 +122,47 @@ void LANDiscovery::broadcastLoop() {
                      currentPlayers,
                      maxPlayers,
                      gameMode,
-                     mapId);  // mapId is auto-selected based on gameMode
+                     mapId);
         }
         
-        // Send broadcast
-        sendto(sockfd, message, strlen(message), 0, 
+#ifdef _WIN32
+        // Windows: Send to global broadcast address
+        // (For robust multi-interface support on Windows, GetAdaptersAddresses is needed,
+        // but this simple fallback usually works if the primary interface is correct)
+         sendto(sockfd, message, strlen(message), 0, 
                (sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+#else
+        // Linux/Unix: specific broadcast to each interface
+        struct ifaddrs *ifaddr, *ifa;
+        bool sent_to_any = false;
+
+        if (getifaddrs(&ifaddr) != -1) {
+            for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+                if (ifa->ifa_addr == NULL) continue;
+                if (ifa->ifa_addr->sa_family != AF_INET) continue;
+                
+                // Check if interface is UP and supports BROADCAST
+                if ((ifa->ifa_flags & IFF_UP) && (ifa->ifa_flags & IFF_BROADCAST)) {
+                    // Get broadcast address for this interface
+                    if (ifa->ifa_broadaddr != NULL) {
+                        sockaddr_in* if_bcast = (sockaddr_in*)ifa->ifa_broadaddr;
+                        if_bcast->sin_port = htons(BROADCAST_PORT);
+
+                        sendto(sockfd, message, strlen(message), 0, 
+                               (sockaddr*)if_bcast, sizeof(*if_bcast));
+                        sent_to_any = true;
+                    }
+                }
+            }
+            freeifaddrs(ifaddr);
+        }
+
+        // Fallback to global broadcast if enumeration failed or no interfaces found
+        if (!sent_to_any) {
+             sendto(sockfd, message, strlen(message), 0, 
+               (sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+        }
+#endif
         
         // Wait before next broadcast
         std::this_thread::sleep_for(std::chrono::milliseconds(BROADCAST_INTERVAL_MS));
