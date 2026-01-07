@@ -50,6 +50,8 @@ void BossFightManager::reset() {
     boss.isAlive = false;
     playerAlive.clear();
     playerDamageDealt.clear();
+    bossBullets.clear();  // Clear any active boss projectiles
+    playerBullets.clear(); // Clear any active player bullets
     matchTime = 0.0f;
     spawnTimer = 0.0f;
     bossUpdateTimer = 0.0f;
@@ -80,10 +82,12 @@ void BossFightManager::update(float deltaTime, std::map<int32_t, phisics::Entity
             updateBoss(deltaTime, players);
             updateProximityDamage(deltaTime, players);
             checkBossPlayerCollision(players, deltaTime);
+            updateBossBullets(deltaTime, players);  // Update circle spray bullets
+            updatePlayerBullets(deltaTime);         // Update player bullets for boss damage
             
-            // Broadcast updates at 10Hz
+            // Broadcast updates at 20Hz (0.05s) for smoother movement
             bossUpdateTimer += deltaTime;
-            if (bossUpdateTimer >= 0.1f) {
+            if (bossUpdateTimer >= 0.05f) {
                 broadcastBossUpdate();
                 bossUpdateTimer = 0.0f;
             }
@@ -394,9 +398,14 @@ void BossFightManager::executeBossAttack(std::map<int32_t, phisics::Entity>& pla
     BossAttackType attackType = BossAttackType::MELEE;
     
     if (boss.currentPhase == BossPhase::PHASE_1) {
-        // Phase 1: Only melee attacks
-        attackType = BossAttackType::MELEE;
-        boss.nextAttackTimer = 2.5f;
+        // Phase 1: 50% melee, 50% circle spray (Changed for testing/variety)
+        if (roll < 50) {
+            attackType = BossAttackType::MELEE;
+            boss.nextAttackTimer = 2.0f;
+        } else {
+            attackType = BossAttackType::CIRCLE_SPRAY;
+            boss.nextAttackTimer = 2.5f;
+        }
     } else if (boss.currentPhase == BossPhase::PHASE_2) {
         // Phase 2: 70% melee, 30% circle spray
         if (roll < 70) {
@@ -473,6 +482,19 @@ void BossFightManager::performCircleSprayAttack(std::map<int32_t, phisics::Entit
     sprayData.bulletSpeed = CIRCLE_SPRAY_SPEED;
     sprayData.damage = boss.baseDamage;
     
+    // Spawn actual bullets for server-side collision detection
+    float angleStep = 2.0f * 3.14159f / CIRCLE_SPRAY_BULLETS;
+    for (int i = 0; i < CIRCLE_SPRAY_BULLETS; i++) {
+        float angle = i * angleStep;
+        BossBullet bullet;
+        bullet.pos = boss.position;
+        bullet.velocity = glm::vec2(std::cos(angle), std::sin(angle)) * CIRCLE_SPRAY_SPEED;
+        bullet.damage = boss.baseDamage;
+        bullet.lifetime = 5.0f;  // 5 seconds lifetime
+        bullet.active = true;
+        bossBullets.push_back(bullet);
+    }
+    
     // Broadcast circle spray for client visualization
     if (broadcastCallback) {
         Packet p;
@@ -484,6 +506,99 @@ void BossFightManager::performCircleSprayAttack(std::map<int32_t, phisics::Entit
     // Update last skill time
     boss.lastSkillTime = matchTime;
     boss.isSprayingCircle = false;
+}
+
+void BossFightManager::updateBossBullets(float deltaTime, std::map<int32_t, phisics::Entity>& players) {
+    const float BULLET_RADIUS = 0.5f;  // Bullet collision radius
+    const float PLAYER_RADIUS = 0.8f;  // Player collision radius
+    
+    for (auto& bullet : bossBullets) {
+        if (!bullet.active) continue;
+        
+        // Update position
+        bullet.pos += bullet.velocity * deltaTime;
+        bullet.lifetime -= deltaTime;
+        
+        // Deactivate if lifetime expired
+        if (bullet.lifetime <= 0) {
+            bullet.active = false;
+            continue;
+        }
+        
+        // Check collision with players
+        for (auto& [cid, player] : players) {
+            if (!isPlayerAlive(cid)) continue;
+            
+            float dist = glm::length(bullet.pos - player.pos);
+            if (dist < BULLET_RADIUS + PLAYER_RADIUS) {
+                // Hit player
+                applyDamageToPlayer(cid, player, bullet.damage, BossFight::BossAttackType::CIRCLE_SPRAY, glm::vec2(0, 0));
+                bullet.active = false;
+                std::cout << "[BossFight] Circle spray bullet hit player " << cid << " for " << bullet.damage << " damage" << std::endl;
+                break;
+            }
+        }
+    }
+    
+    // Remove inactive bullets
+    bossBullets.erase(
+        std::remove_if(bossBullets.begin(), bossBullets.end(),
+            [](const BossBullet& b) { return !b.active; }),
+        bossBullets.end()
+    );
+}
+
+void BossFightManager::addPlayerBullet(glm::vec2 pos, glm::vec2 vel, int damage, int32_t cid) {
+    PlayerBullet bullet;
+    bullet.pos = pos;
+    bullet.velocity = vel;
+    bullet.damage = damage;
+    bullet.cid = cid;
+    bullet.lifetime = 2.0f; // Standard bullet lifetime
+    bullet.active = true;
+    playerBullets.push_back(bullet);
+}
+
+void BossFightManager::updatePlayerBullets(float deltaTime) {
+    if (!boss.isAlive) return;
+
+    // Boss AABB for collision
+    glm::vec2 bossMin = boss.position - glm::vec2(BossFight::BOSS_HITBOX_HALF, BossFight::BOSS_HITBOX_HALF);
+    glm::vec2 bossMax = boss.position + glm::vec2(BossFight::BOSS_HITBOX_HALF, BossFight::BOSS_HITBOX_HALF);
+
+    for (auto& bullet : playerBullets) {
+        if (!bullet.active) continue;
+
+        // Store old position for continuous collision detection (optional, but good for fast bullets)
+        // glm::vec2 oldPos = bullet.pos;
+        
+        // Update position
+        bullet.pos += bullet.velocity * deltaTime;
+        bullet.lifetime -= deltaTime;
+
+        // Deactivate if lifetime expired
+        if (bullet.lifetime <= 0) {
+            bullet.active = false;
+            continue;
+        }
+
+        // Check collision with boss AABB
+        if (bullet.pos.x >= bossMin.x && bullet.pos.x <= bossMax.x &&
+            bullet.pos.y >= bossMin.y && bullet.pos.y <= bossMax.y) {
+            
+            // Hit boss!
+            damageBoss(bullet.damage, bullet.cid);
+            bullet.active = false; // Destroy bullet
+            // std::cout << "[BossFight] Bullet hit boss!" << std::endl;
+        }
+    }
+
+    // Remove inactive bullets
+    playerBullets.erase(
+        std::remove_if(playerBullets.begin(), playerBullets.end(),
+            [](const PlayerBullet& b) { return !b.active; }),
+        playerBullets.end()
+    );
 }
 
 // ============================================================================
@@ -595,15 +710,32 @@ void BossFightManager::broadcastBossUpdate() {
 // ============================================================================
 
 glm::vec2 BossFightManager::getRandomSpawnPosition() {
-    static glm::vec2 spawnPositions[] = {
-        {30.0f, 10.0f},  // North
-        {30.0f, 50.0f},  // South
-        {10.0f, 30.0f},  // West
-        {50.0f, 30.0f}   // East
-    };
+    // Use map-relative positions if map data is available
+    if (currentMap && currentMap->data) {
+        float mapW = (float)currentMap->w;
+        float mapH = (float)currentMap->h;
+        
+        // Calculate spawn positions relative to map size (with 10% margin from edges)
+        float margin = 0.1f;
+        glm::vec2 spawnPositions[] = {
+            {mapW * 0.5f, mapH * margin + 3.0f},      // North (center-top)
+            {mapW * 0.5f, mapH * (1.0f - margin) - 3.0f}, // South (center-bottom)
+            {mapW * margin + 3.0f, mapH * 0.5f},      // West (left-center)
+            {mapW * (1.0f - margin) - 3.0f, mapH * 0.5f}  // East (right-center)
+        };
+        
+        std::uniform_int_distribution<int> dist(0, 3);
+        glm::vec2 pos = spawnPositions[dist(rng)];
+        
+        // Clamp to valid map bounds (leaving room for 5x5 boss size)
+        pos.x = std::max(5.0f, std::min(pos.x, mapW - 5.0f));
+        pos.y = std::max(5.0f, std::min(pos.y, mapH - 5.0f));
+        
+        return pos;
+    }
     
-    std::uniform_int_distribution<int> dist(0, 3);
-    return spawnPositions[dist(rng)];
+    // Fallback for no map data - use center position
+    return glm::vec2(30.0f, 30.0f);
 }
 
 glm::vec2 BossFightManager::getSafeRespawnPosition() {
@@ -838,8 +970,8 @@ void BossFightManager::moveBossWithPathfinding(float deltaTime, const std::map<i
     const phisics::Entity& target = it->second;
     currentMap = mapData;
     
-    std::cout << "[BossFight] Moving boss from (" << boss.position.x << ", " << boss.position.y 
-              << ") towards player at (" << target.pos.x << ", " << target.pos.y << ")" << std::endl;
+    // Log removed for performance
+    // std::cout << "[BossFight] Moving boss..." << std::endl;
     
     // Recalculate path periodically
     pathRecalcTimer -= deltaTime;
@@ -856,28 +988,35 @@ void BossFightManager::moveBossWithPathfinding(float deltaTime, const std::map<i
         glm::vec2 direction = waypoint - boss.position;
         float distance = glm::length(direction);
         
-        std::cout << "[BossFight] Following waypoint " << bossPathIndex << "/" << bossPath.size() 
-                  << " at (" << waypoint.x << ", " << waypoint.y << "), distance: " << distance << std::endl;
+        // std::cout << "[BossFight] Following waypoint " << bossPathIndex << "/" << bossPath.size() 
+        //           << " at (" << waypoint.x << ", " << waypoint.y << "), distance: " << distance << std::endl;
         
         if (distance < 0.3f) {
             // Reached waypoint, move to next
             bossPathIndex++;
-            std::cout << "[BossFight] Reached waypoint, moving to next" << std::endl;
+            // std::cout << "[BossFight] Reached waypoint, moving to next" << std::endl;
         } else {
             // Move towards waypoint
             direction = glm::normalize(direction);
-            glm::vec2 oldPos = boss.position;
             boss.velocity = direction * boss.speed;
             boss.position += boss.velocity * deltaTime;
-            
-            std::cout << "[BossFight] Moved boss to (" << boss.position.x << ", " << boss.position.y 
-                      << "), velocity: " << boss.speed << std::endl;
-            
-            // Resolve collisions with map
-            if (mapData) {
-                resolveBossCollision(mapData);
-            }
         }
+    } else {
+        // Fallback: simple movement towards target if pathfinding fails
+        // std::cout << "[BossFight] Path empty/finished, using direct movement fallback" << std::endl;
+        glm::vec2 direction = target.pos - boss.position;
+        float distance = glm::length(direction);
+        
+        if (distance > 0.1f) {
+            direction = glm::normalize(direction);
+            boss.velocity = direction * boss.speed;
+            boss.position += boss.velocity * deltaTime;
+        }
+    }
+    
+    // Resolve collisions with map
+    if (mapData) {
+        resolveBossCollision(mapData);
     } else {
         std::cout << "[BossFight] No valid path or reached end" << std::endl;
     }

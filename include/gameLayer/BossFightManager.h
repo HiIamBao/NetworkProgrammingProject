@@ -64,6 +64,7 @@ public:
     void executeBossAttack(std::map<int32_t, phisics::Entity>& players);
     void performMeleeAttack(std::map<int32_t, phisics::Entity>& players);
     void performCircleSprayAttack(std::map<int32_t, phisics::Entity>& players);
+    void updateBossBullets(float deltaTime, std::map<int32_t, phisics::Entity>& players);
     void updateProximityDamage(float deltaTime, std::map<int32_t, phisics::Entity>& players);
     
     // ========================================================================
@@ -110,6 +111,10 @@ public:
     // ========================================================================
     
     float getBossHealthPercent() const;
+
+    // Bullet Management
+    void addPlayerBullet(glm::vec2 pos, glm::vec2 vel, int damage, int32_t cid);
+    void updatePlayerBullets(float deltaTime);
     
 private:
     // ========================================================================
@@ -140,6 +145,28 @@ private:
     BroadcastFunc broadcastCallback;
     SendToPlayerFunc sendToPlayerCallback;
     
+    // Boss bullets for circle spray attack
+    struct BossBullet {
+        glm::vec2 pos;
+        glm::vec2 velocity;
+        int damage;
+        float lifetime;
+        bool active;
+    };
+    std::vector<BossBullet> bossBullets;
+    
+    // Player bullets for continuous collision detection
+    struct PlayerBullet {
+        glm::vec2 pos;
+        glm::vec2 velocity;
+        int damage;
+        int32_t cid;
+        float lifetime;
+        bool active;
+    };
+    std::vector<PlayerBullet> playerBullets;
+
+
     // ========================================================================
     // Helper Methods
     // ========================================================================

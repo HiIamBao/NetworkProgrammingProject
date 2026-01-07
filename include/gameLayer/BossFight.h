@@ -127,7 +127,7 @@ struct BossStats {
 // GAME CONSTANTS
 // ============================================================================
 
-constexpr float BOSS_SPAWN_DURATION = 3.0f;   // Spawn animation time
+constexpr float BOSS_SPAWN_DURATION = 0.0f;   // Spawn animation time
 constexpr float BOSS_SIZE = 5.0f;             // Boss is 5x5 tiles
 constexpr float BOSS_HITBOX_HALF = 2.5f;      // Half size for calculations
 constexpr float BOSS_ATTACK_RANGE = 2.5f;     // Melee attack range
