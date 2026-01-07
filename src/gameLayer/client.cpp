@@ -1463,8 +1463,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					};
 					renderer.renderRectangle(fgRect, healthColor);
 				}
-				
-				// Draw minions
+			}
 	#pragma endregion
 
 			static float timer = 0;
