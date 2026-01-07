@@ -2,6 +2,7 @@
 
 #include <glm/vec2.hpp>
 #include <cstdint>
+#include <algorithm>
 
 // ============================================================================
 // HORDE DEFENSE MODE - DATA STRUCTURES & ENUMS
@@ -318,15 +319,18 @@ struct WaveConfig {
         WaveConfig config;
         config.waveNumber = wave;
         config.completionBonus = 100 * wave;
-        config.spawnInterval = 2.0f;  // 2 seconds between spawns
         
-        config.zombieCount = 0;
-        config.runnerCount = 0;
-        config.tankCount = 0;
-        config.exploderCount = 0;
-        config.bossCount = 1;
-       
-     return config;
+        // Spawn interval decreases as waves progress (faster spawning)
+        config.spawnInterval = std::max(0.5f, 2.0f - (wave * 0.1f));
+        
+        // Base enemy counts scale with wave number
+        config.zombieCount = 5 + (wave * 2);      // 7, 9, 11, 13... zombies
+        config.runnerCount = wave >= 3 ? (wave - 1) : 0;  // Start runners at wave 3
+        config.tankCount = wave >= 5 ? (wave / 3) : 0;    // Start tanks at wave 5
+        config.exploderCount = wave >= 7 ? (wave / 4) : 0; // Start exploders at wave 7
+        config.bossCount = (wave % 5 == 0) ? 1 : 0;       // Boss every 5th wave
+        
+        return config;
     }
     
     int getTotalEnemies() const {

@@ -1,5 +1,4 @@
 #include "HordeDefenseManager.h"
-#include <iostream>
 #include <cstring>
 #include <algorithm>
 
@@ -34,7 +33,6 @@ HordeDefenseManager::~HordeDefenseManager() {
 
 void HordeDefenseManager::initialize() {
     reset();
-    std::cout << "[HordeDefense] Manager initialized" << std::endl;
 }
 
 void HordeDefenseManager::cleanup() {
@@ -56,8 +54,6 @@ void HordeDefenseManager::reset() {
     
     enemies.clear();
     playerKills.clear();
-    
-    std::cout << "[HordeDefense] Game state reset" << std::endl;
 }
 
 // ============================================================================
@@ -96,7 +92,6 @@ void HordeDefenseManager::update(float deltaTime) {
 void HordeDefenseManager::setState(HordeDefenseState newState) {
     if (currentState == newState) return;
     
-    std::cout << "[HordeDefense] State change: " << (int)currentState << " -> " << (int)newState << std::endl;
     currentState = newState;
     
     broadcastStateUpdate();
@@ -128,8 +123,6 @@ void HordeDefenseManager::startMatch() {
     currentWave = 1;
     setState(HordeDefenseState::BUYING_PHASE);
     phaseTimer = BUY_PHASE_DURATION;
-    
-    std::cout << "[HordeDefense] Match started! Wave 1 buy phase beginning..." << std::endl;
 }
 
 void HordeDefenseManager::endMatch(bool victory) {
@@ -163,8 +156,6 @@ void HordeDefenseManager::endMatch(bool victory) {
         p.cid = 0;
         broadcastCallback(p, &endData, sizeof(endData), true);
     }
-    
-    std::cout << "[HordeDefense] Match ended! Victory: " << victory << ", Final wave: " << currentWave << std::endl;
 }
 
 // ============================================================================
@@ -199,8 +190,6 @@ void HordeDefenseManager::startWave() {
         p.cid = 0;
         broadcastCallback(p, &waveData, sizeof(waveData), true);
     }
-    
-    std::cout << "[HordeDefense] Wave " << currentWave << " started! Enemies: " << totalEnemiesToSpawn << std::endl;
 }
 
 void HordeDefenseManager::completeWave() {
@@ -241,8 +230,6 @@ void HordeDefenseManager::completeWave() {
         p.cid = 0;
         broadcastCallback(p, &completeData, sizeof(completeData), true);
     }
-    
-    std::cout << "[HordeDefense] Wave " << currentWave << " complete! Bonus: $" << bonus << std::endl;
     
     // Check for victory
     if (currentWave >= TOTAL_WAVES) {
@@ -389,8 +376,6 @@ void HordeDefenseManager::addPlayer(int32_t cid) {
     playerAlive[cid] = true;
     playerRespawned[cid] = false;
     playerKills[cid] = 0;
-    
-    std::cout << "[HordeDefense] Player " << cid << " added" << std::endl;
 }
 
 void HordeDefenseManager::removePlayer(int32_t cid) {
@@ -398,18 +383,13 @@ void HordeDefenseManager::removePlayer(int32_t cid) {
     playerAlive.erase(cid);
     playerRespawned.erase(cid);
     playerKills.erase(cid);
-    
-    std::cout << "[HordeDefense] Player " << cid << " removed" << std::endl;
 }
 
 void HordeDefenseManager::respawnPlayer(int32_t cid, phisics::Entity& player) {
-    std::cout << "[HordeDefense] respawnPlayer() called for CID " << cid << ", current HP: " << player.life << std::endl;
-    
     playerAlive[cid] = true;
     playerRespawned[cid] = true;  // Mark as respawned to prevent multiple respawns
     
     int newHP = getEffectiveMaxHealth(player);
-    std::cout << "[HordeDefense] Calculated max HP for player " << cid << ": " << newHP << std::endl;
     player.life = newHP;  // Respawn with full HP (including upgrades)
     
     // Reset temporary buffs (wave-based)
@@ -420,8 +400,6 @@ void HordeDefenseManager::respawnPlayer(int32_t cid, phisics::Entity& player) {
     
     glm::vec2 spawnPos = getRandomSpawnPosition();
     player.pos = spawnPos;
-    
-    std::cout << "[HordeDefense] Player " << cid << " respawned with HP: " << player.life << " at position (" << spawnPos.x << ", " << spawnPos.y << ")" << std::endl;
     
     // Broadcast respawn
     if (broadcastCallback) {
@@ -440,12 +418,10 @@ void HordeDefenseManager::respawnPlayer(int32_t cid, phisics::Entity& player) {
 void HordeDefenseManager::markPlayerDead(int32_t cid) {
     playerAlive[cid] = false;
     playerRespawned[cid] = false;  // Reset respawn flag when player dies
-    std::cout << "[HordeDefense] Player " << cid << " marked as dead" << std::endl;
 }
 
 void HordeDefenseManager::markPlayerRespawned(int32_t cid) {
     playerRespawned[cid] = true;  // Set flag to prevent multiple respawns
-    std::cout << "[HordeDefense] Player " << cid << " marked as respawned" << std::endl;
 }
 
 bool HordeDefenseManager::isPlayerAlive(int32_t cid) const {
@@ -466,8 +442,15 @@ bool HordeDefenseManager::needsRespawn(int32_t cid) const {
 }
 
 void HordeDefenseManager::respawnAllDeadPlayers() {
-    // Just mark players for respawn - actual respawn happens in server loop
-    // This is called during wave complete transition
+    // Mark all dead players as alive (but not yet respawned)
+    // Actual respawn happens in server loop when needsRespawn() returns true
+    for (auto& [cid, alive] : playerAlive) {
+        if (!alive) {
+            // Mark player as alive so they will be picked up by needsRespawn()
+            playerAlive[cid] = true;
+            playerRespawned[cid] = false;  // Not respawned yet
+        }
+    }
 }
 
 void HordeDefenseManager::decrementWaveBasedBuffs(std::map<int32_t, phisics::Entity>& players) {
@@ -477,25 +460,16 @@ void HordeDefenseManager::decrementWaveBasedBuffs(std::map<int32_t, phisics::Ent
         if (player.speedBoostWaves > 0) {
             player.speedBoostWaves--;
             changed = true;
-            if (player.speedBoostWaves == 0) {
-                std::cout << "[HordeDefense] Speed boost expired for player " << cid << std::endl;
-            }
         }
         
         if (player.damageBoostWaves > 0) {
             player.damageBoostWaves--;
             changed = true;
-            if (player.damageBoostWaves == 0) {
-                std::cout << "[HordeDefense] Damage boost expired for player " << cid << std::endl;
-            }
         }
         
         if (player.multiShotWaves > 0) {
             player.multiShotWaves--;
             changed = true;
-            if (player.multiShotWaves == 0) {
-                std::cout << "[HordeDefense] Multi-shot expired for player " << cid << std::endl;
-            }
         }
         
         // If buffs changed, broadcast update
@@ -605,8 +579,6 @@ bool HordeDefenseManager::buyUpgrade(int32_t cid, phisics::Entity& player, Upgra
             // Heal player by the amount maxLife increased
             int healthIncrease = player.maxLife - oldMaxLife;
             player.life = std::min(player.life + healthIncrease, player.maxLife);
-            std::cout << "[HordeDefense] Health upgrade: MaxHP " << oldMaxLife << " -> " << player.maxLife 
-                      << ", CurrentHP: " << player.life << std::endl;
             break;
         }
         case UpgradeType::SPEED: 
@@ -623,8 +595,6 @@ bool HordeDefenseManager::buyUpgrade(int32_t cid, phisics::Entity& player, Upgra
     response.newLevel = nextLevel;
     response.newMoney = playerMoney[cid];
     strcpy(response.message, "Upgrade purchased!");
-    
-    std::cout << "[HordeDefense] Player " << cid << " upgraded " << info.name << " to level " << nextLevel << std::endl;
     
     return true;
 }
@@ -657,8 +627,6 @@ bool HordeDefenseManager::buyItem(int32_t cid, phisics::Entity& player, ShopItem
     response.duration = info.duration;
     strcpy(response.message, "Item purchased!");
     
-    std::cout << "[HordeDefense] Player " << cid << " bought " << info.name << std::endl;
-    
     return true;
 }
 
@@ -668,25 +636,21 @@ void HordeDefenseManager::applyItemEffect(phisics::Entity& player, ShopItemType 
     switch (type) {
         case ShopItemType::HEALTH_PACK:
             player.life = std::min(player.life + (int)info.effectValue, player.maxLife);
-            std::cout << "[HordeDefense] Health pack used: player.life=" << player.life << "/" << player.maxLife << std::endl;
             break;
             
         case ShopItemType::SPEED_BOOST:
             // Add waves (not replace) so multiple purchases stack the duration
             player.speedBoostWaves += (int)info.duration;
-            std::cout << "[HordeDefense] Speed boost applied: " << player.speedBoostWaves << " waves remaining" << std::endl;
             break;
             
         case ShopItemType::DAMAGE_AMPLIFIER:
             // Add waves (not replace) so multiple purchases stack the duration
             player.damageBoostWaves += (int)info.duration;
-            std::cout << "[HordeDefense] Damage amplifier applied: " << player.damageBoostWaves << " waves remaining" << std::endl;
             break;
             
         case ShopItemType::MULTI_SHOT:
             // Add waves (not replace) so multiple purchases stack the duration
             player.multiShotWaves += (int)info.duration;
-            std::cout << "[HordeDefense] Multi-shot applied: " << player.multiShotWaves << " waves remaining" << std::endl;
             break;
     }
 }
@@ -996,8 +960,6 @@ int HordeDefenseManager::getEffectiveMaxHealth(const phisics::Entity& player) co
 void HordeDefenseManager::sendFullStateToPlayer(int32_t cid, ENetPeer* peer) {
     if (!sendToPlayerCallback) return;
     
-    std::cout << "[HordeDefense] Sending full state to newly joined player " << cid << std::endl;
-    
     // Send current game state
     HordeStateUpdateData stateData;
     stateData.currentWave = currentWave;
@@ -1042,8 +1004,6 @@ void HordeDefenseManager::sendFullStateToPlayer(int32_t cid, ENetPeer* peer) {
         mp.cid = 0;
         sendToPlayerCallback(cid, mp, &moneyData, sizeof(moneyData), true);
     }
-    
-    std::cout << "[HordeDefense] Sent " << enemies.size() << " enemies and full state to player " << cid << std::endl;
 }
 
 // ============================================================================

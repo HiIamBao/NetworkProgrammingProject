@@ -104,13 +104,14 @@ bool gameLogic(float deltaTime)
 	static char name[playerNameSize] = {};
 	static int currentPort = 7778;  // Track which port to connect to
 	static bool isPaused = false;  // Track if game is paused
+	static bool roomUIInitialized = false;  // Track if room UI callbacks are set up (at file scope for reset access)
+	static bool wasJoined = false;  // Track if client was joined (for disconnect detection)
 	
 	if (state == 0)
 	{
 		// Use account UI system
 		if (g_accountUI) {
 			UIState uiState = g_accountUI->getState();
-			static bool roomUIInitialized = false;  // Track if room UI callbacks are set up
 			
 			// Render account UI
 			g_accountUI->render(renderer, textures.font, deltaTime);
@@ -125,9 +126,12 @@ bool gameLogic(float deltaTime)
 				if (g_roomUI && !roomUIInitialized) {
 					g_roomUI->setUsername(g_accountUI->getCurrentUsername());
 					
-					// Start LAN discovery listening when entering room browser
-					if (g_lanDiscovery && !g_lanDiscovery->isListening()) {
-						g_lanDiscovery->startListening();
+					// Clear any stale server data and start fresh
+					if (g_lanDiscovery) {
+						g_lanDiscovery->clearDiscoveredServers();
+						if (!g_lanDiscovery->isListening()) {
+							g_lanDiscovery->startListening();
+						}
 					}
 					
 					// Setup simplified callbacks for local hosting with LAN discovery
@@ -440,8 +444,38 @@ bool gameLogic(float deltaTime)
 		escWasPressed = escPressed;
 		
 		if (!isPaused) {
-			// Normal gameplay - just run the game
-			clientFunction(deltaTime, renderer, textures, ip, name, currentPort);
+			// Check if client has been disconnected (returns to menu)
+			extern bool joined;
+			
+			if (wasJoined && !joined) {
+				// Client was disconnected from server - return to menu
+				std::cout << "Client disconnected - returning to menu" << std::endl;
+				wasJoined = false;
+				state = 0;
+				
+				// Stop broadcasting if hosting
+				if (g_lanDiscovery && g_lanDiscovery->isBroadcasting()) {
+					g_lanDiscovery->stopBroadcasting();
+				}
+				
+				// Reset room UI state completely
+				if (g_roomUI) {
+					g_roomUI->setState(RoomUIState::NONE);
+				}
+				
+				// Reset room UI initialization flag so callbacks get re-setup
+				roomUIInitialized = false;
+				
+				if (g_accountUI) {
+					g_accountUI->setState(UIState::MAIN_MENU);
+				}
+				
+				resetClient();
+			} else {
+				// Normal gameplay - just run the game
+				wasJoined = joined;
+				clientFunction(deltaTime, renderer, textures, ip, name, currentPort);
+			}
 		} else {
 			// PAUSED STATE - Render pause menu
 			
@@ -494,6 +528,13 @@ bool gameLogic(float deltaTime)
 				// Return to main menu
 				isPaused = false;
 				state = 0;
+				
+				// Reset room UI state completely (same as disconnect handler)
+				if (g_roomUI) {
+					g_roomUI->setState(RoomUIState::NONE);
+				}
+				roomUIInitialized = false;
+				wasJoined = false;  // Reset so next room creation doesn't trigger false disconnect
 				
 				// Reset account UI state if available
 				if (g_accountUI) {

@@ -1,4 +1,4 @@
-# Install script for directory: /home/hung1fps/NetworkProgrammingProject/thirdparty/stb_image
+# Install script for directory: /home/bao/Network Programming/Project/NetworkProgrammingProject/thirdparty/stb_image
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

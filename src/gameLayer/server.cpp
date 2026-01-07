@@ -1140,16 +1140,19 @@ void serverFunction(int port, int gameMode, int mapId)
 				if (hasHP0 && flagAlive && notWaitingRespawn)
 				{
 					// Player just died during wave - mark them as dead
-					instance->hordeDefenseManager->markPlayerDead(conn.first);				std::cout << "[HordeDefense] Player " << conn.first << " died! (HP: 0)" << std::endl;
-				
-				// Check if all players are dead (game over)
-				if (instance->hordeDefenseManager->allPlayersDead(playerEntities))
-				{
-					std::cout << "[HordeDefense] All players dead! Game Over!" << std::endl;
-					// The HordeDefenseManager will handle game over state
+					instance->hordeDefenseManager->markPlayerDead(conn.first);
+					std::cout << "[HordeDefense] Player " << conn.first << " died! (HP: 0)" << std::endl;
 				}
 			}
-		}
+			
+			// Check if all players are dead AFTER marking all deaths (game over check)
+			// Only check during active wave phase
+			if (instance->hordeDefenseManager->getState() == HordeDefense::HordeDefenseState::WAVE_ACTIVE &&
+			    instance->hordeDefenseManager->getAlivePlayers() == 0)
+			{
+				std::cout << "[HordeDefense] All players dead! Game Over!" << std::endl;
+				instance->hordeDefenseManager->endMatch(false);  // Defeat!
+			}
 		// Note: Buff timers are now wave-based and decremented when wave completes
 	}
 	#pragma endregion

@@ -66,9 +66,27 @@ void RoomUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, float deltaTim
 void RoomUI::setState(RoomUIState newState) {
     currentState = newState;
     
-    if (newState == RoomUIState::ROOM_BROWSER) {
+    if (newState == RoomUIState::NONE) {
+        // Full reset when leaving room system
+        inRoom = false;
+        isHost = false;
+        isReady = false;
+        currentRoomId = -1;
+        joiningRoomId = -1;
+        selectedRoomIndex = -1;
+        roomPlayers.clear();
+        roomList.clear();
+        clearCreateRoomInputs();
+        clearJoinInputs();
+        // Clear any lingering status messages
+        messageTimer = 0.0f;
+        statusMessage = "";
+    } else if (newState == RoomUIState::ROOM_BROWSER) {
         // Request room list when entering browser
         roomListRefreshTimer = 0.0f;
+        // Clear old messages when entering browser
+        messageTimer = 0.0f;
+        statusMessage = "";
         if (onRequestRoomList) {
             onRequestRoomList();
         }

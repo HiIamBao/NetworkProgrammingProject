@@ -1,4 +1,4 @@
-# Install script for directory: /home/hung1fps/NetworkProgrammingProject/thirdparty/glfw-3.3.2/src
+# Install script for directory: /home/bao/Network Programming/Project/NetworkProgrammingProject/thirdparty/glfw-3.3.2/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

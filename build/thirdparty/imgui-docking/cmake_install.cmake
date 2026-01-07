@@ -1,4 +1,4 @@
-# Install script for directory: /home/hung1fps/NetworkProgrammingProject/thirdparty/imgui-docking
+# Install script for directory: /home/bao/Network Programming/Project/NetworkProgrammingProject/thirdparty/imgui-docking
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

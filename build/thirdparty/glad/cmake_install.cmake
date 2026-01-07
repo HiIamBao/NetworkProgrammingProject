@@ -1,4 +1,4 @@
-# Install script for directory: /home/hung1fps/NetworkProgrammingProject/thirdparty/glad
+# Install script for directory: /home/bao/Network Programming/Project/NetworkProgrammingProject/thirdparty/glad
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

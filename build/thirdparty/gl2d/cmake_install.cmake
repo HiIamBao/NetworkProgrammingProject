@@ -1,4 +1,4 @@
-# Install script for directory: /home/hung1fps/NetworkProgrammingProject/thirdparty/gl2d
+# Install script for directory: /home/bao/Network Programming/Project/NetworkProgrammingProject/thirdparty/gl2d
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

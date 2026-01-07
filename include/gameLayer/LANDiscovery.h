@@ -36,6 +36,7 @@ public:
     void startListening();
     void stopListening();
     std::vector<DiscoveredServer> getDiscoveredServers();
+    void clearDiscoveredServers();
     
     // Check if broadcasting or listening
     bool isBroadcasting() const { return broadcasting.load(); }

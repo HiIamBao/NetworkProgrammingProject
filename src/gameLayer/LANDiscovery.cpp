@@ -315,3 +315,8 @@ std::vector<DiscoveredServer> LANDiscovery::getDiscoveredServers() {
     cleanupOldServers();  // Safe to call since we already have the lock
     return discoveredServers;
 }
+
+void LANDiscovery::clearDiscoveredServers() {
+    std::lock_guard<std::mutex> lock(discoveryMutex);
+    discoveredServers.clear();
+}

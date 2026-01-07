@@ -748,6 +748,24 @@ void msgLoop(ENetHost *client)
 						std::cout << "Item purchase failed: " << response.message << std::endl;
 					}
 				}
+				else if (p.header == headerHordeMatchEnd)
+				{
+					auto endData = *(HordeMatchEndData*)data;
+					matchEnded = true;
+					
+					if (endData.victory)
+					{
+						waveNotification = "VICTORY! All waves completed!";
+					}
+					else
+					{
+						waveNotification = "DEFEATED! Wave " + std::to_string(endData.finalWave);
+					}
+					waveNotificationTimer = 10.0f;
+					
+					std::cout << "[HordeDefense] Match ended - Victory: " << endData.victory 
+					          << ", Final Wave: " << endData.finalWave << std::endl;
+				}
 				// ========================================================================
 				// BOSS FIGHT PACKET HANDLERS
 				// ========================================================================
@@ -875,9 +893,11 @@ void msgLoop(ENetHost *client)
 			}
 			case ENET_EVENT_TYPE_DISCONNECT:
 			{
-				//std::cout << "disconect\n";
-				exit(0);
-
+				// Server disconnected - reset client state and return to menu
+				std::cout << "Disconnected from server" << std::endl;
+				joined = false;
+				server = nullptr;
+				matchEnded = true;  // Signal match end for UI
 				break;
 			}
 		}
