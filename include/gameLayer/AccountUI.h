@@ -14,6 +14,7 @@ enum class UIState {
     ACCOUNT_INFO,
     LEADERBOARD,
     BROWSE_ROOMS,
+    MATCH_MAKING,
     HOST_SERVER,
     JOIN_SERVER,
     IN_GAME
@@ -55,6 +56,13 @@ private:
     Account* currentAccount;
     std::vector<Account> leaderboardCache;
     float leaderboardRefreshTimer;
+
+    // Leaderboard UI state
+    int leaderboardSelectedMode = 0; // 0=Deathmatch, 1=Horde, 2=Boss
+    
+    // Matchmaking UI state
+    int mmSelectedGameMode = 0;       // 0-3, same mapping as RoomUI
+    int mmSelectedMaxPlayersIdx = 0;  // index into {2,4,6,8}
     
 public:
     AccountUI(AccountManager* accMgr, SessionManager* sessMgr);
@@ -76,6 +84,11 @@ public:
     // Account info
     Account* getCurrentAccount() { return currentAccount; }
     
+    // Matchmaking callbacks (wired from gameLayer)
+    std::function<void(bool start)> onMatchmakingRequest;
+    int getMatchmakingSelectedGameMode() const { return mmSelectedGameMode; }
+    int getMatchmakingSelectedMaxPlayersIndex() const { return mmSelectedMaxPlayersIdx; }
+    
 private:
     // Screen rendering
     void renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font);
@@ -83,6 +96,7 @@ private:
     void renderRegisterScreen(gl2d::Renderer2D& renderer, gl2d::Font& font);
     void renderAccountInfo(gl2d::Renderer2D& renderer, gl2d::Font& font);
     void renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font);
+    void renderMatchMaking(gl2d::Renderer2D& renderer, gl2d::Font& font);
     
     // Actions
     void attemptLogin();

@@ -35,6 +35,10 @@ namespace glui
 
 	void Space(float pixels);
 
+	void SameLine();
+
+	void NewLine();
+
 	void InputText(std::string name,
 		char* text, size_t textSizeWithNullChar, gl2d::Color4f color = {0,0,0,0}, const gl2d::Texture texture = {});
 

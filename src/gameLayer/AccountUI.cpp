@@ -52,8 +52,86 @@ void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, float delta
         case UIState::LEADERBOARD:
             renderLeaderboard(renderer, font);
             break;
+        case UIState::MATCH_MAKING:
+            renderMatchMaking(renderer, font);
+            break;
         default:
             break;
+    }
+}
+
+void AccountUI::renderMatchMaking(gl2d::Renderer2D& renderer, gl2d::Font& font) {
+    glui::Text("===== MATCH MAKING =====", UIColors::Primary);
+    glui::Space(20);
+
+    if (currentAccount) {
+        char eloText[64];
+        sprintf(eloText, "Current ELO: %d", currentAccount->elo);
+        glui::Text(eloText, UIColors::White);
+        glui::Space(10);
+    }
+
+    // Max players selection (like RoomUI::renderCreateRoom)
+    glui::Text("Max Players:", UIColors::White);
+    const char* playerOptions[] = {"2", "4", "6", "8"};
+    for (int i = 0; i < 4; i++) {
+        char buttonLabel[64];
+        if (mmSelectedMaxPlayersIdx == i) {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     ">>> %s Players <<<##mm_maxp%d", playerOptions[i], i);
+        } else {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     "    %s Players    ##mm_maxp%d", playerOptions[i], i);
+        }
+
+        glm::vec4 btnColor = (mmSelectedMaxPlayersIdx == i)
+                                 ? UIColors::Success
+                                 : UIColors::Panel;
+        if (glui::Button(buttonLabel, btnColor)) {
+            mmSelectedMaxPlayersIdx = i;
+        }
+    }
+    glui::Space(10);
+
+    // Game mode selection (same 4 options as RoomUI)
+    glui::Text("Game Mode:", UIColors::White);
+    const char* modeOptions[] = {
+        "Deathmatch (FFA)", "Team Battle", "Boss Fight", "Horde Defense"};
+    for (int i = 0; i < 4; i++) {
+        char buttonLabel[64];
+        if (mmSelectedGameMode == i) {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     ">>> %s <<<##mm_mode%d", modeOptions[i], i);
+        } else {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     "    %s    ##mm_mode%d", modeOptions[i], i);
+        }
+
+        glm::vec4 btnColor = (mmSelectedGameMode == i)
+                                 ? UIColors::Success
+                                 : UIColors::Panel;
+        if (glui::Button(buttonLabel, btnColor)) {
+            mmSelectedGameMode = i;
+        }
+    }
+    glui::Space(20);
+
+    if (glui::Button("Start Search", UIColors::Success)) {
+        if (onMatchmakingRequest) {
+            onMatchmakingRequest(true);
+        }
+    }
+
+    if (glui::Button("Cancel Search", UIColors::Panel)) {
+        if (onMatchmakingRequest) {
+            onMatchmakingRequest(false);
+        }
+    }
+
+    glui::Space(20);
+
+    if (glui::Button("Back", UIColors::Panel)) {
+        setState(UIState::MAIN_MENU);
     }
 }
 
@@ -89,14 +167,18 @@ void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
         if (glui::Button("Browse Rooms", UIColors::Success)) {
             setState(UIState::BROWSE_ROOMS);
         }
-        
-        if (glui::Button("Host Game", UIColors::Primary)) {
-            setState(UIState::HOST_SERVER);
+
+        if (glui::Button("Match Making", UIColors::Success)) {
+            setState(UIState::MATCH_MAKING);
         }
         
-        if (glui::Button("Join Game", UIColors::Primary)) {
-            setState(UIState::JOIN_SERVER);
-        }
+        // if (glui::Button("Host Game", UIColors::Primary)) {
+        //     setState(UIState::HOST_SERVER);
+        // }
+        
+        // if (glui::Button("Join Game", UIColors::Primary)) {
+        //     setState(UIState::JOIN_SERVER);
+        // }
         
         glui::Space(20);
         
@@ -262,8 +344,28 @@ void AccountUI::renderAccountInfo(gl2d::Renderer2D& renderer, gl2d::Font& font) 
 
 void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     glui::Text("===== LEADERBOARD =====", UIColors::Primary);
-    glui::Text("(Refreshes every 5 seconds)", UIColors::White);
-    glui::Space(20);
+    glui::Space(10);
+    
+    // Game-mode tabs: Deathmatch, Horde Defense, Boss Fight
+    const char* modeTabs[] = {"Deathmatch", "Horde Defense", "Boss Fight"};
+    for (int i = 0; i < 3; i++) {
+        char label[64];
+        if (leaderboardSelectedMode == i) {
+            snprintf(label, sizeof(label), ">>> %s <<<##lb_mode%d", modeTabs[i], i);
+        } else {
+            snprintf(label, sizeof(label), "    %s    ##lb_mode%d", modeTabs[i], i);
+        }
+        
+        glm::vec4 color = (leaderboardSelectedMode == i) ? UIColors::Success : UIColors::Panel;
+        if (glui::Button(label, color)) {
+            leaderboardSelectedMode = i;
+            // TODO: in future, filter/sort leaderboardCache by game mode here
+        }
+        
+        glui::SameLine(); // Render on one row
+    }
+    glui::NewLine();
+    glui::Space(10);
     
     if (leaderboardCache.empty()) {
         glui::Text("No players found", UIColors::White);

@@ -59,12 +59,13 @@ bool AccountManager::createTables() {
             username TEXT UNIQUE NOT NULL COLLATE NOCASE,
             password_hash TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL COLLATE NOCASE,
-            level INTEGER DEFAULT 1,
+            level INTEGER DEFAULT 69,
             total_score INTEGER DEFAULT 0,
-            games_played INTEGER DEFAULT 0,
+            games_played INTEGER DEFAULT 100,
             games_won INTEGER DEFAULT 0,
             win_rate REAL DEFAULT 0.0,
             ranking INTEGER DEFAULT 0,
+            elo INTEGER DEFAULT 1500,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         
@@ -80,6 +81,14 @@ bool AccountManager::createTables() {
         std::cerr << "SQL error: " << errMsg << std::endl;
         sqlite3_free(errMsg);
         return false;
+    }
+    
+    // Try to add elo column for existing databases (ignore error if it exists)
+    const char* alterSql = "ALTER TABLE accounts ADD COLUMN elo INTEGER DEFAULT 1500;";
+    rc = sqlite3_exec(db, alterSql, nullptr, nullptr, &errMsg);
+    if (rc != SQLITE_OK && errMsg) {
+        // Most likely "duplicate column" on already-migrated DBs; safe to ignore
+        sqlite3_free(errMsg);
     }
     
     return true;
@@ -195,7 +204,7 @@ Account* AccountManager::getAccount(const std::string& username) {
 }
 
 bool AccountManager::loadAccountFromDB(const std::string& username, Account& account) {
-    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, created_at FROM accounts WHERE username = ? COLLATE NOCASE";
+    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, elo, created_at FROM accounts WHERE username = ? COLLATE NOCASE";
     sqlite3_stmt* stmt = nullptr;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -214,7 +223,8 @@ bool AccountManager::loadAccountFromDB(const std::string& username, Account& acc
         account.gamesWon = sqlite3_column_int(stmt, 6);
         account.winRate = static_cast<float>(sqlite3_column_double(stmt, 7));
         account.ranking = sqlite3_column_int(stmt, 8);
-        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9));
+        account.elo = sqlite3_column_int(stmt, 9);
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
         
         sqlite3_finalize(stmt);
         return true;
@@ -235,7 +245,7 @@ bool AccountManager::updateAccount(const Account& account) {
         return false;
     }
     
-    const char* sql = "UPDATE accounts SET level = ?, total_score = ?, games_played = ?, games_won = ?, win_rate = ?, ranking = ? WHERE username = ?";
+    const char* sql = "UPDATE accounts SET level = ?, total_score = ?, games_played = ?, games_won = ?, win_rate = ?, ranking = ?, elo = ? WHERE username = ?";
     sqlite3_stmt* stmt = nullptr;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -248,7 +258,8 @@ bool AccountManager::updateAccount(const Account& account) {
     sqlite3_bind_int(stmt, 4, account.gamesWon);
     sqlite3_bind_double(stmt, 5, account.winRate);
     sqlite3_bind_int(stmt, 6, account.ranking);
-    sqlite3_bind_text(stmt, 7, account.username.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 7, account.elo);
+    sqlite3_bind_text(stmt, 8, account.username.c_str(), -1, SQLITE_TRANSIENT);
     
     int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -345,7 +356,7 @@ std::vector<Account> AccountManager::getTopPlayers(int limit) {
         return topPlayers;
     }
     
-    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, created_at FROM accounts ORDER BY ranking DESC, total_score DESC LIMIT ?";
+    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, elo, created_at FROM accounts ORDER BY ranking DESC, total_score DESC LIMIT ?";
     sqlite3_stmt* stmt = nullptr;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -365,7 +376,8 @@ std::vector<Account> AccountManager::getTopPlayers(int limit) {
         account.gamesWon = sqlite3_column_int(stmt, 6);
         account.winRate = static_cast<float>(sqlite3_column_double(stmt, 7));
         account.ranking = sqlite3_column_int(stmt, 8);
-        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9));
+        account.elo = sqlite3_column_int(stmt, 9);
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
         
         topPlayers.push_back(account);
     }
@@ -399,4 +411,36 @@ bool AccountManager::deleteAccount(const std::string& username) {
     }
     
     return false;
+}
+
+bool AccountManager::setAllLevels(int level) {
+    std::lock_guard<std::mutex> lock(accountMutex);
+    
+    if (!initialized) {
+        std::cerr << "Account Manager not initialized" << std::endl;
+        return false;
+    }
+    
+    const char* sql = "UPDATE accounts SET level = ?";
+    sqlite3_stmt* stmt = nullptr;
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+        return false;
+    }
+    
+    sqlite3_bind_int(stmt, 1, level);
+    
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (rc == SQLITE_DONE) {
+        // Clear cache since levels have changed
+        cachedAccounts.clear();
+        std::cout << "All account levels set to " << level << std::endl;
+        return true;
+    } else {
+        std::cerr << "Failed to update levels: " << sqlite3_errmsg(db) << std::endl;
+        return false;
+    }
 }

@@ -113,6 +113,10 @@ char *parsePacket(ENetEvent &event, Packet &p, size_t &dataSize)
         case headerRoomPlayerLeft: std::cout << "headerRoomPlayerLeft"; break;
         case headerRoomStatusChanged: std::cout << "headerRoomStatusChanged"; break;
         case headerRoomPlayerReadyChanged: std::cout << "headerRoomPlayerReadyChanged"; break;
+        case headerMatchmakingStart: std::cout << "headerMatchmakingStart"; break;
+        case headerMatchmakingCancel: std::cout << "headerMatchmakingCancel"; break;
+        case headerMatchmakingStatus: std::cout << "headerMatchmakingStatus"; break;
+        case headerMatchmakingFound: std::cout << "headerMatchmakingFound"; break;
         case headerGameModeUpdate: std::cout << "headerGameModeUpdate"; break;
         case headerMatchStart: std::cout << "headerMatchStart"; break;
         case headerMatchEnd: std::cout << "headerMatchEnd"; break;

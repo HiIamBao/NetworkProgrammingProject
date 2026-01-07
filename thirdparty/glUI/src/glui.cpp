@@ -36,6 +36,8 @@ namespace glui
 		textInput,
 		beginMenu,
 		endMenu,
+		sameLineMarker,
+		newLineMarker,
 	};
 
 	struct InputData
@@ -274,6 +276,15 @@ namespace glui
 
 	float timer=0;
 	std::string focusedInputField = "";
+	
+	// Horizontal layout state
+	static bool sameLineActive = false;
+	static float sameLineStartX = 0.0f;
+	static float sameLineCurrentX = 0.0f;
+	static float sameLineY = 0.0f;
+	static float sameLineMaxHeight = 0.0f;
+	static int sameLineWidgetCount = 0;
+	static int sameLineWidgetIndex = 0;
 
 	void renderFrame(gl2d::Renderer2D& renderer, gl2d::Font& font, glm::ivec2 mousePos, bool mouseClick,
 		bool mouseHeld, bool mouseReleased, bool escapeReleased, const std::string& typedInput, float deltaTime)
@@ -290,6 +301,15 @@ namespace glui
 		{
 			timer -= 2;
 		}
+		
+		// Reset horizontal layout state at start of frame
+		sameLineActive = false;
+		sameLineStartX = 0.0f;
+		sameLineCurrentX = 0.0f;
+		sameLineY = 0.0f;
+		sameLineMaxHeight = 0.0f;
+		sameLineWidgetCount = 0;
+		sameLineWidgetIndex = 0;
 
 		std::vector<std::pair<std::string, Widget>> widgetsCopy;
 		widgetsCopy.reserve(widgetsVector.size());
@@ -358,6 +378,13 @@ namespace glui
 
 					continue;
 				}
+				
+				// Layout markers should always be included
+				if (i.second.type == widgetType::sameLineMarker || i.second.type == widgetType::newLineMarker)
+				{
+					widgetsCopy.push_back(i);
+					continue;
+				}
 
 				if (shouldIgnor)
 				{
@@ -381,6 +408,9 @@ namespace glui
 		computedPos.y = paddSizeY + (float)renderer.windowH * (1 - mainInSizeY) * 0.5f;
 		computedPos.z = sizeX * mainInSizeX;
 		computedPos.w = sizeY * mainInSizeY;
+		
+		float baseX = computedPos.x;
+		float baseWidth = computedPos.z;
 
 		auto camera = renderer.currentCamera;
 		renderer.currentCamera.setDefault();
@@ -393,8 +423,83 @@ namespace glui
 		input.escapeReleased = escapeReleased;
 
 		
-		for (auto& i : widgetsCopy)
+		// Build map of widget indices to their same-line group info
+		// Key: widget index, Value: (groupStartIndex, widgetCountInGroup)
+		std::unordered_map<int, std::pair<int, int>> widgetToGroup;
+		for (size_t idx = 0; idx < widgetsCopy.size(); idx++)
 		{
+			if (widgetsCopy[idx].second.type == widgetType::sameLineMarker)
+			{
+				// Find widget before this SameLine
+				int firstWidgetIdx = -1;
+				for (int prev = (int)idx - 1; prev >= 0; prev--)
+				{
+					if (widgetsCopy[prev].second.type != widgetType::sameLineMarker && 
+					    widgetsCopy[prev].second.type != widgetType::newLineMarker)
+					{
+						firstWidgetIdx = prev;
+						break;
+					}
+				}
+				
+				if (firstWidgetIdx >= 0)
+				{
+					// Count all widgets in this group (until NewLine)
+					int count = 1; // Include first widget
+					for (size_t next = idx + 1; next < widgetsCopy.size(); next++)
+					{
+						if (widgetsCopy[next].second.type == widgetType::newLineMarker)
+							break;
+						if (widgetsCopy[next].second.type != widgetType::sameLineMarker)
+							count++;
+					}
+					
+					// Mark all widgets in this group
+					widgetToGroup[firstWidgetIdx] = {firstWidgetIdx, count};
+					for (size_t next = idx + 1; next < widgetsCopy.size(); next++)
+					{
+						if (widgetsCopy[next].second.type == widgetType::newLineMarker)
+							break;
+						if (widgetsCopy[next].second.type != widgetType::sameLineMarker)
+							widgetToGroup[next] = {firstWidgetIdx, count};
+					}
+				}
+			}
+		}
+		
+		// Second pass: render widgets
+		for (size_t idx = 0; idx < widgetsCopy.size(); idx++)
+		{
+			auto& i = widgetsCopy[idx];
+			
+			// Handle layout markers
+			if (i.second.type == widgetType::sameLineMarker)
+			{
+				// Check if we need to start same-line mode for the widget before this
+				auto it = widgetToGroup.find((int)idx - 1);
+				if (it != widgetToGroup.end() && !sameLineActive)
+				{
+					sameLineActive = true;
+					sameLineStartX = computedPos.x;
+					sameLineCurrentX = computedPos.x;
+					sameLineY = computedPos.y;
+					sameLineWidgetCount = it->second.second;
+					sameLineWidgetIndex = 0;
+				}
+				continue;
+			}
+			
+			if (i.second.type == widgetType::newLineMarker)
+			{
+				if (sameLineActive)
+				{
+					computedPos.y += (paddSizeY * 2 + sameLineMaxHeight) * mainInSizeY;
+					sameLineMaxHeight = 0.0f;
+				}
+				sameLineActive = false;
+				sameLineWidgetIndex = 0;
+				continue;
+			}
 
 			auto find = widgets.find(i.first);
 
@@ -426,11 +531,40 @@ namespace glui
 			{
 				auto &j = *widgets.find(i.first);
 				auto& widget = j.second;
+				
+				// Check if this widget is part of a same-line group
+				auto groupIt = widgetToGroup.find((int)idx);
+				if (groupIt != widgetToGroup.end())
+				{
+					// Start same-line mode if not already active
+					if (!sameLineActive)
+					{
+						sameLineActive = true;
+						sameLineStartX = computedPos.x;
+						sameLineY = computedPos.y;
+						sameLineWidgetCount = groupIt->second.second;
+						sameLineWidgetIndex = 0;
+					}
+				}
+				
+				// Adjust position for horizontal layout if SameLine is active
+				glm::vec4 widgetPos = computedPos;
+				if (sameLineActive && sameLineWidgetCount > 0)
+				{
+					// Calculate width per widget (divide available width by widget count)
+					float widgetWidth = baseWidth / sameLineWidgetCount;
+					
+					widgetPos.x = sameLineStartX + sameLineWidgetIndex * widgetWidth;
+					widgetPos.z = widgetWidth * 0.95f; // 95% width with 5% gap
+					widgetPos.y = sameLineY;
+					
+					sameLineWidgetIndex++;
+				}
 
 				auto drawButton = [&]()
 				{
-					auto transformDrawn = computedPos;
-					auto aabbTransform = computedPos;
+					auto transformDrawn = widgetPos;
+					auto aabbTransform = widgetPos;
 					bool hovered = 0;
 					bool clicked = 0;
 					auto textColor = Colors_Yellow;
@@ -535,7 +669,7 @@ namespace glui
 					}
 					case widgetType::toggle:
 					{
-						auto transformDrawn = computedPos;
+						auto transformDrawn = widgetPos;
 						bool hovered = 0;
 						bool clicked = 0;
 
@@ -613,7 +747,7 @@ namespace glui
 					case widgetType::text:
 					{
 
-						renderText(renderer, j.first, font, computedPos, j.second.colors, true);
+						renderText(renderer, j.first, font, widgetPos, j.second.colors, true);
 
 						break;
 					}
@@ -626,7 +760,7 @@ namespace glui
 						int pos = strlen(text);
 
 						// Check if this input field is clicked
-						bool isHovered = aabb(computedPos, input.mousePos);
+						bool isHovered = aabb(widgetPos, input.mousePos);
 						bool isFocused = (focusedInputField == i.first);
 						
 						// Set focus on click
@@ -677,7 +811,7 @@ namespace glui
 
 						// Draw white outline for distinction
 						float outlineThickness = 3.0f;
-						glm::vec4 outlineRect = computedPos;
+						glm::vec4 outlineRect = widgetPos;
 						outlineRect.x -= outlineThickness;
 						outlineRect.y -= outlineThickness;
 						outlineRect.z += outlineThickness * 2.0f;
@@ -687,19 +821,19 @@ namespace glui
 						// Render the input box with different color if focused
 						if (i.second.texture.id != 0)
 						{
-							renderFancyBox(renderer, computedPos, i.second.colors, widget.texture, isHovered, isFocused);
+							renderFancyBox(renderer, widgetPos, i.second.colors, widget.texture, isHovered, isFocused);
 						}
 						else if (isFocused)
 						{
 							// Highlight focused field with a subtle border
 							gl2d::Color4f focusColor = {0.3f, 0.6f, 1.0f, 0.3f};
-							renderFancyBox(renderer, computedPos, focusColor, widget.texture, false, false);
+							renderFancyBox(renderer, widgetPos, focusColor, widget.texture, false, false);
 						}
 						else
 						{
 							// Default dark background for unfocused input
 							gl2d::Color4f inputBgColor = {0.15f, 0.15f, 0.2f, 0.95f};
-							renderFancyBox(renderer, computedPos, inputBgColor, widget.texture, false, false);
+							renderFancyBox(renderer, widgetPos, inputBgColor, widget.texture, false, false);
 						}
 						
 
@@ -713,7 +847,7 @@ namespace glui
 						// Center text (and cursor) inside the input box, similar to buttons
 						{
 							// Use a padded content rect to avoid touching edges/outline
-							glm::vec4 contentRect = computedPos;
+							glm::vec4 contentRect = widgetPos;
 							// float padX = contentRect.z * 0.f; // 6% horizontal padding
 							// float padY = contentRect.w * 0.06f; // 12% vertical padding for nicer centering
 							// contentRect.x += padX;
@@ -757,9 +891,26 @@ namespace glui
 
 				widget.justCreated = false;
 				widget.lastFrameData = input;
+				
+				// Update same-line tracking
+				if (sameLineActive)
+				{
+					sameLineMaxHeight = std::max(sameLineMaxHeight, widgetPos.w);
+				}
 			}
 
-			computedPos.y += (paddSizeY * 2 + sizeY) * mainInSizeY;
+			// Advance to next line (or stay on same line if SameLine is active)
+			if (!sameLineActive)
+			{
+				computedPos.y += (paddSizeY * 2 + sizeY) * mainInSizeY;
+			}
+			else if (sameLineWidgetIndex >= sameLineWidgetCount)
+			{
+				// Finished rendering all widgets in same-line group, advance line
+				computedPos.y += (paddSizeY * 2 + sameLineMaxHeight) * mainInSizeY;
+				sameLineActive = false;
+				sameLineMaxHeight = 0.0f;
+			}
 		}
 
 		
@@ -858,6 +1009,28 @@ namespace glui
 		// Create empty text widgets to add spacing
 		std::string spaceName = "##space" + std::to_string((long long)pixels) + "_" + std::to_string(widgetsVector.size());
 		Text(spaceName, Colors_White);
+	}
+
+	void SameLine()
+	{
+		// Create a marker widget to start same-line layout
+		std::string markerName = "##sameLine_" + std::to_string(widgetsVector.size());
+		Widget widget = {};
+		widget.type = widgetType::sameLineMarker;
+		widget.usedThisFrame = true;
+		widget.justCreated = true;
+		widgetsVector.push_back({markerName, widget});
+	}
+
+	void NewLine()
+	{
+		// Create a marker widget to end same-line layout
+		std::string markerName = "##newLine_" + std::to_string(widgetsVector.size());
+		Widget widget = {};
+		widget.type = widgetType::newLineMarker;
+		widget.usedThisFrame = true;
+		widget.justCreated = true;
+		widgetsVector.push_back({markerName, widget});
 	}
 
 	void InputText(std::string name, char* text, size_t textSizeWithNullChar, 

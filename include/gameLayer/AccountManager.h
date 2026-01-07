@@ -17,9 +17,18 @@ struct Account {
     int gamesWon;
     float winRate;
     int ranking;
+    int elo;
     std::string createdAt;
     
-    Account() : id(0), level(1), totalScore(0), gamesPlayed(0), gamesWon(0), winRate(0.0f), ranking(0) {}
+    Account()
+        : id(0),
+          level(1),
+          totalScore(0),
+          gamesPlayed(0),
+          gamesWon(0),
+          winRate(0.0f),
+          ranking(0),
+          elo(1500) {}
 };
 
 class AccountManager {
@@ -52,6 +61,9 @@ public:
     bool accountExists(const std::string& username);
     bool emailExists(const std::string& email);
     std::vector<Account> getTopPlayers(int limit = 100);
+    
+    // Admin operations
+    bool setAllLevels(int level);
     
 private:
     std::string hashPassword(const std::string& password);

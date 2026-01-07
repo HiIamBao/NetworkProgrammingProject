@@ -59,6 +59,12 @@ enum
 	headerRoomPlayerLeft,       // Server -> All in room: player left
 	headerRoomStatusChanged,    // Server -> All in room: room status changed
 	headerRoomPlayerReadyChanged, // Server -> All in room: player ready status
+    
+    // Matchmaking packets
+    headerMatchmakingStart,     // Client -> Server: start ELO matchmaking
+    headerMatchmakingCancel,    // Client -> Server: cancel matchmaking
+    headerMatchmakingStatus,    // Server -> Client: status updates (queue time, range)
+    headerMatchmakingFound,     // Server -> Client: match found, connect to server
 	
 	// Game Mode packets
 	headerGameModeUpdate,       // Server -> Client: current game mode state
@@ -242,6 +248,30 @@ struct RoomStatusChangedData {
 struct PlayerReadyChangedData {
     char username[32];
     bool isReady;
+};
+
+// Matchmaking data structures
+struct MatchmakingStartData {
+    int desiredGameMode;   // GameMode as int
+    int maxPlayers;        // Desired lobby size
+    int elo;               // Player ELO for matching
+};
+
+struct MatchmakingStatusData {
+    bool searching;
+    int secondsInQueue;
+    int eloCenter;
+    int eloMin;
+    int eloMax;
+    int playersInRange;
+};
+
+struct MatchmakingFoundData {
+    int gameMode;
+    int maxPlayers;
+    int mapId;
+    char serverIp[16];
+    int serverPort;
 };
 
 // Game Mode data structures
