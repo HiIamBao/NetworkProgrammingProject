@@ -299,7 +299,7 @@ int main()
 
 	int w = 500;
 	int h = 500;
-	wind = glfwCreateWindow(w, h, "geam", nullptr, nullptr);
+	wind = glfwCreateWindow(w, h, "Hust Arena", nullptr, nullptr);
 	glfwMakeContextCurrent(wind);
 	glfwSwapInterval(1);
 
