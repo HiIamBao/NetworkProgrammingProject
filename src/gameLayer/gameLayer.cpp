@@ -68,6 +68,9 @@ bool initGame()
 	
 	g_sessionManager = new SessionManager(g_accountManager);
 	g_accountUI = new AccountUI(g_accountManager, g_sessionManager);
+	
+	// Set account manager for client-side match recording
+	setClientAccountManager(g_accountManager);
 
 	// Initialize room management system
 	g_roomManager = new RoomManager();

@@ -1,6 +1,7 @@
 #include "HordeDefenseManager.h"
 #include <cstring>
 #include <algorithm>
+#include <iostream>
 
 using namespace HordeDefense;
 
@@ -376,6 +377,7 @@ void HordeDefenseManager::addPlayer(int32_t cid) {
     playerAlive[cid] = true;
     playerRespawned[cid] = false;
     playerKills[cid] = 0;
+    std::cout << "[HordeDefense] addPlayer: CID " << cid << " registered with $0. Total players: " << playerMoney.size() << std::endl;
 }
 
 void HordeDefenseManager::removePlayer(int32_t cid) {
@@ -505,7 +507,13 @@ void HordeDefenseManager::decrementWaveBasedBuffs(std::map<int32_t, phisics::Ent
 // ============================================================================
 
 void HordeDefenseManager::awardMoney(int32_t cid, int amount, const char* reason) {
+    auto it = playerMoney.find(cid);
+    if (it == playerMoney.end()) {
+        std::cout << "[HordeDefense] awardMoney WARNING: CID " << cid << " not in playerMoney! Creating entry with $0" << std::endl;
+        playerMoney[cid] = 0;
+    }
     playerMoney[cid] += amount;
+    std::cout << "[HordeDefense] awardMoney: CID " << cid << " +$" << amount << " (" << reason << ") -> Total: $" << playerMoney[cid] << std::endl;
     
     // Send money update
     if (sendToPlayerCallback) {
@@ -523,9 +531,20 @@ void HordeDefenseManager::awardMoney(int32_t cid, int amount, const char* reason
     }
 }
 
+
 bool HordeDefenseManager::canAfford(int32_t cid, int cost) const {
     auto it = playerMoney.find(cid);
-    if (it == playerMoney.end()) return false;
+    if (it == playerMoney.end()) {
+        std::cout << "[HordeDefense] canAfford: CID " << cid << " NOT FOUND in playerMoney! (" << playerMoney.size() << " players tracked)" << std::endl;
+        // Debug: Print all tracked CIDs
+        std::cout << "[HordeDefense] Tracked CIDs: ";
+        for (const auto& [trackedCid, money] : playerMoney) {
+            std::cout << trackedCid << " ";
+        }
+        std::cout << std::endl;
+        return false;
+    }
+    std::cout << "[HordeDefense] canAfford: CID " << cid << " has $" << it->second << ", needs $" << cost << " -> " << (it->second >= cost ? "YES" : "NO") << std::endl;
     return it->second >= cost;
 }
 
@@ -557,11 +576,13 @@ bool HordeDefenseManager::buyUpgrade(int32_t cid, phisics::Entity& player, Upgra
     int cost = info.getCostForLevel(nextLevel);
     
     // Check if can afford
+    std::cout << "[HordeDefense] buyUpgrade: CID " << cid << " buying type " << (int)type << " (level " << currentLevel << " -> " << nextLevel << "), cost: $" << cost << std::endl;
     if (!canAfford(cid, cost)) {
         response.success = false;
         response.upgradeType = (int)type;
         response.newLevel = currentLevel;
-        response.newMoney = playerMoney[cid];
+        auto moneyIt = playerMoney.find(cid);
+        response.newMoney = (moneyIt != playerMoney.end()) ? moneyIt->second : 0;
         strcpy(response.message, "Not enough money");
         return false;
     }
@@ -609,10 +630,12 @@ bool HordeDefenseManager::buyItem(int32_t cid, phisics::Entity& player, ShopItem
     ShopItemInfo info = ShopItemInfo::getInfo(type);
     
     // Check if can afford
+    std::cout << "[HordeDefense] buyItem: CID " << cid << " buying item type " << (int)type << ", cost: $" << info.cost << std::endl;
     if (!canAfford(cid, info.cost)) {
         response.success = false;
         response.itemType = (int)type;
-        response.newMoney = playerMoney[cid];
+        auto moneyIt = playerMoney.find(cid);
+        response.newMoney = (moneyIt != playerMoney.end()) ? moneyIt->second : 0;
         response.effectValue = 0;
         response.duration = 0;
         strcpy(response.message, "Not enough money");

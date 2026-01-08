@@ -107,6 +107,8 @@ bool AccountManager::createTables() {
         "ALTER TABLE accounts ADD COLUMN horde_defense_total_score INTEGER DEFAULT 0;",
         "ALTER TABLE accounts ADD COLUMN horde_defense_games_played INTEGER DEFAULT 100;",
         "ALTER TABLE accounts ADD COLUMN horde_defense_games_won INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN horde_defense_best_wave INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN horde_defense_total_damage INTEGER DEFAULT 0;",
         "ALTER TABLE accounts ADD COLUMN boss_fight_total_score INTEGER DEFAULT 0;",
         "ALTER TABLE accounts ADD COLUMN boss_fight_games_played INTEGER DEFAULT 100;",
         "ALTER TABLE accounts ADD COLUMN boss_fight_games_won INTEGER DEFAULT 0;"
@@ -239,6 +241,7 @@ bool AccountManager::loadAccountFromDB(const std::string& username, Account& acc
     const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, "
                       "deathmatch_total_score, deathmatch_games_played, deathmatch_games_won, "
                       "horde_defense_total_score, horde_defense_games_played, horde_defense_games_won, "
+                      "horde_defense_best_wave, horde_defense_total_damage, "
                       "boss_fight_total_score, boss_fight_games_played, boss_fight_games_won, "
                       "created_at FROM accounts WHERE username = ? COLLATE NOCASE";
     sqlite3_stmt* stmt = nullptr;
@@ -267,12 +270,14 @@ bool AccountManager::loadAccountFromDB(const std::string& username, Account& acc
         account.hordeDefenseTotalScore = sqlite3_column_int(stmt, 12);
         account.hordeDefenseGamesPlayed = sqlite3_column_int(stmt, 13);
         account.hordeDefenseGamesWon = sqlite3_column_int(stmt, 14);
+        account.hordeDefenseBestWave = sqlite3_column_int(stmt, 15);
+        account.hordeDefenseTotalDamage = sqlite3_column_int(stmt, 16);
         
-        account.bossFightTotalScore = sqlite3_column_int(stmt, 15);
-        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 16);
-        account.bossFightGamesWon = sqlite3_column_int(stmt, 17);
+        account.bossFightTotalScore = sqlite3_column_int(stmt, 17);
+        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 18);
+        account.bossFightGamesWon = sqlite3_column_int(stmt, 19);
         
-        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 18));
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
         
         sqlite3_finalize(stmt);
         return true;
@@ -281,6 +286,7 @@ bool AccountManager::loadAccountFromDB(const std::string& username, Account& acc
     sqlite3_finalize(stmt);
     return false;
 }
+
 
 void AccountManager::cacheAccount(const Account& account) {
     cachedAccounts[account.username] = account;
@@ -296,6 +302,7 @@ bool AccountManager::updateAccount(const Account& account) {
     const char* sql = "UPDATE accounts SET level = ?, total_score = ?, games_played = ?, games_won = ?, win_rate = ?, ranking = ?, "
                       "deathmatch_total_score = ?, deathmatch_games_played = ?, deathmatch_games_won = ?, "
                       "horde_defense_total_score = ?, horde_defense_games_played = ?, horde_defense_games_won = ?, "
+                      "horde_defense_best_wave = ?, horde_defense_total_damage = ?, "
                       "boss_fight_total_score = ?, boss_fight_games_played = ?, boss_fight_games_won = ? "
                       "WHERE username = ?";
     sqlite3_stmt* stmt = nullptr;
@@ -318,12 +325,15 @@ bool AccountManager::updateAccount(const Account& account) {
     sqlite3_bind_int(stmt, 10, account.hordeDefenseTotalScore);
     sqlite3_bind_int(stmt, 11, account.hordeDefenseGamesPlayed);
     sqlite3_bind_int(stmt, 12, account.hordeDefenseGamesWon);
+    sqlite3_bind_int(stmt, 13, account.hordeDefenseBestWave);
+    sqlite3_bind_int(stmt, 14, account.hordeDefenseTotalDamage);
     
-    sqlite3_bind_int(stmt, 13, account.bossFightTotalScore);
-    sqlite3_bind_int(stmt, 14, account.bossFightGamesPlayed);
-    sqlite3_bind_int(stmt, 15, account.bossFightGamesWon);
+    sqlite3_bind_int(stmt, 15, account.bossFightTotalScore);
+    sqlite3_bind_int(stmt, 16, account.bossFightGamesPlayed);
+    sqlite3_bind_int(stmt, 17, account.bossFightGamesWon);
     
-    sqlite3_bind_text(stmt, 16, account.username.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 18, account.username.c_str(), -1, SQLITE_TRANSIENT);
+
     
     int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -423,6 +433,7 @@ std::vector<Account> AccountManager::getTopPlayers(int limit) {
     const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, "
                       "deathmatch_total_score, deathmatch_games_played, deathmatch_games_won, "
                       "horde_defense_total_score, horde_defense_games_played, horde_defense_games_won, "
+                      "horde_defense_best_wave, horde_defense_total_damage, "
                       "boss_fight_total_score, boss_fight_games_played, boss_fight_games_won, "
                       "created_at FROM accounts ORDER BY ranking DESC, total_score DESC LIMIT ?";
     sqlite3_stmt* stmt = nullptr;
@@ -452,12 +463,14 @@ std::vector<Account> AccountManager::getTopPlayers(int limit) {
         account.hordeDefenseTotalScore = sqlite3_column_int(stmt, 12);
         account.hordeDefenseGamesPlayed = sqlite3_column_int(stmt, 13);
         account.hordeDefenseGamesWon = sqlite3_column_int(stmt, 14);
+        account.hordeDefenseBestWave = sqlite3_column_int(stmt, 15);
+        account.hordeDefenseTotalDamage = sqlite3_column_int(stmt, 16);
         
-        account.bossFightTotalScore = sqlite3_column_int(stmt, 15);
-        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 16);
-        account.bossFightGamesWon = sqlite3_column_int(stmt, 17);
+        account.bossFightTotalScore = sqlite3_column_int(stmt, 17);
+        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 18);
+        account.bossFightGamesWon = sqlite3_column_int(stmt, 19);
         
-        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 18));
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
         
         topPlayers.push_back(account);
     }
@@ -465,6 +478,7 @@ std::vector<Account> AccountManager::getTopPlayers(int limit) {
     sqlite3_finalize(stmt);
     return topPlayers;
 }
+
 
 std::vector<Account> AccountManager::getTopPlayersForMode(int mode, int limit) {
     std::lock_guard<std::mutex> lock(accountMutex);
@@ -479,13 +493,8 @@ std::vector<Account> AccountManager::getTopPlayersForMode(int mode, int limit) {
         case 0: // Deathmatch - Sort by Kills (Total Score)
             orderBy = "deathmatch_total_score DESC";
             break;
-        case 1: // Horde Defense - Sort by Games Won
-        // In reality, it should be Horde Defense (index 3 in some enums, but here expected 1 per UI)
-        // Wait, UI passes 0, 1, 2. 
-        // 0 = Deathmatch
-        // 1 = Horde Defense
-        // 2 = Boss Fight
-            orderBy = "horde_defense_games_won DESC";
+        case 1: // Horde Defense - Sort by Best Wave (primary), Total Damage (secondary)
+            orderBy = "horde_defense_best_wave DESC, horde_defense_total_damage DESC";
             break;
         case 2: // Boss Fight - Sort by Total Score
             orderBy = "boss_fight_total_score DESC";
@@ -498,6 +507,7 @@ std::vector<Account> AccountManager::getTopPlayersForMode(int mode, int limit) {
     std::string sqlStr = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, "
                       "deathmatch_total_score, deathmatch_games_played, deathmatch_games_won, "
                       "horde_defense_total_score, horde_defense_games_played, horde_defense_games_won, "
+                      "horde_defense_best_wave, horde_defense_total_damage, "
                       "boss_fight_total_score, boss_fight_games_played, boss_fight_games_won, "
                       "created_at FROM accounts ORDER BY " + orderBy + ", username ASC LIMIT ?";
                       
@@ -528,12 +538,14 @@ std::vector<Account> AccountManager::getTopPlayersForMode(int mode, int limit) {
         account.hordeDefenseTotalScore = sqlite3_column_int(stmt, 12);
         account.hordeDefenseGamesPlayed = sqlite3_column_int(stmt, 13);
         account.hordeDefenseGamesWon = sqlite3_column_int(stmt, 14);
+        account.hordeDefenseBestWave = sqlite3_column_int(stmt, 15);
+        account.hordeDefenseTotalDamage = sqlite3_column_int(stmt, 16);
         
-        account.bossFightTotalScore = sqlite3_column_int(stmt, 15);
-        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 16);
-        account.bossFightGamesWon = sqlite3_column_int(stmt, 17);
+        account.bossFightTotalScore = sqlite3_column_int(stmt, 17);
+        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 18);
+        account.bossFightGamesWon = sqlite3_column_int(stmt, 19);
         
-        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 18));
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
         
         topPlayers.push_back(account);
     }
@@ -541,6 +553,7 @@ std::vector<Account> AccountManager::getTopPlayersForMode(int mode, int limit) {
     sqlite3_finalize(stmt);
     return topPlayers;
 }
+
 
 // ============================================================================
 // MATCH END STATISTICS
@@ -592,6 +605,7 @@ bool AccountManager::recordDeathmatchMatchEnd(const std::vector<MatchPlayerStats
 bool AccountManager::recordHordeDefenseMatchEnd(const std::vector<MatchPlayerStats>& stats) {
     if (stats.empty()) return false;
     
+    // Check if any player reached wave 20 (victory)
     bool wave20Reached = false;
     for (const auto& p : stats) {
         if (p.roundsSurvived >= 20) {
@@ -607,6 +621,17 @@ bool AccountManager::recordHordeDefenseMatchEnd(const std::vector<MatchPlayerSta
             // Update Horde Defense Stats
             account->hordeDefenseGamesPlayed++;
             
+            // Update best wave (keep the maximum)
+            if (p.roundsSurvived > account->hordeDefenseBestWave) {
+                account->hordeDefenseBestWave = p.roundsSurvived;
+            }
+            
+            // Accumulate total damage dealt
+            account->hordeDefenseTotalDamage += p.damageDealt;
+            
+            // Also update legacy score field with wave count for backwards compatibility
+            account->hordeDefenseTotalScore = account->hordeDefenseBestWave;
+            
             if (wave20Reached) {
                 account->hordeDefenseGamesWon++;
             }
@@ -614,9 +639,15 @@ bool AccountManager::recordHordeDefenseMatchEnd(const std::vector<MatchPlayerSta
             // Update global stats
             account->gamesPlayed++;
             if (wave20Reached) account->gamesWon++;
-             if (account->gamesPlayed > 0) {
+            if (account->gamesPlayed > 0) {
                 account->winRate = (float)account->gamesWon / account->gamesPlayed;
             }
+            
+            std::cout << "[HordeDefense] Recorded match for " << p.playerName 
+                      << ": Wave " << p.roundsSurvived 
+                      << ", Damage " << p.damageDealt 
+                      << ", Best Wave " << account->hordeDefenseBestWave 
+                      << ", Total Damage " << account->hordeDefenseTotalDamage << std::endl;
             
             if (!updateAccount(*account)) {
                 success = false;

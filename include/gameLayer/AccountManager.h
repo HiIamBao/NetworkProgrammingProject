@@ -10,8 +10,8 @@ struct MatchPlayerStats {
     int playerId;
     std::string playerName;
     int kills;          // For Deathmatch
-    int roundsSurvived; // For Horde Defense
-    int damageDealt;    // For Boss Fight
+    int roundsSurvived; // For Horde Defense (waves survived)
+    int damageDealt;    // For Boss Fight and Horde Defense
 };
 
 struct Account {
@@ -33,9 +33,11 @@ struct Account {
     int deathmatchGamesWon;
     
     // Horde Defense Stats
-    int hordeDefenseTotalScore;
+    int hordeDefenseTotalScore;   // Legacy field (for compatibility)
     int hordeDefenseGamesPlayed;
     int hordeDefenseGamesWon;
+    int hordeDefenseBestWave;     // Best wave reached (for ranking)
+    int hordeDefenseTotalDamage;  // Total damage dealt (tie-breaker)
     
     // Boss Fight Stats
     int bossFightTotalScore;
@@ -56,6 +58,8 @@ struct Account {
           hordeDefenseTotalScore(0),
           hordeDefenseGamesPlayed(0),
           hordeDefenseGamesWon(0),
+          hordeDefenseBestWave(0),
+          hordeDefenseTotalDamage(0),
           bossFightTotalScore(0),
           bossFightGamesPlayed(0),
           bossFightGamesWon(0) {}

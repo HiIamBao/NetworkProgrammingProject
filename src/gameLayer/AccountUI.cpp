@@ -398,10 +398,10 @@ void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) 
                  sprintf(buffer, "%d. %s - Kills: %d", 
                     i + 1, acc.username.c_str(), acc.deathmatchTotalScore);
             }
-            // 2. If selected mode is Horde defense, display the name of player alongside with their total games won
+            // 2. If selected mode is Horde defense, display the name with best wave and total damage
             else if (leaderboardSelectedMode == 1) {
-                 sprintf(buffer, "%d. %s - Wins: %d", 
-                    i + 1, acc.username.c_str(), acc.hordeDefenseGamesWon);
+                 sprintf(buffer, "%d. %s - Wave: %d | Damage: %d", 
+                    i + 1, acc.username.c_str(), acc.hordeDefenseBestWave, acc.hordeDefenseTotalDamage);
             }
             // 3. If selected mode is Boss fight, display the name along side the total score
             else if (leaderboardSelectedMode == 2) {
