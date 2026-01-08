@@ -1073,10 +1073,13 @@ void serverFunction(int port, int gameMode, int mapId)
 				
 				if (instance->gameMode == GameMode::DEATHMATCH) {
 					lbData.entries[i].value = p.second->kills;
+					lbData.entries[i].extraValue = p.second->deaths;
 				} else if (instance->gameMode == GameMode::HORDE_DEFENSE) {
 					lbData.entries[i].value = p.second->wavesSurvived;
+					lbData.entries[i].extraValue = p.second->totalDamageDealt;
 				} else {
 					lbData.entries[i].value = p.second->totalDamageDealt;
+					lbData.entries[i].extraValue = 0;
 				}
 			}
 			

@@ -138,6 +138,7 @@ enum
 struct LeaderBoardEntry {
     char playerName[32];
     int value; // Kills (DM), Damage (HD), Score (BF)
+    int extraValue; // Secondary stat (e.g., Damage for HD)
     int32_t cid; // Client ID for highlighting (optional)
 };
 

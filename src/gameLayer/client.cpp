@@ -2029,6 +2029,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				struct DisplayEntry {
 					std::string name;
 					int value;
+					int extraValue;
 					int32_t cid;
 				};
 				std::vector<DisplayEntry> displayList;
@@ -2041,7 +2042,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					for (int i=0; i < activeLeaderboard.count; ++i)
 					{
 						const auto& e = activeLeaderboard.entries[i];
-						displayList.push_back({e.playerName, e.value, e.cid});
+						displayList.push_back({e.playerName, e.value, e.extraValue, e.cid});
 					}
 					
 					if (activeLeaderboard.gameMode == (int)GameMode::DEATHMATCH) metricLabel = "Kills";
@@ -2086,11 +2087,20 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					{
 						const auto& p = *sortedPlayers[i].second;
 						int val = 0;
-						if (currentGameMode == GameMode::DEATHMATCH) val = p.kills;
-						else if (currentGameMode == GameMode::HORDE_DEFENSE) val = p.wavesSurvived;
-						else val = p.totalDamageDealt;
+						int extraVal = 0;
+						if (currentGameMode == GameMode::DEATHMATCH) {
+							val = p.kills;
+							extraVal = p.deaths;
+						}
+						else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+							val = p.wavesSurvived;
+							extraVal = p.totalDamageDealt;
+						}
+						else {
+							val = p.totalDamageDealt;
+						}
 						
-						displayList.push_back({p.name, val, sortedPlayers[i].first});
+						displayList.push_back({p.name, val, extraVal, sortedPlayers[i].first});
 					}
 				}
 				
@@ -2098,9 +2108,13 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				if (!displayList.empty())
 				{
 					float leaderboardX = 20.0f;
-					float leaderboardY = 50.0f;
-					float leaderboardW = 460.0f;
-					float leaderboardH = 50.0f + (displayList.size() * 32.0f);
+				float leaderboardY = 50.0f;
+				
+				// Dynamic width based on columns (HD has 4 columns, others have 3)
+				float leaderboardW = (activeLeaderboard.gameMode == (int)GameMode::HORDE_DEFENSE) ? 540.0f : 460.0f;
+				
+				// Dynamic height based on number of entries
+				float leaderboardH = 50.0f + (displayList.size() * 32.0f);
 					
 					auto leaderboardBox = Ui::Box()
 						.xLeft(leaderboardX)
@@ -2117,7 +2131,12 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					// Column headers
 					glm::vec2 colHeaderPos(leaderboardX + 10.0f, leaderboardY + 38.0f);
 					char colHeader[64];
-					snprintf(colHeader, sizeof(colHeader), "Rank  Player   %s", metricLabel.c_str());
+					if (activeLeaderboard.gameMode == (int)GameMode::HORDE_DEFENSE) {
+						// Special header for HD with two columns
+						snprintf(colHeader, sizeof(colHeader), "Rank  Player   Wave   Damage");
+					} else {
+						snprintf(colHeader, sizeof(colHeader), "Rank  Player   %s", metricLabel.c_str());
+					}
 					renderer.renderText(colHeaderPos, colHeader, textures.font, 
 						glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), 0.45f, 4.f, 3.f, false);
 					
@@ -2141,7 +2160,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						{
 							auto highlightBox = Ui::Box()
 								.xLeft(leaderboardX + 5.0f)
-								.yTop(rankY - 3.0f)
+								.yTop(rankY - 20.0f)
 								.xDimensionPixels(leaderboardW - 10.0f)
 								.yDimensionPixels(28.0f);
 							renderer.renderRectangle(highlightBox, {0.2f, 0.4f, 0.6f, 0.4f});
@@ -2161,12 +2180,20 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						renderer.renderText(glm::vec2(leaderboardX + 130.0f, rankY), nameText, 
 							textures.font, rankColor, 0.4f, 4.f, 3.f, false);
 						
-						// Value
+						// Value 1 (Primary)
 						char valText[32];
 						snprintf(valText, sizeof(valText), "%d", entry.value);
 						
 						renderer.renderText(glm::vec2(leaderboardX + 300.0f, rankY), valText, 
 							textures.font, rankColor, 0.52f, 4.f, 3.f, false);
+							
+						// Value 2 (Secondary - e.g. Damage in HD)
+						if (activeLeaderboard.gameMode == (int)GameMode::HORDE_DEFENSE) {
+							char extraValText[32];
+							snprintf(extraValText, sizeof(extraValText), "%d", entry.extraValue);
+							renderer.renderText(glm::vec2(leaderboardX + 420.0f, rankY), extraValText, 
+								textures.font, rankColor, 0.52f, 4.f, 3.f, false);
+						}
 							
 						rankY += 32.0f;
 					}
