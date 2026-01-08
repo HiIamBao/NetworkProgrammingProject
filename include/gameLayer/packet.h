@@ -107,10 +107,16 @@ enum
 	headerHordeBuyItem,             // Client -> Server: buy shop item
 	headerHordeBuyItemResponse,     // Server -> Client: item purchase result
 	headerHordePlayerMoneyUpdate,   // Server -> Client: money changed
+	headerHordeBossAttack,          // Server -> All: Boss shooting/attack
+	headerHordeBossTeleport,        // Server -> All: Boss teleportation effect
+	headerHordeEnemyDash,           // Runner dash effect
+	headerHordeEnemyShield,         // Tank shield effect
+	headerHordeBossSummon,          // Boss summon effect
 	headerHordePlayerStatsUpdate,   // Server -> All: player upgrade levels/buffs
 	headerHordePlayerRespawn,       // Server -> All: player respawned
 	headerHordeMatchEnd,            // Server -> All: match ended (victory/defeat)
 	headerHordeBulletHitEnemy,      // Client -> Server: bullet hit enemy (for damage)
+	headerHordePlayerTakeDamage,    // Client -> Server: player reports taking damage
 	headerHordeEnemyAttack,         // Server -> All: enemy attacks player (deal damage)
 	headerHordeDamageUpdate,        // Server -> All: lightweight damage leaderboard update (batched)
 	
@@ -129,6 +135,23 @@ enum
 	
 	// Boss Fight DEBUG packets
 	headerBossFightDebugRespawnBoss, // Client -> Server: Request to respawn boss at player position (DEBUG)
+	
+	// Real-time Leaderboard Packet
+	headerUpdateLeaderBoard,        // Server -> All: Leaderboard data update
+};
+
+// Leaderboard Data Structures
+struct LeaderBoardEntry {
+    char playerName[32];
+    int value; // Kills (DM), Damage (HD), Score (BF)
+    int extraValue; // Secondary stat (e.g., Damage for HD)
+    int32_t cid; // Client ID for highlighting (optional)
+};
+
+struct LeaderBoardUpdateData {
+    int gameMode;
+    int count; // Number of entries (max 5)
+    LeaderBoardEntry entries[5];
 };
 
 constexpr int SERVER_CHANNELS = 2;

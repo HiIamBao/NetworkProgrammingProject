@@ -1,2 +1,0 @@
-/usr/bin/ar qc libsafeSave.a CMakeFiles/safeSave.dir/src/safeSave.cpp.o
-/usr/bin/ranlib libsafeSave.a

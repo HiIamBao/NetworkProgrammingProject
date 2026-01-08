@@ -17,6 +17,7 @@ void closeServerByPort(int port);  // Close specific server by port
 void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textures, std::string ip, char *playerName, int port = 7778);
 void resetClient();
 void closeFunction(AccountManager &accountManager);
+void setClientAccountManager(AccountManager* accMgr);  // For recording match results
 
 struct Textures
 {
@@ -26,4 +27,16 @@ struct Textures
 	gl2d::Texture battery;
 	gl2d::Texture cross;
 	gl2d::Font font;
+	gl2d::Texture accountBackground;
+	
+	// Horde Defense Enemy Sprites
+	gl2d::Texture zombieSprite;
+	gl2d::Texture runnerSprite;
+	gl2d::Texture tankSprite;
+	gl2d::Texture exploderSprite;
+	gl2d::Texture eliteSprite;
+	gl2d::Texture bossSummonerSprite;
+	gl2d::Texture bossBulletHellSprite;
+	gl2d::Texture bossExploderSprite;
+	gl2d::Texture bossFinalSprite;
 };

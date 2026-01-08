@@ -231,14 +231,17 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     }
     
     glui::Text("Room Name:", RoomUIColors::White);
+    glui::Space(5);  // Add spacing to prevent overlap
     glui::InputText("##roomname", roomNameInput, sizeof(roomNameInput), RoomUIColors::Panel);
-    glui::Space(10);
+    glui::Space(15);
     
     glui::Text("Password (optional):", RoomUIColors::White);
+    glui::Space(5);  // Add spacing to prevent overlap
     glui::InputText("##roompass", roomPasswordInput, sizeof(roomPasswordInput), RoomUIColors::Panel);
-    glui::Space(10);
+    glui::Space(15);
     
     glui::Text("Max Players:", RoomUIColors::White);
+    glui::Space(5);  // Add spacing to prevent overlap
     const char* playerOptions[] = {"2", "4", "6", "8"};
     
     // Render buttons with visual selection indicator
@@ -257,9 +260,10 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             selectedMaxPlayers = i;
         }
     }
-    glui::Space(10);
+    glui::Space(15);
     
     glui::Text("Game Mode:", RoomUIColors::White);
+    glui::Space(5);  // Add spacing to prevent overlap
     const char* modeOptions[] = {"Deathmatch (FFA)", "Team Battle", "Boss Fight", "Horde Defense"};
     
     // Render buttons with visual selection indicator

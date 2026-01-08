@@ -65,7 +65,20 @@ bool AccountManager::createTables() {
             games_won INTEGER DEFAULT 0,
             win_rate REAL DEFAULT 0.0,
             ranking INTEGER DEFAULT 0,
-            elo INTEGER DEFAULT 1500,
+            deathmatch_total_score INTEGER DEFAULT 0,
+            deathmatch_games_played INTEGER DEFAULT 100,
+            deathmatch_games_won INTEGER DEFAULT 0,
+
+            horde_defense_total_score INTEGER DEFAULT 0,
+            horde_defense_games_played INTEGER DEFAULT 100,
+            horde_defense_games_won INTEGER DEFAULT 0,
+          
+            boss_fight_total_score INTEGER DEFAULT 0,
+            boss_fight_games_played INTEGER DEFAULT 100,
+            boss_fight_games_won INTEGER DEFAULT 0,
+    
+       
+         
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         
@@ -83,12 +96,33 @@ bool AccountManager::createTables() {
         return false;
     }
     
-    // Try to add elo column for existing databases (ignore error if it exists)
-    const char* alterSql = "ALTER TABLE accounts ADD COLUMN elo INTEGER DEFAULT 1500;";
-    rc = sqlite3_exec(db, alterSql, nullptr, nullptr, &errMsg);
-    if (rc != SQLITE_OK && errMsg) {
-        // Most likely "duplicate column" on already-migrated DBs; safe to ignore
-        sqlite3_free(errMsg);
+    // Try to add new columns if they don't exist (migrations)
+    // We ignore errors assuming they might already exist
+    // Try to add new columns if they don't exist (migrations)
+    // We execute them one by one so if one fails (already exists), the others still run.
+    const char* migrations[] = {
+        "ALTER TABLE accounts ADD COLUMN deathmatch_total_score INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN deathmatch_games_played INTEGER DEFAULT 100;",
+        "ALTER TABLE accounts ADD COLUMN deathmatch_games_won INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN horde_defense_total_score INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN horde_defense_games_played INTEGER DEFAULT 100;",
+        "ALTER TABLE accounts ADD COLUMN horde_defense_games_won INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN horde_defense_best_wave INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN horde_defense_total_damage INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN boss_fight_total_score INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN boss_fight_games_played INTEGER DEFAULT 100;",
+        "ALTER TABLE accounts ADD COLUMN boss_fight_games_won INTEGER DEFAULT 0;"
+    };
+
+    for (const char* migration : migrations) {
+        rc = sqlite3_exec(db, migration, nullptr, nullptr, &errMsg);
+        if (rc != SQLITE_OK && errMsg) {
+            // Check if error is due to duplicate column
+            // SQLite error message for this is usually "duplicate column name: ..."
+            // We'll just ignore it as per requirement to be idempotent
+            sqlite3_free(errMsg);
+            errMsg = nullptr;
+        }
     }
     
     return true;
@@ -204,7 +238,12 @@ Account* AccountManager::getAccount(const std::string& username) {
 }
 
 bool AccountManager::loadAccountFromDB(const std::string& username, Account& account) {
-    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, elo, created_at FROM accounts WHERE username = ? COLLATE NOCASE";
+    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, "
+                      "deathmatch_total_score, deathmatch_games_played, deathmatch_games_won, "
+                      "horde_defense_total_score, horde_defense_games_played, horde_defense_games_won, "
+                      "horde_defense_best_wave, horde_defense_total_damage, "
+                      "boss_fight_total_score, boss_fight_games_played, boss_fight_games_won, "
+                      "created_at FROM accounts WHERE username = ? COLLATE NOCASE";
     sqlite3_stmt* stmt = nullptr;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -223,8 +262,22 @@ bool AccountManager::loadAccountFromDB(const std::string& username, Account& acc
         account.gamesWon = sqlite3_column_int(stmt, 6);
         account.winRate = static_cast<float>(sqlite3_column_double(stmt, 7));
         account.ranking = sqlite3_column_int(stmt, 8);
-        account.elo = sqlite3_column_int(stmt, 9);
-        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
+        
+        account.deathmatchTotalScore = sqlite3_column_int(stmt, 9);
+        account.deathmatchGamesPlayed = sqlite3_column_int(stmt, 10);
+        account.deathmatchGamesWon = sqlite3_column_int(stmt, 11);
+        
+        account.hordeDefenseTotalScore = sqlite3_column_int(stmt, 12);
+        account.hordeDefenseGamesPlayed = sqlite3_column_int(stmt, 13);
+        account.hordeDefenseGamesWon = sqlite3_column_int(stmt, 14);
+        account.hordeDefenseBestWave = sqlite3_column_int(stmt, 15);
+        account.hordeDefenseTotalDamage = sqlite3_column_int(stmt, 16);
+        
+        account.bossFightTotalScore = sqlite3_column_int(stmt, 17);
+        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 18);
+        account.bossFightGamesWon = sqlite3_column_int(stmt, 19);
+        
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
         
         sqlite3_finalize(stmt);
         return true;
@@ -233,6 +286,7 @@ bool AccountManager::loadAccountFromDB(const std::string& username, Account& acc
     sqlite3_finalize(stmt);
     return false;
 }
+
 
 void AccountManager::cacheAccount(const Account& account) {
     cachedAccounts[account.username] = account;
@@ -245,7 +299,12 @@ bool AccountManager::updateAccount(const Account& account) {
         return false;
     }
     
-    const char* sql = "UPDATE accounts SET level = ?, total_score = ?, games_played = ?, games_won = ?, win_rate = ?, ranking = ?, elo = ? WHERE username = ?";
+    const char* sql = "UPDATE accounts SET level = ?, total_score = ?, games_played = ?, games_won = ?, win_rate = ?, ranking = ?, "
+                      "deathmatch_total_score = ?, deathmatch_games_played = ?, deathmatch_games_won = ?, "
+                      "horde_defense_total_score = ?, horde_defense_games_played = ?, horde_defense_games_won = ?, "
+                      "horde_defense_best_wave = ?, horde_defense_total_damage = ?, "
+                      "boss_fight_total_score = ?, boss_fight_games_played = ?, boss_fight_games_won = ? "
+                      "WHERE username = ?";
     sqlite3_stmt* stmt = nullptr;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -258,8 +317,23 @@ bool AccountManager::updateAccount(const Account& account) {
     sqlite3_bind_int(stmt, 4, account.gamesWon);
     sqlite3_bind_double(stmt, 5, account.winRate);
     sqlite3_bind_int(stmt, 6, account.ranking);
-    sqlite3_bind_int(stmt, 7, account.elo);
-    sqlite3_bind_text(stmt, 8, account.username.c_str(), -1, SQLITE_TRANSIENT);
+    
+    sqlite3_bind_int(stmt, 7, account.deathmatchTotalScore);
+    sqlite3_bind_int(stmt, 8, account.deathmatchGamesPlayed);
+    sqlite3_bind_int(stmt, 9, account.deathmatchGamesWon);
+    
+    sqlite3_bind_int(stmt, 10, account.hordeDefenseTotalScore);
+    sqlite3_bind_int(stmt, 11, account.hordeDefenseGamesPlayed);
+    sqlite3_bind_int(stmt, 12, account.hordeDefenseGamesWon);
+    sqlite3_bind_int(stmt, 13, account.hordeDefenseBestWave);
+    sqlite3_bind_int(stmt, 14, account.hordeDefenseTotalDamage);
+    
+    sqlite3_bind_int(stmt, 15, account.bossFightTotalScore);
+    sqlite3_bind_int(stmt, 16, account.bossFightGamesPlayed);
+    sqlite3_bind_int(stmt, 17, account.bossFightGamesWon);
+    
+    sqlite3_bind_text(stmt, 18, account.username.c_str(), -1, SQLITE_TRANSIENT);
+
     
     int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -356,7 +430,12 @@ std::vector<Account> AccountManager::getTopPlayers(int limit) {
         return topPlayers;
     }
     
-    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, elo, created_at FROM accounts ORDER BY ranking DESC, total_score DESC LIMIT ?";
+    const char* sql = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, "
+                      "deathmatch_total_score, deathmatch_games_played, deathmatch_games_won, "
+                      "horde_defense_total_score, horde_defense_games_played, horde_defense_games_won, "
+                      "horde_defense_best_wave, horde_defense_total_damage, "
+                      "boss_fight_total_score, boss_fight_games_played, boss_fight_games_won, "
+                      "created_at FROM accounts ORDER BY ranking DESC, total_score DESC LIMIT ?";
     sqlite3_stmt* stmt = nullptr;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -376,14 +455,257 @@ std::vector<Account> AccountManager::getTopPlayers(int limit) {
         account.gamesWon = sqlite3_column_int(stmt, 6);
         account.winRate = static_cast<float>(sqlite3_column_double(stmt, 7));
         account.ranking = sqlite3_column_int(stmt, 8);
-        account.elo = sqlite3_column_int(stmt, 9);
-        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
+        
+        account.deathmatchTotalScore = sqlite3_column_int(stmt, 9);
+        account.deathmatchGamesPlayed = sqlite3_column_int(stmt, 10);
+        account.deathmatchGamesWon = sqlite3_column_int(stmt, 11);
+        
+        account.hordeDefenseTotalScore = sqlite3_column_int(stmt, 12);
+        account.hordeDefenseGamesPlayed = sqlite3_column_int(stmt, 13);
+        account.hordeDefenseGamesWon = sqlite3_column_int(stmt, 14);
+        account.hordeDefenseBestWave = sqlite3_column_int(stmt, 15);
+        account.hordeDefenseTotalDamage = sqlite3_column_int(stmt, 16);
+        
+        account.bossFightTotalScore = sqlite3_column_int(stmt, 17);
+        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 18);
+        account.bossFightGamesWon = sqlite3_column_int(stmt, 19);
+        
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
         
         topPlayers.push_back(account);
     }
     
     sqlite3_finalize(stmt);
     return topPlayers;
+}
+
+
+std::vector<Account> AccountManager::getTopPlayersForMode(int mode, int limit) {
+    std::lock_guard<std::mutex> lock(accountMutex);
+    std::vector<Account> topPlayers;
+    
+    if (!initialized) {
+        return topPlayers;
+    }
+    
+    std::string orderBy;
+    switch(mode) {
+        case 0: // Deathmatch - Sort by Kills (Total Score)
+            orderBy = "deathmatch_total_score DESC";
+            break;
+        case 1: // Horde Defense - Sort by Best Wave (primary), Total Damage (secondary)
+            orderBy = "horde_defense_best_wave DESC, horde_defense_total_damage DESC";
+            break;
+        case 2: // Boss Fight - Sort by Total Score
+            orderBy = "boss_fight_total_score DESC";
+            break;
+        default:
+            orderBy = "total_score DESC"; 
+            break;
+    }
+    
+    std::string sqlStr = "SELECT id, username, email, level, total_score, games_played, games_won, win_rate, ranking, "
+                      "deathmatch_total_score, deathmatch_games_played, deathmatch_games_won, "
+                      "horde_defense_total_score, horde_defense_games_played, horde_defense_games_won, "
+                      "horde_defense_best_wave, horde_defense_total_damage, "
+                      "boss_fight_total_score, boss_fight_games_played, boss_fight_games_won, "
+                      "created_at FROM accounts ORDER BY " + orderBy + ", username ASC LIMIT ?";
+                      
+    sqlite3_stmt* stmt = nullptr;
+    
+    if (sqlite3_prepare_v2(db, sqlStr.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        return topPlayers;
+    }
+    
+    sqlite3_bind_int(stmt, 1, limit);
+    
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        Account account;
+        account.id = sqlite3_column_int(stmt, 0);
+        account.username = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        account.email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        account.level = sqlite3_column_int(stmt, 3);
+        account.totalScore = sqlite3_column_int(stmt, 4);
+        account.gamesPlayed = sqlite3_column_int(stmt, 5);
+        account.gamesWon = sqlite3_column_int(stmt, 6);
+        account.winRate = static_cast<float>(sqlite3_column_double(stmt, 7));
+        account.ranking = sqlite3_column_int(stmt, 8);
+        
+        account.deathmatchTotalScore = sqlite3_column_int(stmt, 9);
+        account.deathmatchGamesPlayed = sqlite3_column_int(stmt, 10);
+        account.deathmatchGamesWon = sqlite3_column_int(stmt, 11);
+        
+        account.hordeDefenseTotalScore = sqlite3_column_int(stmt, 12);
+        account.hordeDefenseGamesPlayed = sqlite3_column_int(stmt, 13);
+        account.hordeDefenseGamesWon = sqlite3_column_int(stmt, 14);
+        account.hordeDefenseBestWave = sqlite3_column_int(stmt, 15);
+        account.hordeDefenseTotalDamage = sqlite3_column_int(stmt, 16);
+        
+        account.bossFightTotalScore = sqlite3_column_int(stmt, 17);
+        account.bossFightGamesPlayed = sqlite3_column_int(stmt, 18);
+        account.bossFightGamesWon = sqlite3_column_int(stmt, 19);
+        
+        account.createdAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
+        
+        topPlayers.push_back(account);
+    }
+    
+    sqlite3_finalize(stmt);
+    return topPlayers;
+}
+
+
+// ============================================================================
+// MATCH END STATISTICS
+// ============================================================================
+
+bool AccountManager::recordDeathmatchMatchEnd(const std::vector<MatchPlayerStats>& stats) {
+    if (stats.empty()) return false;
+    
+    int maxKills = -1;
+    // Determine winner based on kills
+    for (const auto& p : stats) {
+        if (p.kills > maxKills) {
+            maxKills = p.kills;
+        }
+    }
+    
+    bool success = true;
+    for (const auto& p : stats) {
+        Account* account = getAccount(p.playerName);
+        if (account) {
+            // Update Deathmatch stats
+            account->deathmatchGamesPlayed++;
+            account->deathmatchTotalScore += p.kills; // Accumulate TOTAL KILLS
+            
+            // Note: Total score can be kills for now or accumulative
+            // User requirement: "DeathMatchMatchEnd(playerstats[])" -> calculate winning player based on kills
+            // "After all packet, increase game_played by 1 for that gamemode"
+            
+            bool isWinner = (p.kills == maxKills && maxKills > 0);
+            if (isWinner) {
+                account->deathmatchGamesWon++;
+            }
+            
+            // Also update global stats
+            account->gamesPlayed++;
+            if (isWinner) account->gamesWon++;
+            if (account->gamesPlayed > 0) {
+                account->winRate = (float)account->gamesWon / account->gamesPlayed;
+            }
+            
+            if (!updateAccount(*account)) {
+                success = false;
+            }
+        }
+    }
+    return success;
+}
+
+bool AccountManager::recordHordeDefenseMatchEnd(const std::vector<MatchPlayerStats>& stats) {
+    if (stats.empty()) return false;
+    
+    // Check if any player reached wave 20 (victory)
+    bool wave20Reached = false;
+    for (const auto& p : stats) {
+        if (p.roundsSurvived >= 20) {
+            wave20Reached = true;
+            break;
+        }
+    }
+    
+    bool success = true;
+    for (const auto& p : stats) {
+        Account* account = getAccount(p.playerName);
+        if (account) {
+            // Update Horde Defense Stats
+            account->hordeDefenseGamesPlayed++;
+            
+            // Update best wave (keep the maximum)
+            if (p.roundsSurvived > account->hordeDefenseBestWave) {
+                account->hordeDefenseBestWave = p.roundsSurvived;
+            }
+            
+            // Accumulate total damage dealt
+            account->hordeDefenseTotalDamage += p.damageDealt;
+            
+            // Also update legacy score field with wave count for backwards compatibility
+            account->hordeDefenseTotalScore = account->hordeDefenseBestWave;
+            
+            if (wave20Reached) {
+                account->hordeDefenseGamesWon++;
+            }
+            
+            // Update global stats
+            account->gamesPlayed++;
+            if (wave20Reached) account->gamesWon++;
+            if (account->gamesPlayed > 0) {
+                account->winRate = (float)account->gamesWon / account->gamesPlayed;
+            }
+            
+            std::cout << "[HordeDefense] Recorded match for " << p.playerName 
+                      << ": Wave " << p.roundsSurvived 
+                      << ", Damage " << p.damageDealt 
+                      << ", Best Wave " << account->hordeDefenseBestWave 
+                      << ", Total Damage " << account->hordeDefenseTotalDamage << std::endl;
+            
+            if (!updateAccount(*account)) {
+                success = false;
+            }
+        }
+    }
+    return success;
+}
+
+bool AccountManager::recordBossFightMatchEnd(const std::vector<MatchPlayerStats>& stats, int bossStageLevel) {
+    if (stats.empty()) return false;
+    
+    int maxTotalScore = -1;
+    std::unordered_map<std::string, int> playerScores;
+    
+    // Calculate scores and find winner
+    for (const auto& p : stats) {
+        int score = p.damageDealt * bossStageLevel;
+        playerScores[p.playerName] = score;
+        
+        if (score > maxTotalScore) {
+            maxTotalScore = score;
+        }
+    }
+    
+    bool success = true;
+    for (const auto& p : stats) {
+        Account* account = getAccount(p.playerName);
+        if (account) {
+            int score = playerScores[p.playerName];
+            
+            // Update Boss Fight stats
+            account->bossFightGamesPlayed++;
+            account->bossFightTotalScore += score;
+            
+            bool isWinner = (score == maxTotalScore && maxTotalScore > 0);
+            if (isWinner) {
+                account->bossFightGamesWon++;
+            }
+            
+            // Update global stats
+            account->gamesPlayed++;
+            account->totalScore += score; // Add match score to global score too
+            if (isWinner) account->gamesWon++;
+            
+             if (account->gamesPlayed > 0) {
+                account->winRate = (float)account->gamesWon / account->gamesPlayed;
+            }
+            
+            // Recalculate level based on total score logic (from updateStats)
+            account->level = 1 + (account->totalScore / 1000);
+
+            if (!updateAccount(*account)) {
+                success = false;
+            }
+        }
+    }
+    return success;
 }
 
 bool AccountManager::deleteAccount(const std::string& username) {

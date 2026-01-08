@@ -111,6 +111,7 @@ public:
     // ========================================================================
     
     float getBossHealthPercent() const;
+    int getPlayerDamageDealt(int32_t cid) const;
 
     // Bullet Management
     void addPlayerBullet(glm::vec2 pos, glm::vec2 vel, int damage, int32_t cid);

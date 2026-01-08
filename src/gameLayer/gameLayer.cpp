@@ -21,6 +21,7 @@
 #include <GLFW/glfw3.h>  // For GLFW_KEY_ESCAPE
 #include <cstring>
 #include <packet.h>
+#include "AudioManager.h"
 gl2d::Renderer2D renderer;
 
 Textures textures;
@@ -49,7 +50,19 @@ bool initGame()
 	textures.medKit.loadFromFile(RESOURCES_PATH "medkit.png", true, true);
 	textures.battery.loadFromFile(RESOURCES_PATH "battery.png", true, true);
 	textures.cross.loadFromFile(RESOURCES_PATH "cross.png", true, true);
-
+	textures.accountBackground.loadFromFile(RESOURCES_PATH "husthehebg.jpg");
+	
+	// Load Horde Defense enemy sprites
+	textures.zombieSprite.loadFromFile(RESOURCES_PATH "zombie.png", true, true);
+	textures.runnerSprite.loadFromFile(RESOURCES_PATH "runner.png", true, true);
+	textures.tankSprite.loadFromFile(RESOURCES_PATH "tank.png", true, true);
+	textures.exploderSprite.loadFromFile(RESOURCES_PATH "exploder.png", true, true);
+	textures.eliteSprite.loadFromFile(RESOURCES_PATH "elite.png", true, true);
+	textures.bossSummonerSprite.loadFromFile(RESOURCES_PATH "boss_summoner.png", true, true);
+	textures.bossBulletHellSprite.loadFromFile(RESOURCES_PATH "boss_bullethell.png", true, true);
+	textures.bossExploderSprite.loadFromFile(RESOURCES_PATH "boss_exploder.png", true, true);
+	textures.bossFinalSprite.loadFromFile(RESOURCES_PATH "boss_final.png", true, true);
+	
 	glui::gluiInit();
 
 	if (enet_initialize() != 0)
@@ -68,6 +81,9 @@ bool initGame()
 	
 	g_sessionManager = new SessionManager(g_accountManager);
 	g_accountUI = new AccountUI(g_accountManager, g_sessionManager);
+	
+	// Set account manager for client-side match recording
+	setClientAccountManager(g_accountManager);
 
 	// Initialize room management system
 	g_roomManager = new RoomManager();
@@ -79,6 +95,20 @@ bool initGame()
 	
 	// Initialize multi-room manager
 	g_multiRoomManager = new MultiRoomManager();
+	
+	// Initialize audio system
+	if (!AudioManager::getInstance().init()) {
+		std::cerr << "Warning: Failed to initialize audio system" << std::endl;
+		// Continue anyway - game can run without audio
+	}
+	
+	// Set button click callback for glui
+	glui::setButtonClickCallback([]() {
+		AudioManager::getInstance().playClick();
+	});
+	
+	// Start background music
+	AudioManager::getInstance().playMusic();
 
 	return true;
 }
@@ -114,7 +144,7 @@ bool gameLogic(float deltaTime)
 			UIState uiState = g_accountUI->getState();
 			
 			// Render account UI
-			g_accountUI->render(renderer, textures.font, deltaTime);
+			g_accountUI->render(renderer, textures.font, textures, deltaTime);
 			
 			// Handle room browser state
 			if (uiState == UIState::BROWSE_ROOMS && g_accountUI->getIsLoggedIn()) {
@@ -561,6 +591,9 @@ bool gameLogic(float deltaTime)
 
 	
 #pragma region set finishing stuff
+	// Update audio (music streaming)
+	AudioManager::getInstance().update();
+	
 	renderer.flush();
 
 	return true;
@@ -620,4 +653,7 @@ void closeGame()
 		delete g_multiRoomManager;
 		g_multiRoomManager = nullptr;
 	}
+	
+	// Cleanup audio system
+	AudioManager::getInstance().cleanup();
 }

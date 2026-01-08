@@ -776,6 +776,14 @@ float BossFightManager::getBossHealthPercent() const {
     return boss.health / boss.maxHealth;
 }
 
+int BossFightManager::getPlayerDamageDealt(int32_t cid) const {
+    auto it = playerDamageDealt.find(cid);
+    if (it != playerDamageDealt.end()) {
+        return it->second;
+    }
+    return 0;
+}
+
 void BossFightManager::applyDamageToPlayer(int32_t cid, phisics::Entity& player, int damage, BossAttackType attackType, glm::vec2 knockback) {
     player.life -= damage;
     

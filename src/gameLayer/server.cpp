@@ -55,12 +55,13 @@ struct ServerInstance {
 	// Damage update batching (for performance optimization)
 	std::map<int32_t, bool> damageUpdatesPending;  // Track which players have damage updates
 	float damageUpdateTimer;  // Timer for batched damage updates
+	float leaderboardUpdateTimer; // Timer for leaderboard broadcasts
 	
 	ServerInstance() : pids(1), changedData(false), serverOpen(false), 
 	                   gameMode(GameMode::DEATHMATCH), matchState(MatchState::MATCH_WAITING),
 	                   matchStartTime(30), matchDuration(300), scoreLimit(25), mapId(0),
 	                   leadingPlayerCid(0), leadingPlayerKills(0),
-	                   hordeDefenseManager(nullptr), bossFightManager(nullptr), damageUpdateTimer(0) {
+	                   hordeDefenseManager(nullptr), bossFightManager(nullptr), damageUpdateTimer(0), leaderboardUpdateTimer(0) {
 		itemSpawnPosition = {
 			{22,12}, {44,17}, {31,32}, {16,45}, {39,28},
 			{11,23}, {25,5}, {27,46}, {22,27}
@@ -594,6 +595,51 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			}
 		}
 	}
+	else if (p.header == headerHordePlayerTakeDamage)
+	{
+		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			int damage = *((int*)data);
+			
+			auto playerIt = instance->connections.find(p.cid);
+			if (playerIt != instance->connections.end())
+			{
+				phisics::Entity& player = playerIt->second.entityData;
+				if (player.life > 0)
+				{
+					// Apply shield damage first
+					if (player.shieldHealth > 0) {
+						int shieldDamage = std::min((int)player.shieldHealth, damage);
+						player.shieldHealth -= shieldDamage;
+						damage -= shieldDamage;
+					}
+					
+					// Apply remaining damage
+					if (damage > 0) {
+						player.life -= damage;
+						if (player.life < 0) player.life = 0;
+						
+						std::cout << "[Server] Player " << p.cid << " took " << damage << " boss bullet dmg. HP: " << player.life << std::endl;
+						
+						playerIt->second.changed = true;
+						instance->changedData = true;
+						
+						// IMMEDIATELY broadcast updated entity to ALL clients for UI sync
+						Packet entityPacket;
+						entityPacket.header = headerUpdateConnection;
+						entityPacket.cid = p.cid;
+						broadCast(instance, entityPacket, &player, sizeof(phisics::Entity), nullptr, true, 0);
+						
+						// Check for death
+						if (player.life <= 0) {
+							instance->hordeDefenseManager->markPlayerDead(p.cid);
+							std::cout << "[HordeDefense] Player " << p.cid << " died from boss bullet!" << std::endl;
+						}
+					}
+				}
+			}
+		}
+	}
 	else if (p.header == headerHordeBuyItem)
 	{
 		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
@@ -1024,6 +1070,71 @@ void serverFunction(int port, int gameMode, int mapId)
 			stop = std::chrono::high_resolution_clock::now();
 		}
 
+		// --------------------------------------------------------------------
+		// LEADERBOARD BROADCAST (1Hz)
+		// --------------------------------------------------------------------
+		instance->leaderboardUpdateTimer += deltaTime;
+		if (instance->leaderboardUpdateTimer >= 1.0f)
+		{
+			instance->leaderboardUpdateTimer = 0;
+			
+			// 1. Gather all players
+			std::vector<std::pair<int32_t, phisics::Entity*>> players;
+			for (auto& conn : instance->connections)
+			{
+				players.push_back({conn.first, &conn.second.entityData});
+			}
+			
+			// 2. Sort based on Game Mode
+			auto sortFunc = [instance](const auto& a, const auto& b) {
+				if (instance->gameMode == GameMode::DEATHMATCH) {
+					// For DM, sorting by kills (descending)
+					if (a.second->kills != b.second->kills)
+						return a.second->kills > b.second->kills;
+					return a.second->deaths < b.second->deaths; // Less deaths is better tie-breaker
+				} else if (instance->gameMode == GameMode::HORDE_DEFENSE) {
+					// For HD, sort by Waves Survived
+					if (a.second->wavesSurvived != b.second->wavesSurvived)
+						return a.second->wavesSurvived > b.second->wavesSurvived;
+					return a.second->totalDamageDealt > b.second->totalDamageDealt; // Tie-breaker: Damage
+				}
+				// For BF, sort by Damage (Score)
+				return a.second->totalDamageDealt > b.second->totalDamageDealt;
+			};
+			
+			std::sort(players.begin(), players.end(), sortFunc);
+			
+			// 3. Prepare Packet
+			LeaderBoardUpdateData lbData;
+			lbData.gameMode = static_cast<int>(instance->gameMode);
+			lbData.count = std::min((int)players.size(), 5);
+			
+			for (int i = 0; i < lbData.count; i++)
+			{
+				const auto& p = players[i];
+				strncpy(lbData.entries[i].playerName, p.second->name, 31);
+				lbData.entries[i].playerName[31] = '\0';
+				lbData.entries[i].cid = p.first;
+				
+				if (instance->gameMode == GameMode::DEATHMATCH) {
+					lbData.entries[i].value = p.second->kills;
+					lbData.entries[i].extraValue = p.second->deaths;
+				} else if (instance->gameMode == GameMode::HORDE_DEFENSE) {
+					lbData.entries[i].value = p.second->wavesSurvived;
+					lbData.entries[i].extraValue = p.second->totalDamageDealt;
+				} else {
+					lbData.entries[i].value = p.second->totalDamageDealt;
+					lbData.entries[i].extraValue = 0;
+				}
+			}
+			
+			// 4. Broadcast
+			Packet lbPacket;
+			lbPacket.header = headerUpdateLeaderBoard;
+			lbPacket.cid = 0;
+			broadCast(instance, lbPacket, &lbData, sizeof(lbData), nullptr, true, 0);
+		}
+
 	#pragma region Horde Defense Update
 		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
 		{
@@ -1097,6 +1208,8 @@ void serverFunction(int port, int gameMode, int mapId)
 						it->second.entityData.speedBoostWaves = entity.speedBoostWaves;
 						it->second.entityData.damageBoostWaves = entity.damageBoostWaves;
 						it->second.entityData.multiShotWaves = entity.multiShotWaves;
+						it->second.entityData.wavesSurvived = entity.wavesSurvived; // Sync waves survived
+						it->second.changed = true;
 						it->second.changed = true;
 					}
 				}
@@ -1193,6 +1306,9 @@ void serverFunction(int port, int gameMode, int mapId)
 							std::cout << "[BossFight] Player " << cid << " died!" << std::endl;
 						}
 					}
+					
+					// Update damage dealt (for score/leaderboard)
+					it->second.entityData.totalDamageDealt = instance->bossFightManager->getPlayerDamageDealt(cid);
 				}
 			}
 		}

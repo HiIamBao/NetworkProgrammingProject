@@ -49,4 +49,8 @@ namespace glui
 	void BeginMenu(std::string name, const gl2d::Color4f colors, const gl2d::Texture texture);
 	void EndMenu();
 
+	// Button click callback support
+	using ButtonClickCallback = void(*)();
+	void setButtonClickCallback(ButtonClickCallback callback);
+
 };

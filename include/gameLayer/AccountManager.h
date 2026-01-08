@@ -6,6 +6,14 @@
 #include <mutex>
 #include <sqlite3.h>
 
+struct MatchPlayerStats {
+    int playerId;
+    std::string playerName;
+    int kills;          // For Deathmatch
+    int roundsSurvived; // For Horde Defense (waves survived)
+    int damageDealt;    // For Boss Fight and Horde Defense
+};
+
 struct Account {
     int id;
     std::string username;
@@ -17,8 +25,24 @@ struct Account {
     int gamesWon;
     float winRate;
     int ranking;
-    int elo;
     std::string createdAt;
+    
+    // Deathmatch Stats
+    int deathmatchTotalScore;
+    int deathmatchGamesPlayed;
+    int deathmatchGamesWon;
+    
+    // Horde Defense Stats
+    int hordeDefenseTotalScore;   // Legacy field (for compatibility)
+    int hordeDefenseGamesPlayed;
+    int hordeDefenseGamesWon;
+    int hordeDefenseBestWave;     // Best wave reached (for ranking)
+    int hordeDefenseTotalDamage;  // Total damage dealt (tie-breaker)
+    
+    // Boss Fight Stats
+    int bossFightTotalScore;
+    int bossFightGamesPlayed;
+    int bossFightGamesWon;
     
     Account()
         : id(0),
@@ -28,7 +52,17 @@ struct Account {
           gamesWon(0),
           winRate(0.0f),
           ranking(0),
-          elo(1500) {}
+          deathmatchTotalScore(0),
+          deathmatchGamesPlayed(0),
+          deathmatchGamesWon(0),
+          hordeDefenseTotalScore(0),
+          hordeDefenseGamesPlayed(0),
+          hordeDefenseGamesWon(0),
+          hordeDefenseBestWave(0),
+          hordeDefenseTotalDamage(0),
+          bossFightTotalScore(0),
+          bossFightGamesPlayed(0),
+          bossFightGamesWon(0) {}
 };
 
 class AccountManager {
@@ -57,10 +91,16 @@ public:
     bool updateStats(const std::string& username, int scoreChange, bool won);
     bool updateRanking(const std::string& username, int newRanking);
     
+    // Match End Statistics
+    bool recordDeathmatchMatchEnd(const std::vector<MatchPlayerStats>& stats);
+    bool recordHordeDefenseMatchEnd(const std::vector<MatchPlayerStats>& stats);
+    bool recordBossFightMatchEnd(const std::vector<MatchPlayerStats>& stats, int bossStageLevel);
+    
     // Query
     bool accountExists(const std::string& username);
     bool emailExists(const std::string& email);
     std::vector<Account> getTopPlayers(int limit = 100);
+    std::vector<Account> getTopPlayersForMode(int mode, int limit = 100);
     
     // Admin operations
     bool setAllLevels(int level);

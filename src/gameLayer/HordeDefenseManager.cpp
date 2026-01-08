@@ -1,6 +1,7 @@
 #include "HordeDefenseManager.h"
 #include <cstring>
 #include <algorithm>
+#include <iostream>
 
 using namespace HordeDefense;
 
@@ -183,7 +184,7 @@ void HordeDefenseManager::startWave() {
         waveData.runnerCount = currentWaveConfig.runnerCount;
         waveData.tankCount = currentWaveConfig.tankCount;
         waveData.exploderCount = currentWaveConfig.exploderCount;
-        waveData.bossCount = currentWaveConfig.bossCount;
+        waveData.bossCount = currentWaveConfig.hasBoss ? 1 : 0;
         
         Packet p;
         p.header = headerHordeWaveStart;
@@ -376,6 +377,7 @@ void HordeDefenseManager::addPlayer(int32_t cid) {
     playerAlive[cid] = true;
     playerRespawned[cid] = false;
     playerKills[cid] = 0;
+    std::cout << "[HordeDefense] addPlayer: CID " << cid << " registered with $0. Total players: " << playerMoney.size() << std::endl;
 }
 
 void HordeDefenseManager::removePlayer(int32_t cid) {
@@ -471,6 +473,12 @@ void HordeDefenseManager::decrementWaveBasedBuffs(std::map<int32_t, phisics::Ent
             player.multiShotWaves--;
             changed = true;
         }
+
+        // Increment waves survived if player is alive (for leaderboard)
+        if (player.life > 0) {
+            player.wavesSurvived++;
+            changed = true; // Mark as changed to ensure sync
+        }
         
         // If buffs changed, broadcast update
         if (changed && broadcastCallback) {
@@ -499,7 +507,13 @@ void HordeDefenseManager::decrementWaveBasedBuffs(std::map<int32_t, phisics::Ent
 // ============================================================================
 
 void HordeDefenseManager::awardMoney(int32_t cid, int amount, const char* reason) {
+    auto it = playerMoney.find(cid);
+    if (it == playerMoney.end()) {
+        std::cout << "[HordeDefense] awardMoney WARNING: CID " << cid << " not in playerMoney! Creating entry with $0" << std::endl;
+        playerMoney[cid] = 0;
+    }
     playerMoney[cid] += amount;
+    std::cout << "[HordeDefense] awardMoney: CID " << cid << " +$" << amount << " (" << reason << ") -> Total: $" << playerMoney[cid] << std::endl;
     
     // Send money update
     if (sendToPlayerCallback) {
@@ -517,9 +531,20 @@ void HordeDefenseManager::awardMoney(int32_t cid, int amount, const char* reason
     }
 }
 
+
 bool HordeDefenseManager::canAfford(int32_t cid, int cost) const {
     auto it = playerMoney.find(cid);
-    if (it == playerMoney.end()) return false;
+    if (it == playerMoney.end()) {
+        std::cout << "[HordeDefense] canAfford: CID " << cid << " NOT FOUND in playerMoney! (" << playerMoney.size() << " players tracked)" << std::endl;
+        // Debug: Print all tracked CIDs
+        std::cout << "[HordeDefense] Tracked CIDs: ";
+        for (const auto& [trackedCid, money] : playerMoney) {
+            std::cout << trackedCid << " ";
+        }
+        std::cout << std::endl;
+        return false;
+    }
+    std::cout << "[HordeDefense] canAfford: CID " << cid << " has $" << it->second << ", needs $" << cost << " -> " << (it->second >= cost ? "YES" : "NO") << std::endl;
     return it->second >= cost;
 }
 
@@ -551,11 +576,13 @@ bool HordeDefenseManager::buyUpgrade(int32_t cid, phisics::Entity& player, Upgra
     int cost = info.getCostForLevel(nextLevel);
     
     // Check if can afford
+    std::cout << "[HordeDefense] buyUpgrade: CID " << cid << " buying type " << (int)type << " (level " << currentLevel << " -> " << nextLevel << "), cost: $" << cost << std::endl;
     if (!canAfford(cid, cost)) {
         response.success = false;
         response.upgradeType = (int)type;
         response.newLevel = currentLevel;
-        response.newMoney = playerMoney[cid];
+        auto moneyIt = playerMoney.find(cid);
+        response.newMoney = (moneyIt != playerMoney.end()) ? moneyIt->second : 0;
         strcpy(response.message, "Not enough money");
         return false;
     }
@@ -603,10 +630,12 @@ bool HordeDefenseManager::buyItem(int32_t cid, phisics::Entity& player, ShopItem
     ShopItemInfo info = ShopItemInfo::getInfo(type);
     
     // Check if can afford
+    std::cout << "[HordeDefense] buyItem: CID " << cid << " buying item type " << (int)type << ", cost: $" << info.cost << std::endl;
     if (!canAfford(cid, info.cost)) {
         response.success = false;
         response.itemType = (int)type;
-        response.newMoney = playerMoney[cid];
+        auto moneyIt = playerMoney.find(cid);
+        response.newMoney = (moneyIt != playerMoney.end()) ? moneyIt->second : 0;
         response.effectValue = 0;
         response.duration = 0;
         strcpy(response.message, "Not enough money");
@@ -720,7 +749,7 @@ void HordeDefenseManager::updateEnemySpawning(float deltaTime) {
         // Spawn in order: zombies, runners, tanks, exploders, bosses
         EnemyType typeToSpawn;
         
-        int zombiesSpawned = 0, runnersSpawned = 0, tanksSpawned = 0, explodersSpawned = 0, bossesSpawned = 0;
+        int zombiesSpawned = 0, runnersSpawned = 0, tanksSpawned = 0, explodersSpawned = 0, elitesSpawned = 0, bossesSpawned = 0;
         
         for (const auto& enemy : enemies) {
             switch (enemy.type) {
@@ -728,7 +757,11 @@ void HordeDefenseManager::updateEnemySpawning(float deltaTime) {
                 case EnemyType::RUNNER: runnersSpawned++; break;
                 case EnemyType::TANK: tanksSpawned++; break;
                 case EnemyType::EXPLODER: explodersSpawned++; break;
-                case EnemyType::BOSS: bossesSpawned++; break;
+                case EnemyType::ELITE: elitesSpawned++; break;
+                default: 
+                    // Count any boss type
+                    if (enemy.type >= EnemyType::BOSS_WAVE5) bossesSpawned++; 
+                    break;
             }
         }
         
@@ -740,8 +773,14 @@ void HordeDefenseManager::updateEnemySpawning(float deltaTime) {
             typeToSpawn = EnemyType::TANK;
         } else if (explodersSpawned < currentWaveConfig.exploderCount) {
             typeToSpawn = EnemyType::EXPLODER;
+        } else if (elitesSpawned < currentWaveConfig.eliteCount) {
+            typeToSpawn = EnemyType::ELITE;
+        } else if (currentWaveConfig.hasBoss && bossesSpawned < 1) {
+            typeToSpawn = currentWaveConfig.bossType;
         } else {
-            typeToSpawn = EnemyType::BOSS;
+            // Fallback: If we still need to spawn enemies to reach total count
+            // but all specific type limits are met, spawn Zombies.
+            typeToSpawn = EnemyType::ZOMBIE;
         }
         
         glm::vec2 spawnPos = getRandomSpawnPosition();
@@ -777,10 +816,111 @@ void HordeDefenseManager::updateEnemyAI(float deltaTime, const std::map<int32_t,
                     continue;
                 }
                 
-                // Calculate distance to target
+                // Direction to target
                 glm::vec2 direction = target.pos - enemy.position;
                 float distance = glm::length(direction);
                 
+                if (distance > 0) {
+                    direction = glm::normalize(direction);
+                }
+                
+                // ============================================================
+                // ENEMY SKILLS & BOSS AI
+                // ============================================================
+                
+                // 1. ELITE & FINAL BOSS TELEPORT (Every 10s)
+                if (enemy.type == EnemyType::ELITE || enemy.type == EnemyType::BOSS_WAVE15 || enemy.type == EnemyType::BOSS_WAVE20)
+                {
+                    static float teleportTimer = 0.0f;
+                    teleportTimer += deltaTime;
+                    if (teleportTimer >= 10.0f) {
+                        teleportTimer = 0;
+                        glm::vec2 newPos = getRandomSpawnPosition();
+                        if (enemy.type == EnemyType::BOSS_WAVE20) newPos = target.pos + glm::vec2(5, 5); // Final boss chases better
+                        enemy.position = newPos;
+                        
+                        if (broadcastCallback) {
+                            struct Data { int32_t id; float x, y; } d = {enemy.id, newPos.x, newPos.y};
+                            Packet p; p.cid = 0; p.header = headerHordeBossTeleport;
+                            broadcastCallback(p, &d, sizeof(d), true);
+                        }
+                    }
+                }
+
+                // 2. BOSS SHOOTING (Varies by Boss)
+                if (enemy.type == EnemyType::BOSS_WAVE5 || enemy.type == EnemyType::BOSS_WAVE15 || enemy.type == EnemyType::BOSS_WAVE20)
+                {
+                    static float shootTimer = 0.0f;
+                    shootTimer += deltaTime;
+                    float cooldown = (enemy.type == EnemyType::BOSS_WAVE20) ? 1.5f : 3.0f;
+                    
+                    if (shootTimer >= cooldown) {
+                        shootTimer = 0;
+                        if (broadcastCallback) {
+                            struct Data { int32_t id; float sx, sy, dx, dy; } d;
+                            d.id = enemy.id;
+                            d.sx = enemy.position.x + 2.5f; d.sy = enemy.position.y + 2.5f; // Center
+                            d.dx = direction.x; d.dy = direction.y;
+                            Packet p; p.cid = 0; p.header = headerHordeBossAttack;
+                            broadcastCallback(p, &d, sizeof(d), true);
+                        }
+                    }
+                }
+
+                // 3. BULLET HELL (Wave 10 & 20 Bosses)
+                if (enemy.type == EnemyType::BOSS_WAVE10 || enemy.type == EnemyType::BOSS_WAVE20)
+                {
+                    static float sprayTimer = 0.0f;
+                    sprayTimer += deltaTime;
+                    if (sprayTimer >= 5.0f) {
+                         sprayTimer = 0;
+                         // Reuse BossShoot packet but logic implies spray? 
+                         // Check packet.h: headerBossFightCircleSpray exists but is for BossFight mode.
+                         // Use headerHordeBossAttack multiple times or new packet?
+                         // Let's just rapid fire 8 directions using the Attack packet for simplicity
+                         if (broadcastCallback) {
+                             float angleStep = 3.14159f * 2.0f / 8.0f;
+                             for(int i=0; i<8; i++) {
+                                 float angle = i * angleStep;
+                                 struct Data { int32_t id; float sx, sy, dx, dy; } d;
+                                 d.id = enemy.id;
+                                 d.sx = enemy.position.x + 2.5f; d.sy = enemy.position.y + 2.5f;
+                                 d.dx = cos(angle); d.dy = sin(angle);
+                                 Packet p; p.cid = 0; p.header = headerHordeBossAttack;
+                                 broadcastCallback(p, &d, sizeof(d), true);
+                             }
+                         }
+                    }
+                }
+
+                // 4. SUMMONER (Wave 5 & 20)
+                if (enemy.type == EnemyType::BOSS_WAVE5 || enemy.type == EnemyType::BOSS_WAVE20)
+                {
+                    static float summonTimer = 0.0f;
+                    summonTimer += deltaTime;
+                    if (summonTimer >= 8.0f) {
+                        summonTimer = 0;
+                        // Spawn 2 Zombies
+                        spawnEnemy(EnemyType::ZOMBIE, enemy.position + glm::vec2(2, 2));
+                        spawnEnemy(EnemyType::ZOMBIE, enemy.position - glm::vec2(2, 2));
+                        
+                        if (broadcastCallback) {
+                             // Just send a visual or sound?
+                             // headerHordeBossSummon
+                             struct Data {int32_t id; } d = {enemy.id};
+                             Packet p; p.cid = 0; p.header = headerHordeBossSummon;
+                             broadcastCallback(p, &d, sizeof(d), true);
+                        }
+                    }
+                }
+
+                // 5. RUNNER DASH
+                if (enemy.type == EnemyType::RUNNER) {
+                    // Random small chance to speed up?
+                    // Implementation skipped to keep it simple and safe for now
+                }
+                // ============================================================
+
                 // Check if within attack range
                 if (distance <= ATTACK_RANGE) {
                     // Stop moving
