@@ -1,6 +1,7 @@
 #include "AccountUI.h"
 #include "platformInput.h"
 #include "imgui.h"
+#include "gameLayer/Ui.h"
 #include <cstring>
 #include <cctype>
 #include <algorithm>
@@ -17,7 +18,23 @@ AccountUI::AccountUI(AccountManager* accMgr, SessionManager* sessMgr)
 AccountUI::~AccountUI() {
 }
 
-void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, float deltaTime) {
+void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, const Textures& textures, float deltaTime) {
+    // Save current camera and reset to default for UI rendering
+    auto savedCamera = renderer.currentCamera;
+    renderer.currentCamera.setDefault();
+    
+    // Render fullscreen background image first
+    auto bgBox = Ui::Box()
+        .xLeft(0.0f)
+        .yTop(0.0f)
+        .xDimensionPixels(renderer.windowW)
+        .yDimensionPixels(renderer.windowH);
+    
+    renderer.renderRectangle(bgBox, {1.0f, 1.0f, 1.0f, 1.0f}, {}, 0.f, textures.accountBackground);
+    
+    // Restore camera (though glui will reset it anyway)
+    renderer.currentCamera = savedCamera;
+    
     // Update message timer
     if (messageTimer > 0.0f) {
         messageTimer -= deltaTime;
@@ -129,7 +146,7 @@ void AccountUI::renderMatchMaking(gl2d::Renderer2D& renderer, gl2d::Font& font) 
 }
 
 void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
-    glui::Text("===== MULTIPLAYER GAME =====", UIColors::Primary);
+    glui::Text("HUST ARENA", UIColors::Primary);
     glui::Space(20);
     
     if (isLoggedIn) {
@@ -214,11 +231,13 @@ void AccountUI::renderLoginScreen(gl2d::Renderer2D& renderer, gl2d::Font& font) 
     glui::Space(20);
     
     glui::Text("Username:", UIColors::White);
+    glui::Space(10);
     glui::InputText("##username_login", usernameInput, sizeof(usernameInput));
     
     glui::Space(10);
     
     glui::Text("Password:", UIColors::White);
+    glui::Space(10);
     glui::InputText("##password_login", passwordInput, sizeof(passwordInput), UIColors::Panel);
     
     glui::Space(20);

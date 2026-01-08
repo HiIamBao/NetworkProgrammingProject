@@ -49,7 +49,7 @@ bool initGame()
 	textures.medKit.loadFromFile(RESOURCES_PATH "medkit.png", true, true);
 	textures.battery.loadFromFile(RESOURCES_PATH "battery.png", true, true);
 	textures.cross.loadFromFile(RESOURCES_PATH "cross.png", true, true);
-
+	textures.accountBackground.loadFromFile(RESOURCES_PATH "husthehebg.jpg");
 	glui::gluiInit();
 
 	if (enet_initialize() != 0)
@@ -114,7 +114,7 @@ bool gameLogic(float deltaTime)
 			UIState uiState = g_accountUI->getState();
 			
 			// Render account UI
-			g_accountUI->render(renderer, textures.font, deltaTime);
+			g_accountUI->render(renderer, textures.font, textures, deltaTime);
 			
 			// Handle room browser state
 			if (uiState == UIState::BROWSE_ROOMS && g_accountUI->getIsLoggedIn()) {

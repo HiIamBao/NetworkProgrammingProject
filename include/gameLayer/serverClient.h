@@ -26,4 +26,5 @@ struct Textures
 	gl2d::Texture battery;
 	gl2d::Texture cross;
 	gl2d::Font font;
+	gl2d::Texture accountBackground;
 };

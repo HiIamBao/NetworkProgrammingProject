@@ -6,6 +6,7 @@
 #include "glui/glui.h"
 #include "AccountManager.h"
 #include "SessionManager.h"
+#include "serverClient.h"  // For Textures struct
 
 enum class UIState {
     MAIN_MENU,
@@ -69,7 +70,7 @@ public:
     ~AccountUI();
     
     // Main render function
-    void render(gl2d::Renderer2D& renderer, gl2d::Font& font, float deltaTime);
+    void render(gl2d::Renderer2D& renderer, gl2d::Font& font, const Textures& textures, float deltaTime);
     
     // State management
     void setState(UIState newState);
