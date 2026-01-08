@@ -129,6 +129,22 @@ enum
 	
 	// Boss Fight DEBUG packets
 	headerBossFightDebugRespawnBoss, // Client -> Server: Request to respawn boss at player position (DEBUG)
+	
+	// Real-time Leaderboard Packet
+	headerUpdateLeaderBoard,        // Server -> All: Leaderboard data update
+};
+
+// Leaderboard Data Structures
+struct LeaderBoardEntry {
+    char playerName[32];
+    int value; // Kills (DM), Damage (HD), Score (BF)
+    int32_t cid; // Client ID for highlighting (optional)
+};
+
+struct LeaderBoardUpdateData {
+    int gameMode;
+    int count; // Number of entries (max 5)
+    LeaderBoardEntry entries[5];
 };
 
 constexpr int SERVER_CHANNELS = 2;

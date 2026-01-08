@@ -471,6 +471,12 @@ void HordeDefenseManager::decrementWaveBasedBuffs(std::map<int32_t, phisics::Ent
             player.multiShotWaves--;
             changed = true;
         }
+
+        // Increment waves survived if player is alive (for leaderboard)
+        if (player.life > 0) {
+            player.wavesSurvived++;
+            changed = true; // Mark as changed to ensure sync
+        }
         
         // If buffs changed, broadcast update
         if (changed && broadcastCallback) {

@@ -364,7 +364,7 @@ void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) 
         glui::Text("No players found", UIColors::White);
     } else {
         char buffer[256];
-        int displayCount = std::min(20, (int)leaderboardCache.size());
+        int displayCount = std::min(5, (int)leaderboardCache.size());
         
         for (int i = 0; i < displayCount; i++) {
             const Account& acc = leaderboardCache[i];
@@ -396,10 +396,11 @@ void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) 
             }
 
             glui::Text(buffer, color);
+            glui::Space(5);
         }
     }
     
-    glui::Space(20);
+    glui::Space(10);
     
     if (glui::Button("Refresh Now", UIColors::Primary)) {
         refreshLeaderboard();
