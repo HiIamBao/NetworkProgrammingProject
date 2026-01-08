@@ -352,10 +352,18 @@ bool AccountManager::updateStats(const std::string& username, int scoreChange, b
         return false;
     }
     
+    // Update general stats
     account->totalScore += scoreChange;
     account->gamesPlayed++;
     if (won) {
         account->gamesWon++;
+    }
+    
+    // Update deathmatch-specific stats (scoreChange = kills in deathmatch)
+    account->deathmatchTotalScore += scoreChange;
+    account->deathmatchGamesPlayed++;
+    if (won) {
+        account->deathmatchGamesWon++;
     }
     
     if (account->gamesPlayed > 0) {

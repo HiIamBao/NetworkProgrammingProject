@@ -59,7 +59,7 @@ struct ServerInstance {
 	
 	ServerInstance() : pids(1), changedData(false), serverOpen(false), 
 	                   gameMode(GameMode::DEATHMATCH), matchState(MatchState::MATCH_WAITING),
-	                   matchStartTime(30), matchDuration(300), scoreLimit(25), mapId(0),
+	                   matchStartTime(30), matchDuration(300), scoreLimit(10), mapId(0),
 	                   leadingPlayerCid(0), leadingPlayerKills(0),
 	                   hordeDefenseManager(nullptr), bossFightManager(nullptr), damageUpdateTimer(0), leaderboardUpdateTimer(0) {
 		itemSpawnPosition = {
@@ -503,6 +503,9 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 					instance->leadingPlayerKills = killerIt->second.kills;
 					instance->leadingPlayerCid = killerCid;
 				}
+				
+				// Force immediate leaderboard update on kill in deathmatch
+				instance->leaderboardUpdateTimer = 99.0f; // This will trigger an update on next tick
 				
 				// Check for victory condition (score limit reached)
 				if (instance->scoreLimit > 0 && killerIt->second.kills >= instance->scoreLimit)
