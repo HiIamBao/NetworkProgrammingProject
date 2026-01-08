@@ -36,7 +36,11 @@ enum class EnemyType {
     RUNNER = 1,     // Fast, medium HP, charges at players
     TANK = 2,       // Very slow, very high HP, heavy damage
     EXPLODER = 3,   // Medium speed, explodes on death/contact
-    BOSS = 4        // Slow, massive HP, special attacks
+    ELITE = 4,      // (Old Boss) Tough normal mob, 500 HP
+    BOSS_WAVE5 = 5, // Summoner Boss
+    BOSS_WAVE10 = 6,// Bullet Hell Boss
+    BOSS_WAVE15 = 7,// Explosive Boss
+    BOSS_WAVE20 = 8 // Final Boss
 };
 
 // ============================================================================
@@ -86,34 +90,58 @@ struct EnemyStats {
         
         switch (type) {
             case EnemyType::ZOMBIE:
-                stats.baseHealth = 50.0f;
-                stats.baseSpeed = 0.8f;
-                stats.baseDamage = 1;  // Balanced for 5 HP players
+                stats.baseHealth = 40.0f;
+                stats.baseSpeed = 1.0f;
+                stats.baseDamage = 2;
                 stats.moneyReward = 10;
                 break;
             case EnemyType::RUNNER:
                 stats.baseHealth = 30.0f;
-                stats.baseSpeed = 2.0f;
-                stats.baseDamage = 1;  // Balanced for 5 HP players
+                stats.baseSpeed = 2.5f;
+                stats.baseDamage = 2;
                 stats.moneyReward = 15;
                 break;
             case EnemyType::TANK:
-                stats.baseHealth = 250.0f;
-                stats.baseSpeed = 0.5f;
-                stats.baseDamage = 2;  // Tanks hit harder
+                stats.baseHealth = 200.0f;
+                stats.baseSpeed = 0.6f;
+                stats.baseDamage = 4;
                 stats.moneyReward = 50;
                 break;
             case EnemyType::EXPLODER:
                 stats.baseHealth = 40.0f;
                 stats.baseSpeed = 1.2f;
-                stats.baseDamage = 3;  // Explosion damage (one-shot if low HP)
+                stats.baseDamage = 10;
                 stats.moneyReward = 25;
                 break;
-            case EnemyType::BOSS:
-                stats.baseHealth = 1000.0f;
-                stats.baseSpeed = 0.4f;
-                stats.baseDamage = 2;  // Boss hits hard but slow
-                stats.moneyReward = 200;
+            case EnemyType::ELITE:
+                stats.baseHealth = 500.0f;
+                stats.baseSpeed = 0.8f;
+                stats.baseDamage = 5;
+                stats.moneyReward = 150;
+                break;
+            case EnemyType::BOSS_WAVE5:
+                stats.baseHealth = 2000.0f;
+                stats.baseSpeed = 0.5f;
+                stats.baseDamage = 5;
+                stats.moneyReward = 1000;
+                break;
+            case EnemyType::BOSS_WAVE10:
+                stats.baseHealth = 3500.0f;
+                stats.baseSpeed = 0.6f;
+                stats.baseDamage = 5;
+                stats.moneyReward = 2000;
+                break;
+            case EnemyType::BOSS_WAVE15:
+                stats.baseHealth = 5000.0f;
+                stats.baseSpeed = 0.7f;
+                stats.baseDamage = 8;
+                stats.moneyReward = 3000;
+                break;
+            case EnemyType::BOSS_WAVE20:
+                stats.baseHealth = 10000.0f;
+                stats.baseSpeed = 0.8f;
+                stats.baseDamage = 10;
+                stats.moneyReward = 5000;
                 break;
         }
         
@@ -311,30 +339,57 @@ struct WaveConfig {
     int runnerCount;
     int tankCount;
     int exploderCount;
-    int bossCount;
+    int eliteCount;
+    EnemyType bossType;
+    bool hasBoss;
     float spawnInterval;    // Seconds between spawns
     int completionBonus;    // Money awarded on wave complete
     
     static WaveConfig getWaveConfig(int wave) {
         WaveConfig config;
         config.waveNumber = wave;
-        config.completionBonus = 100 * wave;
+        config.completionBonus = 200 * wave; // Higher bonus for faster scaling
+        config.hasBoss = false;
+        config.bossType = EnemyType::ZOMBIE; // Default
         
-        // Spawn interval decreases as waves progress (faster spawning)
-        config.spawnInterval = std::max(0.5f, 2.0f - (wave * 0.1f));
+        // Spawn interval decreases (faster spawning)
+        config.spawnInterval = std::max(0.3f, 1.5f - (wave * 0.05f));
         
-        // Base enemy counts scale with wave number
-        config.zombieCount = 5 + (wave * 2);      // 7, 9, 11, 13... zombies
-        config.runnerCount = wave >= 3 ? (wave - 1) : 0;  // Start runners at wave 3
-        config.tankCount = wave >= 5 ? (wave / 3) : 0;    // Start tanks at wave 5
-        config.exploderCount = wave >= 7 ? (wave / 4) : 0; // Start exploders at wave 7
-        config.bossCount = (wave % 5 == 0) ? 1 : 0;       // Boss every 5th wave
+        // Config for ~5-10 min game (quick pacing)
+        config.zombieCount = 8 + (wave * 3);
+        config.runnerCount = wave >= 2 ? (wave * 2) : 0;
+        config.tankCount = wave >= 4 ? (wave / 2) : 0;
+        config.exploderCount = wave >= 6 ? (wave / 2) : 0;
+        config.eliteCount = wave >= 8 ? (wave / 4) : 0; // Elites start wave 8
+        
+        // Boss Waves
+        if (wave == 5) {
+            config.hasBoss = true;
+            config.bossType = EnemyType::BOSS_WAVE5;
+            config.zombieCount = 10; // Minions
+        } else if (wave == 10) {
+            config.hasBoss = true;
+            config.bossType = EnemyType::BOSS_WAVE10;
+            config.zombieCount = 15;
+            config.eliteCount = 2;
+        } else if (wave == 15) {
+            config.hasBoss = true;
+            config.bossType = EnemyType::BOSS_WAVE15;
+            config.tankCount = 5;
+            config.eliteCount = 4;
+        } else if (wave == 20) {
+            config.hasBoss = true;
+            config.bossType = EnemyType::BOSS_WAVE20;
+            config.zombieCount = 20;
+            config.tankCount = 10;
+            config.eliteCount = 8;
+        }
         
         return config;
     }
     
     int getTotalEnemies() const {
-        return zombieCount + runnerCount + tankCount + exploderCount + bossCount;
+        return zombieCount + runnerCount + tankCount + exploderCount + eliteCount + (hasBoss ? 1 : 0);
     }
 };
 

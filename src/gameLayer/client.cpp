@@ -90,6 +90,7 @@ struct ClientBossBullet {
     float lifetime;
 };
 static std::vector<ClientBossBullet> clientBossBullets;
+static std::vector<ClientBossBullet> hordeBossBullets; // Horde Defense boss projectiles
 static BossFight::BossFightState bossFightState = BossFight::BossFightState::WAITING;
 static float bossAttackAnimTimer = 0.0f;
 static BossFight::BossAttackType lastBossAttack = BossFight::BossAttackType::MELEE;
@@ -119,6 +120,8 @@ void resetClient()
 	const char* mapFile;
 	if (currentGameMode == GameMode::BOSS_FIGHT) {
 		mapFile = RESOURCES_PATH "bossFightArena.bin";
+	} else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+		mapFile = RESOURCES_PATH "hordeDefense.bin";
 	} else {
 		mapFile = RESOURCES_PATH "mapData2.bin";
 	}
@@ -472,6 +475,8 @@ void msgLoop(ENetHost *client)
 					const char* mapFile;
 					if (currentGameMode == GameMode::BOSS_FIGHT) {
 						mapFile = RESOURCES_PATH "bossFightArena.bin";
+					} else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+						mapFile = RESOURCES_PATH "hordeDefense.bin";
 					} else {
 						mapFile = RESOURCES_PATH "mapData2.bin";
 					}
@@ -567,6 +572,11 @@ void msgLoop(ENetHost *client)
 				{
 					auto deathData = *(HordeEnemyDeathData*)data;
 					hordeEnemies.erase(deathData.enemyId);
+					
+					// Decrement enemy count for UI display
+					if (enemiesAlive > 0) {
+						enemiesAlive--;
+					}
 					
 					// Log enemy kill (money update comes from server via headerHordePlayerMoneyUpdate)
 					if (deathData.killerCid == cid)
@@ -669,11 +679,12 @@ void msgLoop(ENetHost *client)
 				{
 					auto waveData = *(HordeWaveStartData*)data;
 					currentWave = waveData.waveNumber;
+					enemiesAlive = waveData.totalEnemies; // Set initial enemy count for wave
 					
 					waveNotification = "Wave " + std::to_string(currentWave) + " Starting!";
 					waveNotificationTimer = 3.0f;
 					
-					std::cout << "Wave " << currentWave << " started!" << std::endl;
+					std::cout << "Wave " << currentWave << " started! Total enemies: " << enemiesAlive << std::endl;
 				}
 				else if (p.header == headerHordeWaveComplete)
 				{
@@ -949,10 +960,52 @@ void msgLoop(ENetHost *client)
 					{
 						auto& player = players[cid];
 						player.life -= damageData.damage;
-						if (player.life < 0) player.life = 0;
+						if (player.life <= 0)
+						{
+							player.life = 0;
+						}
 						player.hitTime = phisics::Entity::invincibilityTime;
 						
 						std::cout << "[BossFight] You took " << damageData.damage << " damage! HP: " << player.life << std::endl;
+					}
+				}
+				else if (p.header == headerHordeBossTeleport)
+				{
+					if (currentGameMode == GameMode::HORDE_DEFENSE)
+					{
+						struct BossTeleportData { int32_t enemyId; float x, y; };
+						BossTeleportData* teleportData = (BossTeleportData*)data;
+						
+						// Find boss local enemy
+						for (auto& [id, enemy] : hordeEnemies) {
+							if (id == teleportData->enemyId) {
+								// Teleport effect (poof)
+								// Simply update pos for now, server handles sync
+								enemy.position = {teleportData->x, teleportData->y};
+								// std::cout << "Boss Teleported!" << std::endl;
+								break;
+							}
+						}
+					}
+				}
+				else if (p.header == headerHordeBossAttack)
+				{
+					if (currentGameMode == GameMode::HORDE_DEFENSE)
+					{
+						struct BossAttackData { 
+							int32_t enemyId; 
+							float startX, startY;
+							float dirX, dirY;
+						};
+						BossAttackData* attackData = (BossAttackData*)data;
+						
+						// Spawn a visual projectile using hordeBossBullets (like Boss Fight mode)
+						ClientBossBullet b;
+						b.pos = {attackData->startX, attackData->startY};
+						b.velocity = glm::vec2(attackData->dirX, attackData->dirY) * 8.0f; // Bullet speed
+						b.lifetime = 10.0f; // Lifetime before auto-despawn
+						
+						hordeBossBullets.push_back(b);
 					}
 				}
 				enet_packet_destroy(event.packet);
@@ -1442,8 +1495,11 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				// Draw all enemies
 				for (const auto& [enemyId, enemy] : hordeEnemies)
 				{
-					// Size multiplier (boss is larger)
-					float sizeMultiplier = (enemy.type == HordeDefense::EnemyType::BOSS) ? 5.0f : 1.0f;
+					// Size multiplier
+					// OLD BOSS was 5.0f. New Elites are 2.0f. New Bosses are 5.0f.
+					float sizeMultiplier = 1.0f;
+					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.0f;
+					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.0f;
 
 					// Calculate screen position and size
 					glm::vec4 enemyRect = {
@@ -1469,44 +1525,166 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						case HordeDefense::EnemyType::EXPLODER:
 							enemyColor = {0.9f, 0.2f, 0.2f, 1.0f};  // Red
 							break;
-						case HordeDefense::EnemyType::BOSS:
-							enemyColor = {0.8f, 0.1f, 0.9f, 1.0f};  // Purple
+						case HordeDefense::EnemyType::ELITE:
+							// Elite: Purple "Mini-Boss"
+							enemyColor = {0.6f, 0.0f, 0.8f, 1.0f};
 							break;
+						case HordeDefense::EnemyType::BOSS_WAVE5: // Summoner (Gold)
+							enemyColor = {1.0f, 0.8f, 0.0f, 1.0f}; 
+							break;
+						case HordeDefense::EnemyType::BOSS_WAVE10: // Bullet Hell (Red/Black Pulse)
+						{
+							float pulse = (std::sin(glfwGetTime() * 8.0f) + 1.0f) * 0.5f;
+							enemyColor = glm::mix(glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), glm::vec4(0.1f, 0.0f, 0.0f, 1.0f), pulse);
+							break;
+						}
+						case HordeDefense::EnemyType::BOSS_WAVE15: // Explosive (Orange/Red)
+							enemyColor = {1.0f, 0.4f, 0.0f, 1.0f};
+							break;
+						case HordeDefense::EnemyType::BOSS_WAVE20: // Final Boss (White/Cyan Pulse)
+						{
+							float pulse = (std::sin(glfwGetTime() * 10.0f) + 1.0f) * 0.5f;
+							enemyColor = glm::mix(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), pulse);
+							break;
+						}
 						default:
 							enemyColor = {1.0f, 1.0f, 1.0f, 1.0f};
 							break;
 					}
-					
-					// Draw enemy body
+				
+				// Choose sprite texture based on enemy type
+				gl2d::Texture* enemyTexture = nullptr;
+				switch (enemy.type)
+				{
+					case HordeDefense::EnemyType::ZOMBIE:
+						enemyTexture = &textures.zombieSprite;
+						break;
+					case HordeDefense::EnemyType::RUNNER:
+						enemyTexture = &textures.runnerSprite;
+						break;
+					case HordeDefense::EnemyType::TANK:
+						enemyTexture = &textures.tankSprite;
+						break;
+					case HordeDefense::EnemyType::EXPLODER:
+						enemyTexture = &textures.exploderSprite;
+						break;
+					case HordeDefense::EnemyType::ELITE:
+						enemyTexture = &textures.eliteSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE5:
+						enemyTexture = &textures.bossSummonerSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE10:
+						enemyTexture = &textures.bossBulletHellSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE15:
+						enemyTexture = &textures.bossExploderSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE20:
+						enemyTexture = &textures.bossFinalSprite;
+						break;
+					default:
+						enemyTexture = &textures.zombieSprite; // Fallback
+						break;
+				}
+				
+				// Draw enemy with sprite (apply color tint for effects)
+				if (enemyTexture && enemyTexture->id != 0) {
+					renderer.renderRectangle(enemyRect, enemyColor, {}, 0.f, *enemyTexture);
+				} else {
+					// Fallback to colored rectangle if texture not loaded
 					renderer.renderRectangle(enemyRect, enemyColor);
+				}
 					
-					// Draw health bar above enemy
-					float healthPercent = enemy.health / enemy.maxHealth;
-					if (healthPercent < 1.0f)  // Only show if damaged
+					// Draw Boss Helper UI (For actual Bosses only, not Elites)
+					bool isBoss = (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5);
+					if (isBoss)
 					{
-						float healthBarWidth = sizeMultiplier * worldMagnification;
-						float healthBarHeight = 0.1f * worldMagnification;
-						// Raise the health bar proportional to enemy size
-						float healthBarY = (enemy.position.y - 0.2f * sizeMultiplier) * worldMagnification;
+						// "BOSS" Label (add type name)
+						const char* bossName = "BOSS";
+						if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE5) bossName = "SUMMONER";
+						else if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE10) bossName = "BULLET HELL";
+						else if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE15) bossName = "EXPLODER";
+						else if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE20) bossName = "THE END";
 
-						// Background (red)
-						glm::vec4 bgRect = {
-							enemy.position.x * worldMagnification,
-							healthBarY,
-							healthBarWidth,
-							healthBarHeight
-						};
-						renderer.renderRectangle(bgRect, {0.3f, 0.0f, 0.0f, 0.8f});
-
-						// Foreground (green)
-						glm::vec4 fgRect = {
-							enemy.position.x * worldMagnification,
-							healthBarY,
-							healthBarWidth * healthPercent,
-							healthBarHeight
-						};
-						renderer.renderRectangle(fgRect, {0.0f, 1.0f, 0.0f, 0.9f});
+						glm::vec2 labelPos = {enemyRect.x + (enemyRect.z / 2) - 20, enemyRect.y - 60};
+						renderer.renderText(labelPos, bossName, textures.font, {1, 0, 0, 1}, 1.0f);
+						
+						// Boss Health Bar
+						float healthPerc = enemy.health / enemy.maxHealth;
+						glm::vec4 healthBarBg = {enemyRect.x, enemyRect.y - 25, enemyRect.z, 15};
+						glm::vec4 healthBarFill = {enemyRect.x, enemyRect.y - 25, enemyRect.z * healthPerc, 15};
+						
+						renderer.renderRectangle(healthBarBg, {0.2f, 0.2f, 0.2f, 1.0f});
+						renderer.renderRectangle(healthBarFill, {1.0f, 0.0f, 0.0f, 1.0f});
 					}
+					else 
+					{
+						// Normal Enemy Health Bar (Only if damaged)
+						if (enemy.health < enemy.maxHealth) {
+							float healthPerc = enemy.health / enemy.maxHealth;
+							glm::vec4 healthBarBg = {enemyRect.x, enemyRect.y - 10, enemyRect.z, 5};
+							glm::vec4 healthBarFill = {enemyRect.x, enemyRect.y - 10, enemyRect.z * healthPerc, 5};
+							
+							renderer.renderRectangle(healthBarBg, {0.2f, 0.2f, 0.2f, 1.0f});
+							renderer.renderRectangle(healthBarFill, {0.0f, 1.0f, 0.0f, 1.0f});
+						}
+					}
+				}
+			}
+			
+			// ========================================================================
+			// HORDE DEFENSE - Boss Bullet Rendering & Collision
+			// ========================================================================
+			if (currentGameMode == GameMode::HORDE_DEFENSE)
+			{
+				auto myPlayerIt = players.find(cid);
+				glm::vec2 playerPos = myPlayerIt != players.end() ? myPlayerIt->second.pos : glm::vec2(0,0);
+				
+				for (auto it = hordeBossBullets.begin(); it != hordeBossBullets.end(); ) {
+					// Update position
+					it->pos += it->velocity * deltaTime;
+					it->lifetime -= deltaTime;
+					
+					// Lifetime check
+					if (it->lifetime <= 0) {
+						it = hordeBossBullets.erase(it);
+						continue;
+					}
+					
+					// Collision with local player
+					float playerLeft = playerPos.x;
+					float playerRight = playerPos.x + 0.8f;
+					float playerTop = playerPos.y;
+					float playerBottom = playerPos.y + 0.8f;
+					
+					if (it->pos.x >= playerLeft && it->pos.x <= playerRight &&
+						it->pos.y >= playerTop && it->pos.y <= playerBottom)
+					{
+						// Hit local player!
+						it = hordeBossBullets.erase(it);
+						
+						// Send damage to server (1 damage per boss bullet)
+						int damage = 1;
+						Packet p;
+						p.cid = cid;
+						p.header = headerHordePlayerTakeDamage;
+						sendPacket(server, p, (const char*)&damage, sizeof(damage), true, 1);
+						
+						std::cout << "Boss bullet hit you! Sending 1 damage to server." << std::endl;
+						continue;
+					}
+					
+					// Render bullet (purple color)
+					glm::vec4 bulletRect = {
+						it->pos.x * worldMagnification,
+						it->pos.y * worldMagnification,
+						0.5f * worldMagnification,
+						0.5f * worldMagnification
+					};
+					renderer.renderRectangle(bulletRect, {0.8f, 0.0f, 1.0f, 1.0f}); // Purple bullets
+					
+					++it;
 				}
 			}
 			
@@ -1638,6 +1816,38 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				}
 			}
 			
+			// Horde Defense: Check enemy bullets (cid == -1) against LOCAL player
+			if (currentGameMode == GameMode::HORDE_DEFENSE && bullets[i].cid == -1)
+			{
+				// Simple AABB collision with local player
+				auto myPlayerIt = players.find(cid);
+				if (myPlayerIt != players.end()) {
+					glm::vec2 bulletPos = bullets[i].pos;
+					float playerLeft = myPlayerIt->second.pos.x;
+					float playerRight = myPlayerIt->second.pos.x + 0.8f;
+					float playerTop = myPlayerIt->second.pos.y;
+					float playerBottom = myPlayerIt->second.pos.y + 0.8f;
+					
+					if (bulletPos.x >= playerLeft && bulletPos.x <= playerRight &&
+					    bulletPos.y >= playerTop && bulletPos.y <= playerBottom)
+					{
+						// Hit local player!
+						bullets.erase(bullets.begin() + i);
+						i--;
+						
+						// Send damage to server (1 damage per boss bullet)
+						int damage = 1;
+						Packet p;
+						p.cid = cid;
+						p.header = headerHordePlayerTakeDamage;
+						sendPacket(server, p, (const char*)&damage, sizeof(damage), true, 1);
+						
+						std::cout << "Boss bullet hit you! Sending 1 damage to server." << std::endl;
+						continue;
+					}
+				}
+			}
+			
 			// Visual fix: Check collision with Boss
 			if (currentGameMode == GameMode::BOSS_FIGHT && clientBoss.isAlive)
 			{
@@ -1716,15 +1926,25 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				
 				for (auto& [enemyId, enemy] : hordeEnemies)
 				{
-					// Simple circle-circle collision (bullet center vs enemy center)
-					// Account for larger boss size by using a size multiplier
-					float sizeMultiplier = (enemy.type == HordeDefense::EnemyType::BOSS) ? 5.0f : 1.0f;
-					glm::vec2 bulletCenter = ownBullets[i].pos + glm::vec2(0.5f, 0.5f);
-					glm::vec2 enemyCenter = enemy.position + glm::vec2(sizeMultiplier / 2.0f, sizeMultiplier / 2.0f);
-					float distance = glm::length(bulletCenter - enemyCenter);
-					float collisionRadius = 0.7f * sizeMultiplier;  // Combined radius for collision
-
-					if (distance < collisionRadius)
+					// AABB Collision (Axis-Aligned Bounding Box) for precise hit detection
+					// This fixes issues with the large square Boss hitbox
+					float sizeMultiplier = 1.0f;
+					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.0f;
+					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.0f;
+					
+					// Enemy bounding box
+					float enemyLeft = enemy.position.x;
+					float enemyRight = enemy.position.x + sizeMultiplier;
+					float enemyTop = enemy.position.y;
+					float enemyBottom = enemy.position.y + sizeMultiplier;
+					
+					// Bullet bounding box (assuming ~0.5 size for bullet point)
+					float bulletX = ownBullets[i].pos.x;
+					float bulletY = ownBullets[i].pos.y;
+					
+					// Check if bullet is inside enemy box
+					if (bulletX >= enemyLeft && bulletX <= enemyRight &&
+						bulletY >= enemyTop && bulletY <= enemyBottom)
 					{
 						// Bullet hit enemy!
 						// Send notification to server
