@@ -21,6 +21,7 @@
 #include <GLFW/glfw3.h>  // For GLFW_KEY_ESCAPE
 #include <cstring>
 #include <packet.h>
+#include "AudioManager.h"
 gl2d::Renderer2D renderer;
 
 Textures textures;
@@ -82,6 +83,20 @@ bool initGame()
 	
 	// Initialize multi-room manager
 	g_multiRoomManager = new MultiRoomManager();
+	
+	// Initialize audio system
+	if (!AudioManager::getInstance().init()) {
+		std::cerr << "Warning: Failed to initialize audio system" << std::endl;
+		// Continue anyway - game can run without audio
+	}
+	
+	// Set button click callback for glui
+	glui::setButtonClickCallback([]() {
+		AudioManager::getInstance().playClick();
+	});
+	
+	// Start background music
+	AudioManager::getInstance().playMusic();
 
 	return true;
 }
@@ -564,6 +579,9 @@ bool gameLogic(float deltaTime)
 
 	
 #pragma region set finishing stuff
+	// Update audio (music streaming)
+	AudioManager::getInstance().update();
+	
 	renderer.flush();
 
 	return true;
@@ -623,4 +641,7 @@ void closeGame()
 		delete g_multiRoomManager;
 		g_multiRoomManager = nullptr;
 	}
+	
+	// Cleanup audio system
+	AudioManager::getInstance().cleanup();
 }

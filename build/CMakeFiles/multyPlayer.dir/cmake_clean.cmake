@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/multyPlayer.dir/link.d"
   "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o"
   "CMakeFiles/multyPlayer.dir/include/common/Phisics.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/include/common/tiles.cpp.o"
@@ -7,6 +8,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountManager.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountUI.cpp.o"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AccountUI.cpp.o.d"
+  "CMakeFiles/multyPlayer.dir/src/gameLayer/AudioManager.cpp.o"
+  "CMakeFiles/multyPlayer.dir/src/gameLayer/AudioManager.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/AuthenticationHandler.cpp.o.d"
   "CMakeFiles/multyPlayer.dir/src/gameLayer/BossFightManager.cpp.o"

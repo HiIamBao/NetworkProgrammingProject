@@ -14,6 +14,7 @@
 #include <map>
 #include <cstring>
 #include <AccountManager.h>
+#include "AudioManager.h"
 
 phisics::MapData map;
 
@@ -1294,6 +1295,9 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
 				ownBullets.push_back(b);
 				
+				// Play shooting sound
+				AudioManager::getInstance().playShoot();
+				
 				// Left bullet (rotated counterclockwise)
 				phisics::Bullet bLeft = b;
 				float cosLeft = std::cos(-spreadAngle);
@@ -1327,6 +1331,9 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				p.header = headerSendBullet;
 				sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
 				ownBullets.push_back(b);
+				
+				// Play shooting sound
+				AudioManager::getInstance().playShoot();
 			}
 
 			if (hasBatery)

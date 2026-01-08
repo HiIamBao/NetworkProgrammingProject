@@ -14,6 +14,14 @@ namespace glui
 
 	static errorFuncType* errorFunc = defaultErrorFunc;
 
+	// Button click callback
+	static ButtonClickCallback buttonClickCallback = nullptr;
+
+	void setButtonClickCallback(ButtonClickCallback callback)
+	{
+		buttonClickCallback = callback;
+	}
+
 	errorFuncType* setErrorFuncCallback(errorFuncType* newFunc)
 	{
 		auto a = errorFunc;
@@ -957,7 +965,12 @@ namespace glui
 		auto find = widgets.find(name);
 		if (find != widgets.end())
 		{
-			return find->second.returnFromUpdate;
+			bool wasClicked = find->second.returnFromUpdate;
+			if (wasClicked && buttonClickCallback)
+			{
+				buttonClickCallback();
+			}
+			return wasClicked;
 		}
 		else
 		{
