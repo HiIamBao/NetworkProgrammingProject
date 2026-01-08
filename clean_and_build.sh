@@ -47,8 +47,8 @@ if [ "$INSTALL_DEPS" = true ]; then
     MISSING_PACKAGES=()
     REQUIRED_PACKAGES=(
         "cmake"
-        "gcc-11"
-        "g++-11"
+        "gcc-14"
+        "g++-14"
         "libgl1-mesa-dev"
         "libx11-dev"
         "libxrandr-dev"
