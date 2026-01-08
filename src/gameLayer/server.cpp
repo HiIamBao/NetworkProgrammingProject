@@ -595,6 +595,51 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 			}
 		}
 	}
+	else if (p.header == headerHordePlayerTakeDamage)
+	{
+		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)
+		{
+			int damage = *((int*)data);
+			
+			auto playerIt = instance->connections.find(p.cid);
+			if (playerIt != instance->connections.end())
+			{
+				phisics::Entity& player = playerIt->second.entityData;
+				if (player.life > 0)
+				{
+					// Apply shield damage first
+					if (player.shieldHealth > 0) {
+						int shieldDamage = std::min((int)player.shieldHealth, damage);
+						player.shieldHealth -= shieldDamage;
+						damage -= shieldDamage;
+					}
+					
+					// Apply remaining damage
+					if (damage > 0) {
+						player.life -= damage;
+						if (player.life < 0) player.life = 0;
+						
+						std::cout << "[Server] Player " << p.cid << " took " << damage << " boss bullet dmg. HP: " << player.life << std::endl;
+						
+						playerIt->second.changed = true;
+						instance->changedData = true;
+						
+						// IMMEDIATELY broadcast updated entity to ALL clients for UI sync
+						Packet entityPacket;
+						entityPacket.header = headerUpdateConnection;
+						entityPacket.cid = p.cid;
+						broadCast(instance, entityPacket, &player, sizeof(phisics::Entity), nullptr, true, 0);
+						
+						// Check for death
+						if (player.life <= 0) {
+							instance->hordeDefenseManager->markPlayerDead(p.cid);
+							std::cout << "[HordeDefense] Player " << p.cid << " died from boss bullet!" << std::endl;
+						}
+					}
+				}
+			}
+		}
+	}
 	else if (p.header == headerHordeBuyItem)
 	{
 		if (instance->gameMode == GameMode::HORDE_DEFENSE && instance->hordeDefenseManager)

@@ -50,6 +50,18 @@ bool initGame()
 	textures.battery.loadFromFile(RESOURCES_PATH "battery.png", true, true);
 	textures.cross.loadFromFile(RESOURCES_PATH "cross.png", true, true);
 	textures.accountBackground.loadFromFile(RESOURCES_PATH "husthehebg.jpg");
+	
+	// Load Horde Defense enemy sprites
+	textures.zombieSprite.loadFromFile(RESOURCES_PATH "zombie.png", true, true);
+	textures.runnerSprite.loadFromFile(RESOURCES_PATH "runner.png", true, true);
+	textures.tankSprite.loadFromFile(RESOURCES_PATH "tank.png", true, true);
+	textures.exploderSprite.loadFromFile(RESOURCES_PATH "exploder.png", true, true);
+	textures.eliteSprite.loadFromFile(RESOURCES_PATH "elite.png", true, true);
+	textures.bossSummonerSprite.loadFromFile(RESOURCES_PATH "boss_summoner.png", true, true);
+	textures.bossBulletHellSprite.loadFromFile(RESOURCES_PATH "boss_bullethell.png", true, true);
+	textures.bossExploderSprite.loadFromFile(RESOURCES_PATH "boss_exploder.png", true, true);
+	textures.bossFinalSprite.loadFromFile(RESOURCES_PATH "boss_final.png", true, true);
+	
 	glui::gluiInit();
 
 	if (enet_initialize() != 0)

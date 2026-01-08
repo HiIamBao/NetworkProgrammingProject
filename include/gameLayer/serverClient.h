@@ -28,4 +28,15 @@ struct Textures
 	gl2d::Texture cross;
 	gl2d::Font font;
 	gl2d::Texture accountBackground;
+	
+	// Horde Defense Enemy Sprites
+	gl2d::Texture zombieSprite;
+	gl2d::Texture runnerSprite;
+	gl2d::Texture tankSprite;
+	gl2d::Texture exploderSprite;
+	gl2d::Texture eliteSprite;
+	gl2d::Texture bossSummonerSprite;
+	gl2d::Texture bossBulletHellSprite;
+	gl2d::Texture bossExploderSprite;
+	gl2d::Texture bossFinalSprite;
 };

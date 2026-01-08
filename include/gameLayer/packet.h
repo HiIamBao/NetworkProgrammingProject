@@ -107,10 +107,16 @@ enum
 	headerHordeBuyItem,             // Client -> Server: buy shop item
 	headerHordeBuyItemResponse,     // Server -> Client: item purchase result
 	headerHordePlayerMoneyUpdate,   // Server -> Client: money changed
+	headerHordeBossAttack,          // Server -> All: Boss shooting/attack
+	headerHordeBossTeleport,        // Server -> All: Boss teleportation effect
+	headerHordeEnemyDash,           // Runner dash effect
+	headerHordeEnemyShield,         // Tank shield effect
+	headerHordeBossSummon,          // Boss summon effect
 	headerHordePlayerStatsUpdate,   // Server -> All: player upgrade levels/buffs
 	headerHordePlayerRespawn,       // Server -> All: player respawned
 	headerHordeMatchEnd,            // Server -> All: match ended (victory/defeat)
 	headerHordeBulletHitEnemy,      // Client -> Server: bullet hit enemy (for damage)
+	headerHordePlayerTakeDamage,    // Client -> Server: player reports taking damage
 	headerHordeEnemyAttack,         // Server -> All: enemy attacks player (deal damage)
 	headerHordeDamageUpdate,        // Server -> All: lightweight damage leaderboard update (batched)
 	
