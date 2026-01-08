@@ -64,13 +64,6 @@ void AccountUI::renderMatchMaking(gl2d::Renderer2D& renderer, gl2d::Font& font) 
     glui::Text("===== MATCH MAKING =====", UIColors::Primary);
     glui::Space(20);
 
-    if (currentAccount) {
-        char eloText[64];
-        sprintf(eloText, "Current ELO: %d", currentAccount->elo);
-        glui::Text(eloText, UIColors::White);
-        glui::Space(10);
-    }
-
     // Max players selection (like RoomUI::renderCreateRoom)
     glui::Text("Max Players:", UIColors::White);
     const char* playerOptions[] = {"2", "4", "6", "8"};
@@ -359,7 +352,7 @@ void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) 
         glm::vec4 color = (leaderboardSelectedMode == i) ? UIColors::Success : UIColors::Panel;
         if (glui::Button(label, color)) {
             leaderboardSelectedMode = i;
-            // TODO: in future, filter/sort leaderboardCache by game mode here
+            refreshLeaderboard(); // Refresh immediately when tab changes
         }
         
         glui::SameLine(); // Render on one row
@@ -381,8 +374,27 @@ void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) 
             else if (i == 1) color = glm::vec4(0.75f, 0.75f, 0.75f, 1.0f); // Silver
             else if (i == 2) color = glm::vec4(0.8f, 0.5f, 0.2f, 1.0f); // Bronze
             
-            sprintf(buffer, "%d. %s - Lvl %d - Score: %d - W/L: %.1f%%", 
-                    i + 1, acc.username.c_str(), acc.level, acc.totalScore, acc.winRate * 100.0f);
+            // 1. If Selected mode is Death match, display the Name of player and the amount of kills ranking
+            if (leaderboardSelectedMode == 0) {
+                 sprintf(buffer, "%d. %s - Kills: %d", 
+                    i + 1, acc.username.c_str(), acc.deathmatchTotalScore);
+            }
+            // 2. If selected mode is Horde defense, display the name of player alongside with their total games won
+            else if (leaderboardSelectedMode == 1) {
+                 sprintf(buffer, "%d. %s - Wins: %d", 
+                    i + 1, acc.username.c_str(), acc.hordeDefenseGamesWon);
+            }
+            // 3. If selected mode is Boss fight, display the name along side the total score
+            else if (leaderboardSelectedMode == 2) {
+                 sprintf(buffer, "%d. %s - Score: %d", 
+                    i + 1, acc.username.c_str(), acc.bossFightTotalScore);
+            }
+            // Fallback
+            else {
+                sprintf(buffer, "%d. %s - Lvl %d - Score: %d", 
+                    i + 1, acc.username.c_str(), acc.level, acc.totalScore);
+            }
+
             glui::Text(buffer, color);
         }
     }
@@ -485,7 +497,7 @@ void AccountUI::refreshAccountInfo() {
 }
 
 void AccountUI::refreshLeaderboard() {
-    leaderboardCache = accountManager->getTopPlayers(100);
+    leaderboardCache = accountManager->getTopPlayersForMode(leaderboardSelectedMode, 100);
 }
 
 void AccountUI::logout() {
