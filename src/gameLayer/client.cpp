@@ -111,7 +111,32 @@ glm::ivec2 spawnPositions[] =
 
 glm::ivec2 getSpawnPosition()
 {
-	return spawnPositions[rand() % (sizeof(spawnPositions) / sizeof(spawnPositions[0]))];
+	// Try to find a spawn position that doesn't collide with walls
+	int numPositions = sizeof(spawnPositions) / sizeof(spawnPositions[0]);
+	int startIndex = rand() % numPositions;
+	
+	for (int attempts = 0; attempts < numPositions; attempts++) {
+		int index = (startIndex + attempts) % numPositions;
+		glm::ivec2 pos = spawnPositions[index];
+		
+		// Check if the spawn position and surrounding area is not a wall
+		// We check multiple tiles to ensure the player doesn't spawn partially in a wall
+		bool isValid = true;
+		for (int dx = 0; dx <= 1 && isValid; dx++) {
+			for (int dy = 0; dy <= 1 && isValid; dy++) {
+				if (map.get(pos.x + dx, pos.y + dy).isCollidable()) {
+					isValid = false;
+				}
+			}
+		}
+		
+		if (isValid) {
+			return pos;
+		}
+	}
+	
+	// Fallback: return the first spawn position (shouldn't happen if spawn positions are set correctly)
+	return spawnPositions[startIndex];
 }
 
 void resetClient()
@@ -178,6 +203,13 @@ void resetClient()
 	bossNotificationTimer = 0.0f;
 	aoeAttackPos = glm::vec2(0, 0);
 	aoeAttackRadius = 0.0f;
+	
+	// Reset leaderboard to prevent stale data from previous match
+	activeLeaderboard = {};
+	
+	// Reset boss bullets for both modes
+	clientBossBullets.clear();
+	hordeBossBullets.clear();
 
 	//todo add a struct here
 
@@ -433,6 +465,28 @@ void msgLoop(ENetHost *client)
 					matchWinnerKills = endData.winnerKills;
 					
 					std::cout << "Match ended! Winner: " << matchWinnerName << " with " << matchWinnerKills << " kills!" << std::endl;
+					
+					// Save ALL players' match stats to database
+					if (g_clientAccountManager) {
+						std::vector<MatchPlayerStats> matchStats;
+						
+						for (const auto& playerPair : players) {
+							const auto& playerEntity = playerPair.second;
+							MatchPlayerStats pStats;
+							pStats.playerId = playerPair.first;
+							pStats.playerName = std::string(playerEntity.name);
+							pStats.kills = playerEntity.kills;
+							pStats.roundsSurvived = 0;  // Not used in deathmatch
+							pStats.damageDealt = 0;      // Not tracked in deathmatch
+							matchStats.push_back(pStats);
+						}
+						
+						if (!matchStats.empty()) {
+							if (g_clientAccountManager->recordDeathmatchMatchEnd(matchStats)) {
+								std::cout << "[Deathmatch] Recorded match stats for " << matchStats.size() << " players!" << std::endl;
+							}
+						}
+					}
 				}
 				else if (p.header == headerMatchStart)
 				{
@@ -443,6 +497,11 @@ void msgLoop(ENetHost *client)
 					// Check if game mode changed - if so, we need to reload map
 					bool gameModeChanged = (currentGameMode != newGameMode);
 					currentGameMode = newGameMode;
+					
+					// Reset leaderboard when game mode changes to prevent stale data
+					if (gameModeChanged) {
+						activeLeaderboard = {};
+					}
 					
 					if (currentGameMode == GameMode::BOSS_FIGHT) {
 						clientBossBullets.clear();
@@ -1120,36 +1179,39 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 		float posy = 0;
 		float posx = 0;
 		constexpr float CONTROLLER_MARGIN = 0.5;
+		
+		// Block player inputs when deathmatch match has ended (only ESC allowed)
+		bool inputBlocked = (matchEnded && currentGameMode == GameMode::DEATHMATCH);
 
-		if (platform::isKeyHeld(platform::Button::Up)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Up)
 			|| platform::isKeyHeld(platform::Button::W)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Up].held
 			|| platform::getControllerButtons().LStick.y < -CONTROLLER_MARGIN
-			)
+			))
 		{
 			posy = -1;
 		}
-		if (platform::isKeyHeld(platform::Button::Down)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Down)
 			|| platform::isKeyHeld(platform::Button::S)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Down].held
 			|| platform::getControllerButtons().LStick.y > CONTROLLER_MARGIN
-			)
+			))
 		{
 			posy = 1;
 		}
-		if (platform::isKeyHeld(platform::Button::Left)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Left)
 			|| platform::isKeyHeld(platform::Button::A)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Left].held
 			|| platform::getControllerButtons().LStick.x < -CONTROLLER_MARGIN
-			)
+			))
 		{
 			posx = -1;
 		}
-		if (platform::isKeyHeld(platform::Button::Right)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Right)
 			|| platform::isKeyHeld(platform::Button::D)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Right].held
 			|| platform::getControllerButtons().LStick.x > CONTROLLER_MARGIN
-			)
+			))
 		{
 			posx = 1;
 		}
@@ -1285,8 +1347,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			culldown -= deltaTime;
 		}
 
-		// Only allow shooting if player is alive
-		if ((platform::isLMouseHeld() 
+		// Only allow shooting if player is alive and inputs not blocked
+		if (!inputBlocked && (platform::isLMouseHeld() 
 			||
 			platform::getControllerButtons().LT > CONTROLLER_MARGIN
 			)
