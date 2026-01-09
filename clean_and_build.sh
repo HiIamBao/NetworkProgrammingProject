@@ -129,12 +129,17 @@ echo "✅ Clean complete!"
 echo ""
 echo "🔨 Creating build directory..."
 
+<<<<<<< HEAD
 # # Create fresh build directory
+=======
+# Create fresh build directory
+>>>>>>> 02b296704954d1d398dd1f97036712254f7256cd
 mkdir -p build
 cd build
 
-# echo "⚙️  Running CMake..."
+echo "⚙️  Running CMake..."
 
+<<<<<<< HEAD
 # # Generate build files
 cmake ..
 
@@ -142,11 +147,21 @@ if [ $? -ne 0 ]; then
      echo "❌ CMake failed! Please check the error messages above."
      exit 1
  fi
+=======
+# Generate build files
+cmake ..
 
-# echo "✅ CMake configuration complete!"
-# echo ""
-# echo "🔨 Building project..."
+if [ $? -ne 0 ]; then
+    echo "❌ CMake failed! Please check the error messages above."
+    exit 1
+fi
+>>>>>>> 02b296704954d1d398dd1f97036712254f7256cd
 
+echo "✅ CMake configuration complete!"
+echo ""
+echo "🔨 Building project..."
+
+<<<<<<< HEAD
 # # Build the project
  make -j$(nproc)
 
@@ -160,3 +175,19 @@ if [ $? -ne 0 ]; then
  echo "To run the game:"
  echo "  cd build"
  echo "  ./multyPlayer"
+=======
+# Build the project
+make -j$(nproc)
+
+if [ $? -ne 0 ]; then
+    echo "❌ Build failed! Please check the error messages above."
+    exit 1
+fi
+
+echo ""
+echo "✅ Build complete! Executables are in the build directory."
+echo ""
+echo "To run the game:"
+echo "  cd build"
+echo "  ./multyPlayer"
+>>>>>>> 02b296704954d1d398dd1f97036712254f7256cd

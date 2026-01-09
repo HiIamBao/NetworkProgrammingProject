@@ -616,7 +616,7 @@ bool AccountManager::recordHordeDefenseMatchEnd(const std::vector<MatchPlayerSta
     // Check if any player reached wave 20 (victory)
     bool wave20Reached = false;
     for (const auto& p : stats) {
-        if (p.roundsSurvived >= 20) {
+        if (p.roundsSurvived >= 5) {  // TEMP: Changed from 20 for testing winner screen
             wave20Reached = true;
             break;
         }
