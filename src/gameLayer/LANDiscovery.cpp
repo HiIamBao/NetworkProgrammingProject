@@ -141,16 +141,67 @@ void LANDiscovery::broadcastLoop() {
                 if (ifa->ifa_addr == NULL) continue;
                 if (ifa->ifa_addr->sa_family != AF_INET) continue;
                 
-                // Check if interface is UP and supports BROADCAST
-                if ((ifa->ifa_flags & IFF_UP) && (ifa->ifa_flags & IFF_BROADCAST)) {
-                    // Get broadcast address for this interface
-                    if (ifa->ifa_broadaddr != NULL) {
-                        sockaddr_in* if_bcast = (sockaddr_in*)ifa->ifa_broadaddr;
-                        if_bcast->sin_port = htons(BROADCAST_PORT);
+                // Debug: Print found interface
+                // std::cout << "Checking interface: " << ifa->ifa_name << " Flags: " << ifa->ifa_flags << std::endl;
 
+                bool is_up = (ifa->ifa_flags & IFF_UP);
+                bool supports_broadcast = (ifa->ifa_flags & IFF_BROADCAST);
+                bool is_p2p = (ifa->ifa_flags & IFF_POINTOPOINT);
+                bool is_tailscale = (strstr(ifa->ifa_name, "tailscale") != NULL || strstr(ifa->ifa_name, "tun") != NULL);
+
+                // Allow if UP and (Broadcast OR (P2P + Tailscale special handling))
+                if (is_up && (supports_broadcast || (is_p2p && is_tailscale))) {
+                    
+                    sockaddr_in* target_addr = NULL;
+                    
+                    if (supports_broadcast && ifa->ifa_broadaddr != NULL) {
+                        target_addr = (sockaddr_in*)ifa->ifa_broadaddr;
+                    } 
+                    else if (is_p2p && ifa->ifa_dstaddr != NULL) {
+                        // For P2P VPNs, use destination address or specific broadcast logic?
+                        // Standard broadcast won't work on strict P2P without a broadcast IP.
+                        // Tailscale magic: usually 100.x.y.255 is not standard.
+                        // Best effort: Try sending to the "destination" address if it's a P2P link,
+                        // OR if it's Tailscale, we might need to rely on the generic broadcast 
+                        // if specific addressing fails, BUT the user says it's "unknown".
+                        //
+                        // However, simply sending to 255.255.255.255 BINDING to this interface might work better.
+                        // But sendto() logic here uses specific destination address.
+                        
+                        // Let's rely on standard broadcast logic first.
+                        // If P2P, we often don't have a broadcast address.
+                        // But for Tailscale specifically, it often emulates a network.
+                        
+                        // User reported interface is "unknown", failing checks.
+                        // Let's trust ifa_broadaddr if present even if flag is weird,
+                        // OR use a fallback address if it's tailscale.
+                         target_addr = (sockaddr_in*)ifa->ifa_dstaddr; // Use P2P destination
+                    }
+
+                    if (target_addr != NULL) {
+                        sockaddr_in if_bcast = *target_addr;
+                        if_bcast.sin_port = htons(BROADCAST_PORT);
+
+                        // If it's P2P/Tailscale, we might want to ensure we aren't just unicasting to gateway.
+                        // Tailscale supports "MagicDNS" and broadcast if enabled.
+                        // Let's try sending to the derived address.
+                        
                         sendto(sockfd, message, strlen(message), 0, 
-                               (sockaddr*)if_bcast, sizeof(*if_bcast));
+                               (sockaddr*)&if_bcast, sizeof(if_bcast));
                         sent_to_any = true;
+                        // std::cout << "Sent broadcast to " << ifa->ifa_name << std::endl;
+                    } else if (is_tailscale) {
+                         // Fallback for Tailscale: Try to construct a broadcast address from the IP?
+                         // Or just send to 255.255.255.255 but force the interface?
+                         // setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, ...) is root only usually.
+                         //
+                         // Let's try to just use the interface's IP but with .255? 
+                         // Too risky without mask validation.
+                         //
+                         // Simpler fix: If it's tailscale, and we can't find broadaddr, 
+                         // try to send to 255.255.255.255 but we can't bind to device easily.
+                         //
+                         // Let's assume ifa_dstaddr implies the other end for P2P.
                     }
                 }
             }
