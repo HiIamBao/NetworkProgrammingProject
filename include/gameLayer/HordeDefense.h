@@ -397,7 +397,7 @@ struct WaveConfig {
 // GAME CONSTANTS
 // ============================================================================
 
-constexpr int TOTAL_WAVES = 20;
+constexpr int TOTAL_WAVES = 5;  // TEMP: Changed from 20 for testing winner screen
 constexpr int STARTING_MONEY = 500;
 constexpr float BUY_PHASE_DURATION = 30.0f;  // 30 seconds
 constexpr float ENEMY_ATTACK_COOLDOWN = 1.0f; // 1 second between attacks
