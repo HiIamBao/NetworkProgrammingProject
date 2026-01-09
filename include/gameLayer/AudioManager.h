@@ -2,6 +2,8 @@
 #include <raudio.h>
 #include <string>
 #include <iostream>
+#include <mutex>
+#include <atomic>
 
 class AudioManager {
 public:
@@ -30,6 +32,8 @@ private:
     AudioManager& operator=(const AudioManager&) = delete;
     
     bool initialized = false;
+    static std::mutex initMutex;
+    static std::atomic<bool> isInitializing;
     
     // Audio resources
     Music bgMusic = {};
