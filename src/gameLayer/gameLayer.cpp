@@ -19,11 +19,12 @@
 #include <thread>
 #include <ctime>
 #include <GLFW/glfw3.h>  // For GLFW_KEY_ESCAPE
-
+#include <cstring>
+#include <packet.h>
+#include "AudioManager.h"
 gl2d::Renderer2D renderer;
 
 Textures textures;
-
 // Global account management
 static AccountManager* g_accountManager = nullptr;
 static SessionManager* g_sessionManager = nullptr;
@@ -49,7 +50,19 @@ bool initGame()
 	textures.medKit.loadFromFile(RESOURCES_PATH "medkit.png", true, true);
 	textures.battery.loadFromFile(RESOURCES_PATH "battery.png", true, true);
 	textures.cross.loadFromFile(RESOURCES_PATH "cross.png", true, true);
-
+	textures.accountBackground.loadFromFile(RESOURCES_PATH "husthehebg.jpg");
+	
+	// Load Horde Defense enemy sprites
+	textures.zombieSprite.loadFromFile(RESOURCES_PATH "zombie.png", true, true);
+	textures.runnerSprite.loadFromFile(RESOURCES_PATH "runner.png", true, true);
+	textures.tankSprite.loadFromFile(RESOURCES_PATH "tank.png", true, true);
+	textures.exploderSprite.loadFromFile(RESOURCES_PATH "exploder.png", true, true);
+	textures.eliteSprite.loadFromFile(RESOURCES_PATH "elite.png", true, true);
+	textures.bossSummonerSprite.loadFromFile(RESOURCES_PATH "boss_summoner.png", true, true);
+	textures.bossBulletHellSprite.loadFromFile(RESOURCES_PATH "boss_bullethell.png", true, true);
+	textures.bossExploderSprite.loadFromFile(RESOURCES_PATH "boss_exploder.png", true, true);
+	textures.bossFinalSprite.loadFromFile(RESOURCES_PATH "boss_final.png", true, true);
+	
 	glui::gluiInit();
 
 	if (enet_initialize() != 0)
@@ -68,6 +81,9 @@ bool initGame()
 	
 	g_sessionManager = new SessionManager(g_accountManager);
 	g_accountUI = new AccountUI(g_accountManager, g_sessionManager);
+	
+	// Set account manager for client-side match recording
+	setClientAccountManager(g_accountManager);
 
 	// Initialize room management system
 	g_roomManager = new RoomManager();
@@ -79,6 +95,20 @@ bool initGame()
 	
 	// Initialize multi-room manager
 	g_multiRoomManager = new MultiRoomManager();
+	
+	// Initialize audio system
+	if (!AudioManager::getInstance().init()) {
+		std::cerr << "Warning: Failed to initialize audio system" << std::endl;
+		// Continue anyway - game can run without audio
+	}
+	
+	// Set button click callback for glui
+	glui::setButtonClickCallback([]() {
+		AudioManager::getInstance().playClick();
+	});
+	
+	// Start background music
+	AudioManager::getInstance().playMusic();
 
 	return true;
 }
@@ -104,16 +134,17 @@ bool gameLogic(float deltaTime)
 	static char name[playerNameSize] = {};
 	static int currentPort = 7778;  // Track which port to connect to
 	static bool isPaused = false;  // Track if game is paused
+	static bool roomUIInitialized = false;  // Track if room UI callbacks are set up (at file scope for reset access)
+	static bool wasJoined = false;  // Track if client was joined (for disconnect detection)
 	
 	if (state == 0)
 	{
 		// Use account UI system
 		if (g_accountUI) {
 			UIState uiState = g_accountUI->getState();
-			static bool roomUIInitialized = false;  // Track if room UI callbacks are set up
 			
 			// Render account UI
-			g_accountUI->render(renderer, textures.font, deltaTime);
+			g_accountUI->render(renderer, textures.font, textures, deltaTime);
 			
 			// Handle room browser state
 			if (uiState == UIState::BROWSE_ROOMS && g_accountUI->getIsLoggedIn()) {
@@ -125,9 +156,12 @@ bool gameLogic(float deltaTime)
 				if (g_roomUI && !roomUIInitialized) {
 					g_roomUI->setUsername(g_accountUI->getCurrentUsername());
 					
-					// Start LAN discovery listening when entering room browser
-					if (g_lanDiscovery && !g_lanDiscovery->isListening()) {
-						g_lanDiscovery->startListening();
+					// Clear any stale server data and start fresh
+					if (g_lanDiscovery) {
+						g_lanDiscovery->clearDiscoveredServers();
+						if (!g_lanDiscovery->isListening()) {
+							g_lanDiscovery->startListening();
+						}
 					}
 					
 					// Setup simplified callbacks for local hosting with LAN discovery
@@ -211,6 +245,34 @@ bool gameLogic(float deltaTime)
 								state = 1; // Switch to client state
 								
 								std::cout << "Connecting to server at " << ip << ":" << server.port << std::endl;
+							}
+						}
+					};
+					
+					// Start game callback - send start request to server for boss fight mode
+					g_roomUI->onStartGame = []() {
+						// Access server and cid from client.cpp (they're global variables)
+						extern ENetPeer *server;
+						extern int32_t cid;
+						extern bool joined;
+						
+						if (!joined || !server) {
+							std::cout << "Cannot start game: Not connected to server" << std::endl;
+							return;
+						}
+						
+						// Check if we're in boss fight mode
+						if (g_roomUI) {
+							RoomInfoData roomInfo = g_roomUI->getCurrentRoomInfo();
+							if (roomInfo.gameMode == 5) {  // BOSS_FIGHT = 5
+								// Send boss fight start request packet
+								Packet p;
+								p.header = headerBossFightStartRequest;
+								p.cid = cid;
+								sendPacket(server, p, nullptr, 0, true, 0);
+								std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+							} else {
+								std::cout << "Start game requested but not in boss fight mode (mode: " << roomInfo.gameMode << ")" << std::endl;
 							}
 						}
 					};
@@ -412,8 +474,38 @@ bool gameLogic(float deltaTime)
 		escWasPressed = escPressed;
 		
 		if (!isPaused) {
-			// Normal gameplay - just run the game
-			clientFunction(deltaTime, renderer, textures, ip, name, currentPort);
+			// Check if client has been disconnected (returns to menu)
+			extern bool joined;
+			
+			if (wasJoined && !joined) {
+				// Client was disconnected from server - return to menu
+				std::cout << "Client disconnected - returning to menu" << std::endl;
+				wasJoined = false;
+				state = 0;
+				
+				// Stop broadcasting if hosting
+				if (g_lanDiscovery && g_lanDiscovery->isBroadcasting()) {
+					g_lanDiscovery->stopBroadcasting();
+				}
+				
+				// Reset room UI state completely
+				if (g_roomUI) {
+					g_roomUI->setState(RoomUIState::NONE);
+				}
+				
+				// Reset room UI initialization flag so callbacks get re-setup
+				roomUIInitialized = false;
+				
+				if (g_accountUI) {
+					g_accountUI->setState(UIState::MAIN_MENU);
+				}
+				
+				resetClient();
+			} else {
+				// Normal gameplay - just run the game
+				wasJoined = joined;
+				clientFunction(deltaTime, renderer, textures, ip, name, currentPort);
+			}
 		} else {
 			// PAUSED STATE - Render pause menu
 			
@@ -435,7 +527,9 @@ bool gameLogic(float deltaTime)
 				std::cout << "Leave Match button clicked" << std::endl;
 				
 				// Disconnect from server
-				closeFunction();
+				// Example with data
+				
+				closeFunction(*g_accountManager);
 				resetClient();
 				
 				// Stop broadcasting if hosting
@@ -465,6 +559,13 @@ bool gameLogic(float deltaTime)
 				isPaused = false;
 				state = 0;
 				
+				// Reset room UI state completely (same as disconnect handler)
+				if (g_roomUI) {
+					g_roomUI->setState(RoomUIState::NONE);
+				}
+				roomUIInitialized = false;
+				wasJoined = false;  // Reset so next room creation doesn't trigger false disconnect
+				
 				// Reset account UI state if available
 				if (g_accountUI) {
 					g_accountUI->setState(UIState::MAIN_MENU);
@@ -490,6 +591,9 @@ bool gameLogic(float deltaTime)
 
 	
 #pragma region set finishing stuff
+	// Update audio (music streaming)
+	AudioManager::getInstance().update();
+	
 	renderer.flush();
 
 	return true;
@@ -501,7 +605,7 @@ void closeGame()
 {
 	closeServer();
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
-	closeFunction();
+	closeFunction(*g_accountManager);
 	
 	// Cleanup account system
 	if (g_accountUI) {
@@ -549,4 +653,7 @@ void closeGame()
 		delete g_multiRoomManager;
 		g_multiRoomManager = nullptr;
 	}
+	
+	// Cleanup audio system
+	AudioManager::getInstance().cleanup();
 }

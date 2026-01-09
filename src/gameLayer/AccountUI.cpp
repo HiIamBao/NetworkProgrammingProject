@@ -1,6 +1,7 @@
 #include "AccountUI.h"
 #include "platformInput.h"
 #include "imgui.h"
+#include "gameLayer/Ui.h"
 #include <cstring>
 #include <cctype>
 #include <algorithm>
@@ -17,7 +18,23 @@ AccountUI::AccountUI(AccountManager* accMgr, SessionManager* sessMgr)
 AccountUI::~AccountUI() {
 }
 
-void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, float deltaTime) {
+void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, const Textures& textures, float deltaTime) {
+    // Save current camera and reset to default for UI rendering
+    auto savedCamera = renderer.currentCamera;
+    renderer.currentCamera.setDefault();
+    
+    // Render fullscreen background image first
+    auto bgBox = Ui::Box()
+        .xLeft(0.0f)
+        .yTop(0.0f)
+        .xDimensionPixels(renderer.windowW)
+        .yDimensionPixels(renderer.windowH);
+    
+    renderer.renderRectangle(bgBox, {1.0f, 1.0f, 1.0f, 1.0f}, {}, 0.f, textures.accountBackground);
+    
+    // Restore camera (though glui will reset it anyway)
+    renderer.currentCamera = savedCamera;
+    
     // Update message timer
     if (messageTimer > 0.0f) {
         messageTimer -= deltaTime;
@@ -52,13 +69,84 @@ void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, float delta
         case UIState::LEADERBOARD:
             renderLeaderboard(renderer, font);
             break;
+        case UIState::MATCH_MAKING:
+            renderMatchMaking(renderer, font);
+            break;
         default:
             break;
     }
 }
 
+void AccountUI::renderMatchMaking(gl2d::Renderer2D& renderer, gl2d::Font& font) {
+    glui::Text("===== MATCH MAKING =====", UIColors::Primary);
+    glui::Space(20);
+
+    // Max players selection (like RoomUI::renderCreateRoom)
+    glui::Text("Max Players:", UIColors::White);
+    const char* playerOptions[] = {"2", "4", "6", "8"};
+    for (int i = 0; i < 4; i++) {
+        char buttonLabel[64];
+        if (mmSelectedMaxPlayersIdx == i) {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     ">>> %s Players <<<##mm_maxp%d", playerOptions[i], i);
+        } else {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     "    %s Players    ##mm_maxp%d", playerOptions[i], i);
+        }
+
+        glm::vec4 btnColor = (mmSelectedMaxPlayersIdx == i)
+                                 ? UIColors::Success
+                                 : UIColors::Panel;
+        if (glui::Button(buttonLabel, btnColor)) {
+            mmSelectedMaxPlayersIdx = i;
+        }
+    }
+    glui::Space(10);
+
+    // Game mode selection (same 4 options as RoomUI)
+    glui::Text("Game Mode:", UIColors::White);
+    const char* modeOptions[] = {
+        "Deathmatch (FFA)", "Team Battle", "Boss Fight", "Horde Defense"};
+    for (int i = 0; i < 4; i++) {
+        char buttonLabel[64];
+        if (mmSelectedGameMode == i) {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     ">>> %s <<<##mm_mode%d", modeOptions[i], i);
+        } else {
+            snprintf(buttonLabel, sizeof(buttonLabel),
+                     "    %s    ##mm_mode%d", modeOptions[i], i);
+        }
+
+        glm::vec4 btnColor = (mmSelectedGameMode == i)
+                                 ? UIColors::Success
+                                 : UIColors::Panel;
+        if (glui::Button(buttonLabel, btnColor)) {
+            mmSelectedGameMode = i;
+        }
+    }
+    glui::Space(20);
+
+    if (glui::Button("Start Search", UIColors::Success)) {
+        if (onMatchmakingRequest) {
+            onMatchmakingRequest(true);
+        }
+    }
+
+    if (glui::Button("Cancel Search", UIColors::Panel)) {
+        if (onMatchmakingRequest) {
+            onMatchmakingRequest(false);
+        }
+    }
+
+    glui::Space(20);
+
+    if (glui::Button("Back", UIColors::Panel)) {
+        setState(UIState::MAIN_MENU);
+    }
+}
+
 void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
-    glui::Text("===== MULTIPLAYER GAME =====", UIColors::Primary);
+    glui::Text("HUST ARENA", UIColors::Primary);
     glui::Space(20);
     
     if (isLoggedIn) {
@@ -89,14 +177,18 @@ void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
         if (glui::Button("Browse Rooms", UIColors::Success)) {
             setState(UIState::BROWSE_ROOMS);
         }
-        
-        if (glui::Button("Host Game", UIColors::Primary)) {
-            setState(UIState::HOST_SERVER);
+
+        if (glui::Button("Match Making", UIColors::Success)) {
+            setState(UIState::MATCH_MAKING);
         }
         
-        if (glui::Button("Join Game", UIColors::Primary)) {
-            setState(UIState::JOIN_SERVER);
-        }
+        // if (glui::Button("Host Game", UIColors::Primary)) {
+        //     setState(UIState::HOST_SERVER);
+        // }
+        
+        // if (glui::Button("Join Game", UIColors::Primary)) {
+        //     setState(UIState::JOIN_SERVER);
+        // }
         
         glui::Space(20);
         
@@ -139,11 +231,13 @@ void AccountUI::renderLoginScreen(gl2d::Renderer2D& renderer, gl2d::Font& font) 
     glui::Space(20);
     
     glui::Text("Username:", UIColors::White);
+    glui::Space(10);
     glui::InputText("##username_login", usernameInput, sizeof(usernameInput));
     
     glui::Space(10);
     
     glui::Text("Password:", UIColors::White);
+    glui::Space(10);
     glui::InputText("##password_login", passwordInput, sizeof(passwordInput), UIColors::Panel);
     
     glui::Space(20);
@@ -262,14 +356,34 @@ void AccountUI::renderAccountInfo(gl2d::Renderer2D& renderer, gl2d::Font& font) 
 
 void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) {
     glui::Text("===== LEADERBOARD =====", UIColors::Primary);
-    glui::Text("(Refreshes every 5 seconds)", UIColors::White);
-    glui::Space(20);
+    glui::Space(10);
+    
+    // Game-mode tabs: Deathmatch, Horde Defense, Boss Fight
+    const char* modeTabs[] = {"Deathmatch", "Horde Defense", "Boss Fight"};
+    for (int i = 0; i < 3; i++) {
+        char label[64];
+        if (leaderboardSelectedMode == i) {
+            snprintf(label, sizeof(label), ">>> %s <<<##lb_mode%d", modeTabs[i], i);
+        } else {
+            snprintf(label, sizeof(label), "    %s    ##lb_mode%d", modeTabs[i], i);
+        }
+        
+        glm::vec4 color = (leaderboardSelectedMode == i) ? UIColors::Success : UIColors::Panel;
+        if (glui::Button(label, color)) {
+            leaderboardSelectedMode = i;
+            refreshLeaderboard(); // Refresh immediately when tab changes
+        }
+        
+        glui::SameLine(); // Render on one row
+    }
+    glui::NewLine();
+    glui::Space(10);
     
     if (leaderboardCache.empty()) {
         glui::Text("No players found", UIColors::White);
     } else {
         char buffer[256];
-        int displayCount = std::min(20, (int)leaderboardCache.size());
+        int displayCount = std::min(5, (int)leaderboardCache.size());
         
         for (int i = 0; i < displayCount; i++) {
             const Account& acc = leaderboardCache[i];
@@ -279,13 +393,33 @@ void AccountUI::renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font) 
             else if (i == 1) color = glm::vec4(0.75f, 0.75f, 0.75f, 1.0f); // Silver
             else if (i == 2) color = glm::vec4(0.8f, 0.5f, 0.2f, 1.0f); // Bronze
             
-            sprintf(buffer, "%d. %s - Lvl %d - Score: %d - W/L: %.1f%%", 
-                    i + 1, acc.username.c_str(), acc.level, acc.totalScore, acc.winRate * 100.0f);
+            // 1. If Selected mode is Death match, display the Name of player and the amount of kills ranking
+            if (leaderboardSelectedMode == 0) {
+                 sprintf(buffer, "%d. %s - Kills: %d", 
+                    i + 1, acc.username.c_str(), acc.deathmatchTotalScore);
+            }
+            // 2. If selected mode is Horde defense, display the name with best wave and total damage
+            else if (leaderboardSelectedMode == 1) {
+                 sprintf(buffer, "%d. %s - Wave: %d | Damage: %d", 
+                    i + 1, acc.username.c_str(), acc.hordeDefenseBestWave, acc.hordeDefenseTotalDamage);
+            }
+            // 3. If selected mode is Boss fight, display the name along side the total score
+            else if (leaderboardSelectedMode == 2) {
+                 sprintf(buffer, "%d. %s - Score: %d", 
+                    i + 1, acc.username.c_str(), acc.bossFightTotalScore);
+            }
+            // Fallback
+            else {
+                sprintf(buffer, "%d. %s - Lvl %d - Score: %d", 
+                    i + 1, acc.username.c_str(), acc.level, acc.totalScore);
+            }
+
             glui::Text(buffer, color);
+            glui::Space(5);
         }
     }
     
-    glui::Space(20);
+    glui::Space(10);
     
     if (glui::Button("Refresh Now", UIColors::Primary)) {
         refreshLeaderboard();
@@ -383,7 +517,7 @@ void AccountUI::refreshAccountInfo() {
 }
 
 void AccountUI::refreshLeaderboard() {
-    leaderboardCache = accountManager->getTopPlayers(100);
+    leaderboardCache = accountManager->getTopPlayersForMode(leaderboardSelectedMode, 100);
 }
 
 void AccountUI::logout() {

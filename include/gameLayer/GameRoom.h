@@ -16,7 +16,8 @@ enum class GameMode {
     TEAM_BATTLE = 1,    // Team vs Team
     COOPERATIVE = 2,    // Players vs AI
     TOWER_DEFENSE = 3,  // Tower Defense - Cooperative wave defense (DEPRECATED)
-    HORDE_DEFENSE = 4   // Horde Defense - Players fight waves of AI enemies directly
+    HORDE_DEFENSE = 4,  // Horde Defense - Players fight waves of AI enemies directly
+    BOSS_FIGHT = 5      // Boss Fight - Cooperative boss battle
 };
 
 struct PlayerInRoom {

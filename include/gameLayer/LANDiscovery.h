@@ -36,6 +36,7 @@ public:
     void startListening();
     void stopListening();
     std::vector<DiscoveredServer> getDiscoveredServers();
+    void clearDiscoveredServers();
     
     // Check if broadcasting or listening
     bool isBroadcasting() const { return broadcasting.load(); }
@@ -74,4 +75,5 @@ private:
     // Helper functions
     void cleanupOldServers();
     uint64_t getCurrentTimeMs();
+    void broadcastToTailscalePeers(const char* message, int length);
 };

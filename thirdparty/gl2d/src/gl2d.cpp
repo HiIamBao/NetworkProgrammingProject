@@ -46,6 +46,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iostream>
+#include <cstring>
 
 //if you are not using visual studio make shure you link to "Opengl32.lib"
 #ifdef _MSC_VER
@@ -2056,7 +2057,9 @@ namespace gl2d
 
 		}
 
-		__m128 _deltaTime = _mm_set1_ps(deltaTime);
+		#if GL2D_SIMD != 0
+				__m128 _deltaTime = _mm_set1_ps(deltaTime);
+		#endif
 
 	#pragma region applyDrag
 

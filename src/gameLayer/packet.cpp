@@ -2,6 +2,8 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include <iostream>
+#include <iomanip>
 #undef max
 #undef min
 
@@ -54,25 +56,37 @@ void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reli
 
 }
 
+int seq =0;
 char *parsePacket(ENetEvent &event, Packet &p, size_t &dataSize)
 {
-	size_t size = event.packet->dataLength;
-	void *data = event.packet->data;
-	dataSize = std::max(size_t(0), size - sizeof(Packet));
-
-	memcpy(&p, data, sizeof(Packet));
-
-	if (size <= sizeof(Packet))
-	{
-		return nullptr;
-	}
-	else
-	{
-		return (char *)data + sizeof(Packet);
-	}
-
+    size_t size = event.packet->dataLength;
+    void *data = event.packet->data;
+    dataSize = std::max(size_t(0), size - sizeof(Packet));
+    memcpy(&p, data, sizeof(Packet));
+    
+    // Increment and reset sequence number
+    seq++;
+    if (seq >= 100000) {
+        seq = 0;
+    }
+    
+    /*
+    // Logging removed to reduce spam
+    // Print packet contents
+    std::cout << "=== Packet #" << seq << " ===" << std::endl;
+    // ... (rest of logging code)
+    std::cout << "=====================" << std::endl;
+    */
+    
+    if (size <= sizeof(Packet))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return (char *)data + sizeof(Packet);
+    }
 }
-
 // ============================================================================
 // HORDE DEFENSE - Helper Function Implementations
 // ============================================================================

@@ -59,6 +59,12 @@ enum
 	headerRoomPlayerLeft,       // Server -> All in room: player left
 	headerRoomStatusChanged,    // Server -> All in room: room status changed
 	headerRoomPlayerReadyChanged, // Server -> All in room: player ready status
+    
+    // Matchmaking packets
+    headerMatchmakingStart,     // Client -> Server: start ELO matchmaking
+    headerMatchmakingCancel,    // Client -> Server: cancel matchmaking
+    headerMatchmakingStatus,    // Server -> Client: status updates (queue time, range)
+    headerMatchmakingFound,     // Server -> Client: match found, connect to server
 	
 	// Game Mode packets
 	headerGameModeUpdate,       // Server -> Client: current game mode state
@@ -101,12 +107,51 @@ enum
 	headerHordeBuyItem,             // Client -> Server: buy shop item
 	headerHordeBuyItemResponse,     // Server -> Client: item purchase result
 	headerHordePlayerMoneyUpdate,   // Server -> Client: money changed
+	headerHordeBossAttack,          // Server -> All: Boss shooting/attack
+	headerHordeBossTeleport,        // Server -> All: Boss teleportation effect
+	headerHordeEnemyDash,           // Runner dash effect
+	headerHordeEnemyShield,         // Tank shield effect
+	headerHordeBossSummon,          // Boss summon effect
 	headerHordePlayerStatsUpdate,   // Server -> All: player upgrade levels/buffs
 	headerHordePlayerRespawn,       // Server -> All: player respawned
 	headerHordeMatchEnd,            // Server -> All: match ended (victory/defeat)
 	headerHordeBulletHitEnemy,      // Client -> Server: bullet hit enemy (for damage)
+	headerHordePlayerTakeDamage,    // Client -> Server: player reports taking damage
 	headerHordeEnemyAttack,         // Server -> All: enemy attacks player (deal damage)
 	headerHordeDamageUpdate,        // Server -> All: lightweight damage leaderboard update (batched)
+	
+	// Boss Fight mode packets
+	headerBossFightStateUpdate,     // Server -> Client: Game state update
+	headerBossFightBossSpawn,       // Server -> Client: Boss spawn notification
+	headerBossFightBossUpdate,      // Server -> Client: Boss position/health update (10Hz)
+	headerBossFightBossAttack,      // Server -> Client: Boss attack notification
+	headerBossFightCircleSpray,     // Server -> Client: Circle spray attack visuals
+	headerBossFightBossDeath,       // Server -> Client: Boss defeated
+	headerBossFightPlayerRespawn,   // Server -> Client: Player respawn
+	headerBossFightMatchEnd,        // Server -> Client: Match end (victory/defeat)
+	headerBossFightPlayerDamage,    // Server -> Client: Player took damage from boss
+	headerBossFightStartRequest,    // Client (host) -> Server: Request to start boss fight match
+    gameEndHeader,
+	
+	// Boss Fight DEBUG packets
+	headerBossFightDebugRespawnBoss, // Client -> Server: Request to respawn boss at player position (DEBUG)
+	
+	// Real-time Leaderboard Packet
+	headerUpdateLeaderBoard,        // Server -> All: Leaderboard data update
+};
+
+// Leaderboard Data Structures
+struct LeaderBoardEntry {
+    char playerName[32];
+    int value; // Kills (DM), Damage (HD), Score (BF)
+    int extraValue; // Secondary stat (e.g., Damage for HD)
+    int32_t cid; // Client ID for highlighting (optional)
+};
+
+struct LeaderBoardUpdateData {
+    int gameMode;
+    int count; // Number of entries (max 5)
+    LeaderBoardEntry entries[5];
 };
 
 constexpr int SERVER_CHANNELS = 2;
@@ -228,6 +273,30 @@ struct PlayerReadyChangedData {
     bool isReady;
 };
 
+// Matchmaking data structures
+struct MatchmakingStartData {
+    int desiredGameMode;   // GameMode as int
+    int maxPlayers;        // Desired lobby size
+    int elo;               // Player ELO for matching
+};
+
+struct MatchmakingStatusData {
+    bool searching;
+    int secondsInQueue;
+    int eloCenter;
+    int eloMin;
+    int eloMax;
+    int playersInRange;
+};
+
+struct MatchmakingFoundData {
+    int gameMode;
+    int maxPlayers;
+    int mapId;
+    char serverIp[16];
+    int serverPort;
+};
+
 // Game Mode data structures
 // Note: GameMode enum class is defined in GameRoom.h
 // DEATHMATCH = 0 (Free for all), TEAM_BATTLE = 1, COOPERATIVE = 2
@@ -250,6 +319,7 @@ struct MatchStartData {
     int gameMode;
     int matchDuration;  // in seconds, 0 = infinite
     int scoreLimit;     // 0 = no limit
+    int mapId;          // Map selection (0=default, 1=industrial, 2=warehouse, 3=boss arena)
 };
 
 struct MatchEndData {
@@ -406,4 +476,83 @@ struct HordeDamageUpdate {
     int32_t cid;               // Player ID
     int totalDamageDealt;      // Total damage dealt
     int enemiesKilled;         // Total enemies killed
+};
+
+// ============================================================================
+// BOSS FIGHT MODE - Network Data Structures
+// ============================================================================
+
+struct BossFightStateUpdateData {
+    int gameState;             // BossFightState as int
+    float bossHealth;          // Current boss health
+    float bossMaxHealth;       // Boss max health
+    int bossPhase;             // BossPhase as int
+    int playersAlive;          // Number of players alive
+    float matchTime;           // Time elapsed since match start
+};
+
+struct BossFightBossSpawnData {
+    int32_t bossId;
+    int bossType;              // BossType as int
+    float posX, posY;          // Spawn position
+    float health;
+    float maxHealth;
+    float speed;
+};
+
+struct BossFightBossUpdateData {
+    int32_t bossId;
+    float posX, posY;
+    float velX, velY;
+    float health;
+    int currentPhase;          // BossPhase as int
+    int32_t targetPlayerId;    // Current target (-1 = no target)
+};
+
+struct BossFightBossAttackData {
+    int32_t bossId;
+    int attackType;            // BossAttackType as int
+    float attackPosX, attackPosY; // Attack position (for AOE center)
+    int32_t targetCid;         // Primary target CID (-1 for AOE)
+    int damage;                // Base damage of attack
+};
+
+struct BossFightBossDeathData {
+    int32_t bossId;
+    int32_t lastHitPlayerCid;  // Player who landed killing blow
+    float posX, posY;          // Death position for effects
+};
+
+struct BossFightCircleSprayData {
+    int32_t bossId;
+    float centerX, centerY;    // Center position of spray
+    int bulletCount;           // Number of bullets (8-12)
+    float bulletSpeed;         // Speed of bullets
+    int damage;                // Damage per bullet
+};
+
+struct BossFightPlayerRespawnData {
+    int32_t cid;
+    float posX, posY;
+};
+
+struct BossFightMatchEndData {
+    bool victory;              // true = boss defeated, false = all players dead
+    float matchDuration;       // Time to complete (or fail)
+    int32_t mvpPlayerId;       // Most damage dealt
+    char mvpPlayerName[32];
+    int mvpDamage;             // Total damage dealt by MVP
+    int totalPlayerDeaths;     // Total deaths across all players
+};
+
+struct BossFightPlayerDamageData {
+    int32_t cid;               // Player who took damage
+    int damage;                // Damage amount
+    int attackType;            // BossAttackType as int
+    float knockbackX, knockbackY; // Knockback vector
+};
+
+// DEBUG: Request to respawn boss at specific position
+struct BossFightDebugRespawnBossData {
+    float posX, posY;          // Position to spawn boss at
 };

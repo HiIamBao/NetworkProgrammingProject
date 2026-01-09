@@ -77,6 +77,7 @@ namespace phisics
 	// Damage tracking for leaderboard (Horde Defense mode)
 	int totalDamageDealt = 0;             // Total damage dealt to enemies
 	int enemiesKilled = 0;                // Total enemies killed
+	int wavesSurvived = 0;                // Number of waves survived alive
 
 	static constexpr float invincibilityTime = 0.10;  // Hit invincibility frames
 

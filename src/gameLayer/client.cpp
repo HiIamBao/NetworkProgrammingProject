@@ -10,7 +10,11 @@
 #include <iostream>
 #include "GameRoom.h"
 #include "HordeDefense.h"
+#include "BossFight.h"
 #include <map>
+#include <cstring>
+#include <AccountManager.h>
+#include "AudioManager.h"
 
 phisics::MapData map;
 
@@ -19,7 +23,7 @@ int32_t cid = {};
 bool joined = false;
 ENetHost *client;
 
-
+#pragma region Player & Game State
 std::unordered_map<int32_t, phisics::Entity> players;
 
 static std::vector<phisics::Bullet> bullets;
@@ -27,6 +31,9 @@ static std::vector<phisics::Bullet> ownBullets;
 static std::vector<phisics::Item> items;
 static bool hasBatery = 0;
 
+#pragma endregion
+
+#pragma region Game Mode State
 // Game mode state
 static GameMode currentGameMode = GameMode::DEATHMATCH;
 static MatchState currentMatchState = MatchState::MATCH_WAITING;
@@ -35,7 +42,21 @@ static char matchWinnerName[32] = {};
 static int matchWinnerKills = 0;
 static std::string lastKillMessage = "";
 static float killMessageTimer = 0.0f;
+// Tracks whether we've already received the initial Boss Fight mode announcement
+static bool receivedInitialBossModeInfo = false;
 
+// Account Manager for recording match results
+static AccountManager* g_clientAccountManager = nullptr;
+void setClientAccountManager(AccountManager* accMgr) {
+    g_clientAccountManager = accMgr;
+}
+
+// Networked Leaderboard State
+static LeaderBoardUpdateData activeLeaderboard = {};
+
+#pragma endregion
+
+#pragma region Horde Defense State
 // Horde Defense client-side state
 static std::map<int32_t, HordeDefense::Enemy> hordeEnemies;
 static HordeDefense::HordeDefenseState hordeState = HordeDefense::HordeDefenseState::WAITING;
@@ -58,6 +79,28 @@ static float shopMessageTimer = 0.0f;
 // Player's current upgrade levels (for UI display)
 static HordeDefense::PlayerUpgrades playerUpgrades;
 
+#pragma endregion
+
+#pragma region Boss Fight State
+// Boss Fight client-side state
+static BossFight::Boss clientBoss;
+struct ClientBossBullet {
+    glm::vec2 pos;
+    glm::vec2 velocity;
+    float lifetime;
+};
+static std::vector<ClientBossBullet> clientBossBullets;
+static std::vector<ClientBossBullet> hordeBossBullets; // Horde Defense boss projectiles
+static BossFight::BossFightState bossFightState = BossFight::BossFightState::WAITING;
+static float bossAttackAnimTimer = 0.0f;
+static BossFight::BossAttackType lastBossAttack = BossFight::BossAttackType::MELEE;
+static std::string bossNotification = "";
+static float bossNotificationTimer = 0.0f;
+static glm::vec2 aoeAttackPos = glm::vec2(0, 0);
+static float aoeAttackRadius = 0.0f;
+
+#pragma endregion
+
 glm::ivec2 spawnPositions[] =
 {
 	{5,5},
@@ -68,13 +111,47 @@ glm::ivec2 spawnPositions[] =
 
 glm::ivec2 getSpawnPosition()
 {
-	return spawnPositions[rand() % (sizeof(spawnPositions) / sizeof(spawnPositions[0]))];
+	// Try to find a spawn position that doesn't collide with walls
+	int numPositions = sizeof(spawnPositions) / sizeof(spawnPositions[0]);
+	int startIndex = rand() % numPositions;
+	
+	for (int attempts = 0; attempts < numPositions; attempts++) {
+		int index = (startIndex + attempts) % numPositions;
+		glm::ivec2 pos = spawnPositions[index];
+		
+		// Check if the spawn position and surrounding area is not a wall
+		// We check multiple tiles to ensure the player doesn't spawn partially in a wall
+		bool isValid = true;
+		for (int dx = 0; dx <= 1 && isValid; dx++) {
+			for (int dy = 0; dy <= 1 && isValid; dy++) {
+				if (map.get(pos.x + dx, pos.y + dy).isCollidable()) {
+					isValid = false;
+				}
+			}
+		}
+		
+		if (isValid) {
+			return pos;
+		}
+	}
+	
+	// Fallback: return the first spawn position (shouldn't happen if spawn positions are set correctly)
+	return spawnPositions[startIndex];
 }
 
 void resetClient()
 {
-
-	if (!map.load(RESOURCES_PATH "mapData2.bin"))
+	// Load appropriate map based on game mode
+	const char* mapFile;
+	if (currentGameMode == GameMode::BOSS_FIGHT) {
+		mapFile = RESOURCES_PATH "bossFightArena.bin";
+	} else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+		mapFile = RESOURCES_PATH "hordeDefense.bin";
+	} else {
+		mapFile = RESOURCES_PATH "mapData2.bin";
+	}
+	
+	if (!map.load(mapFile))
 	{
 		return ;
 	}
@@ -85,14 +162,16 @@ void resetClient()
 	items.clear();
 	hasBatery = false;
 	
-	// Reset game mode state
-	currentGameMode = GameMode::DEATHMATCH;
+	// Reset game mode state (keep currentGameMode - it's set by server)
+	// currentGameMode = GameMode::DEATHMATCH;  // Don't reset - preserve from server
 	currentMatchState = MatchState::MATCH_WAITING;
 	matchEnded = false;
 	matchWinnerName[0] = '\0';
 	matchWinnerKills = 0;
 	lastKillMessage = "";
 	killMessageTimer = 0.0f;
+	// Allow Boss Fight START button to appear again on fresh connections
+	receivedInitialBossModeInfo = false;
 	
 	// Reset Horde Defense state
 	hordeEnemies.clear();
@@ -113,6 +192,24 @@ void resetClient()
 	lastShopMessage = "";
 	shopMessageTimer = 0.0f;
 	playerUpgrades = HordeDefense::PlayerUpgrades();
+	
+	// Reset Boss Fight state
+	clientBoss = BossFight::Boss();
+	clientBoss.isAlive = false;
+	bossFightState = BossFight::BossFightState::WAITING;
+	bossAttackAnimTimer = 0.0f;
+	lastBossAttack = BossFight::BossAttackType::MELEE;
+	bossNotification = "";
+	bossNotificationTimer = 0.0f;
+	aoeAttackPos = glm::vec2(0, 0);
+	aoeAttackRadius = 0.0f;
+	
+	// Reset leaderboard to prevent stale data from previous match
+	activeLeaderboard = {};
+	
+	// Reset boss bullets for both modes
+	clientBossBullets.clear();
+	hordeBossBullets.clear();
 
 	//todo add a struct here
 
@@ -227,12 +324,12 @@ void msgLoop(ENetHost *client)
 		{
 			case ENET_EVENT_TYPE_RECEIVE:
 			{
-				//std::cout << event.packet->dataLength << "\n";
-				//std::cout << "recieved: " << event.packet->data << "\n";
-				//std::cout << event.peer->data << "\n"; //recieved from
-				//std::cout << event.peer->address.host << "\n"; //recieved from
-				//std::cout << event.peer->address.port << "\n"; //recieved from
-				//std::cout << event.channelID << "\n";
+				// std::cout << event.packet->dataLength << "\n";
+				// std::cout << "recieved: " << event.packet->data << "\n";
+				// std::cout << event.peer->data << "\n"; //recieved from
+				// std::cout << event.peer->address.host << "\n"; //recieved from
+				// std::cout << event.peer->address.port << "\n"; //recieved from
+				// std::cout << event.channelID << "\n";
 				Packet p = {};
 				size_t size = {};
 				auto data = parsePacket(event, p, size);
@@ -242,6 +339,10 @@ void msgLoop(ENetHost *client)
 
 					players[p.cid] = *(phisics::Entity*)data;
 
+
+				}else if (p.header == headerUpdateLeaderBoard)
+				{
+					activeLeaderboard = *(LeaderBoardUpdateData*)data;
 				}else if (p.header == headerUpdateConnection)
 				{
 					phisics::Entity updatedEntity = *(phisics::Entity *)data;
@@ -364,26 +465,119 @@ void msgLoop(ENetHost *client)
 					matchWinnerKills = endData.winnerKills;
 					
 					std::cout << "Match ended! Winner: " << matchWinnerName << " with " << matchWinnerKills << " kills!" << std::endl;
+					
+					// Save ALL players' match stats to database
+					if (g_clientAccountManager) {
+						std::vector<MatchPlayerStats> matchStats;
+						
+						for (const auto& playerPair : players) {
+							const auto& playerEntity = playerPair.second;
+							MatchPlayerStats pStats;
+							pStats.playerId = playerPair.first;
+							pStats.playerName = std::string(playerEntity.name);
+							pStats.kills = playerEntity.kills;
+							pStats.roundsSurvived = 0;  // Not used in deathmatch
+							pStats.damageDealt = 0;      // Not tracked in deathmatch
+							matchStats.push_back(pStats);
+						}
+						
+						if (!matchStats.empty()) {
+							if (g_clientAccountManager->recordDeathmatchMatchEnd(matchStats)) {
+								std::cout << "[Deathmatch] Recorded match stats for " << matchStats.size() << " players!" << std::endl;
+							}
+						}
+					}
 				}
 				else if (p.header == headerMatchStart)
 				{
-					// Match started
+					// Match started OR game mode update (sent on connection)
 					auto startData = *(MatchStartData*)data;
-					currentGameMode = static_cast<GameMode>(startData.gameMode);
-					currentMatchState = MatchState::MATCH_IN_PROGRESS;
-					matchEnded = false;
+					GameMode newGameMode = static_cast<GameMode>(startData.gameMode);
 					
-					if (currentGameMode == GameMode::DEATHMATCH)
-					{
-						std::cout << "Match started! Game mode: Free-for-All Deathmatch" << std::endl;
+					// Check if game mode changed - if so, we need to reload map
+					bool gameModeChanged = (currentGameMode != newGameMode);
+					currentGameMode = newGameMode;
+					
+					// Reset leaderboard when game mode changes to prevent stale data
+					if (gameModeChanged) {
+						activeLeaderboard = {};
 					}
-					else if (currentGameMode == GameMode::HORDE_DEFENSE)
+					
+					if (currentGameMode == GameMode::BOSS_FIGHT) {
+						clientBossBullets.clear();
+						// Reset other boss state if needed
+					}
+
+					// Distinguish initial Boss Fight mode announcement from actual start
+					bool wasWaiting = (currentMatchState == MatchState::MATCH_WAITING);
+					bool initialBossModeAnnouncement = (
+						newGameMode == GameMode::BOSS_FIGHT &&
+						currentMatchState == MatchState::MATCH_WAITING &&
+						bossFightState == BossFight::BossFightState::WAITING &&
+						!receivedInitialBossModeInfo
+					);
+
+					if (initialBossModeAnnouncement)
 					{
-						std::cout << "Match started! Game mode: Horde Defense" << std::endl;
-						hordeEnemies.clear();
-						hordeState = HordeDefense::HordeDefenseState::WAITING;
-						currentWave = 0;
-						playerMoney = 500;  // Starting money
+						// Keep state as WAITING so the host sees the START button
+						receivedInitialBossModeInfo = true;
+						matchEnded = false;
+					}
+					else
+					{
+						// Actual match start (or non-boss modes): move to IN_PROGRESS
+						currentMatchState = MatchState::MATCH_IN_PROGRESS;
+						matchEnded = false;
+					}
+					
+					// Load correct map based on game mode (always reload if game mode changed)
+					const char* mapFile;
+					if (currentGameMode == GameMode::BOSS_FIGHT) {
+						mapFile = RESOURCES_PATH "bossFightArena.bin";
+					} else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+						mapFile = RESOURCES_PATH "hordeDefense.bin";
+					} else {
+						mapFile = RESOURCES_PATH "mapData2.bin";
+					}
+					
+					// Reload map if game mode changed or if we're starting a match
+					if (gameModeChanged || wasWaiting)
+					{
+						std::cout << "Game mode: " << static_cast<int>(currentGameMode) 
+						          << (gameModeChanged ? " (changed)" : "") << std::endl;
+						std::cout << "Loading map: " << mapFile << std::endl;
+						
+						map.cleanup();
+						if (!map.load(mapFile)) {
+							std::cout << "Failed to load map: " << mapFile << std::endl;
+						} else {
+							std::cout << "Map loaded successfully: " << mapFile << std::endl;
+						}
+					}
+					
+					// Initialize game mode-specific state
+					if (wasWaiting || gameModeChanged)
+					{
+						if (currentGameMode == GameMode::DEATHMATCH)
+						{
+							std::cout << "Match started! Game mode: Free-for-All Deathmatch" << std::endl;
+						}
+						else if (currentGameMode == GameMode::HORDE_DEFENSE)
+						{
+							std::cout << "Match started! Game mode: Horde Defense" << std::endl;
+							hordeEnemies.clear();
+							hordeState = HordeDefense::HordeDefenseState::WAITING;
+							currentWave = 0;
+							playerMoney = 500;  // Starting money
+						}
+						else if (currentGameMode == GameMode::BOSS_FIGHT)
+						{
+							std::cout << "Match started! Game mode: Boss Fight" << std::endl;
+							clientBoss = BossFight::Boss();
+							clientBoss.isAlive = false;
+
+							bossFightState = BossFight::BossFightState::WAITING;
+						}
 					}
 				}
 				// ========================================================================
@@ -438,11 +632,15 @@ void msgLoop(ENetHost *client)
 					auto deathData = *(HordeEnemyDeathData*)data;
 					hordeEnemies.erase(deathData.enemyId);
 					
-					// Update player money if we killed it
+					// Decrement enemy count for UI display
+					if (enemiesAlive > 0) {
+						enemiesAlive--;
+					}
+					
+					// Log enemy kill (money update comes from server via headerHordePlayerMoneyUpdate)
 					if (deathData.killerCid == cid)
 					{
-						playerMoney += deathData.moneyReward;
-						std::cout << "Enemy killed! +$" << deathData.moneyReward << " (Total: $" << playerMoney << ")" << std::endl;
+						std::cout << "Enemy killed! +$" << deathData.moneyReward << " (awaiting server update)" << std::endl;
 					}
 				}
 				else if (p.header == headerHordeEnemyAttack)
@@ -540,11 +738,12 @@ void msgLoop(ENetHost *client)
 				{
 					auto waveData = *(HordeWaveStartData*)data;
 					currentWave = waveData.waveNumber;
+					enemiesAlive = waveData.totalEnemies; // Set initial enemy count for wave
 					
 					waveNotification = "Wave " + std::to_string(currentWave) + " Starting!";
 					waveNotificationTimer = 3.0f;
 					
-					std::cout << "Wave " << currentWave << " started!" << std::endl;
+					std::cout << "Wave " << currentWave << " started! Total enemies: " << enemiesAlive << std::endl;
 				}
 				else if (p.header == headerHordeWaveComplete)
 				{
@@ -553,10 +752,10 @@ void msgLoop(ENetHost *client)
 					waveNotification = "Wave Complete! Bonus: $" + std::to_string(completeData.completionBonus);
 				 waveNotificationTimer = 3.0f;
 					
-					// Update money if we got bonus
+					// Note: Money update comes from server via headerHordePlayerMoneyUpdate
+					// (no local money tracking to avoid double-counting)
 					if (completeData.mvpPlayerId == cid)
 					{
-						playerMoney += completeData.completionBonus;
 						waveNotification += " (MVP!)";
 					}
 					
@@ -643,27 +842,268 @@ void msgLoop(ENetHost *client)
 						std::cout << "Item purchase failed: " << response.message << std::endl;
 					}
 				}
+				else if (p.header == headerHordeMatchEnd)
+				{
+					auto endData = *(HordeMatchEndData*)data;
+					matchEnded = true;
+					
+					if (endData.victory)
+					{
+						waveNotification = "VICTORY! All waves completed!";
+					}
+					else
+					{
+						waveNotification = "DEFEATED! Wave " + std::to_string(endData.finalWave);
+					}
+					waveNotificationTimer = 10.0f;
+					
+					std::cout << "[HordeDefense] Match ended - Victory: " << endData.victory 
+					          << ", Final Wave: " << endData.finalWave << std::endl;
+					
+					// Record match results to leaderboard
+					if (g_clientAccountManager)
+					{
+						std::vector<MatchPlayerStats> matchStats;
+						
+						// Collect stats for all players in the match
+						for (const auto& [playerCid, playerEntity] : players)
+						{
+							MatchPlayerStats stats;
+							stats.playerId = playerCid;
+							stats.playerName = std::string(playerEntity.name);
+							stats.roundsSurvived = endData.finalWave;  // Use final wave reached
+							stats.damageDealt = playerEntity.totalDamageDealt;
+							stats.kills = playerEntity.kills;
+							matchStats.push_back(stats);
+							
+							std::cout << "[HordeDefense] Recording stats for " << stats.playerName 
+							          << ": Wave " << stats.roundsSurvived 
+							          << ", Damage " << stats.damageDealt << std::endl;
+						}
+						
+						// Record to database
+						if (g_clientAccountManager->recordHordeDefenseMatchEnd(matchStats))
+						{
+							std::cout << "[HordeDefense] Match results saved to leaderboard!" << std::endl;
+						}
+						else
+						{
+							std::cout << "[HordeDefense] Failed to save match results!" << std::endl;
+						}
+					}
+				}
+
+				// ========================================================================
+				// BOSS FIGHT PACKET HANDLERS
+				// ========================================================================
+				else if (p.header == headerBossFightStateUpdate)
+				{
+					auto stateData = *(BossFightStateUpdateData*)data;
+					bossFightState = static_cast<BossFight::BossFightState>(stateData.gameState);
+					clientBoss.health = stateData.bossHealth;
+					clientBoss.maxHealth = stateData.bossMaxHealth;
+					clientBoss.currentPhase = static_cast<BossFight::BossPhase>(stateData.bossPhase);
+				}
+				else if (p.header == headerBossFightBossSpawn)
+				{
+					auto spawnData = *(BossFightBossSpawnData*)data;
+					clientBoss.bossId = spawnData.bossId;
+					clientBoss.type = static_cast<BossFight::BossType>(spawnData.bossType);
+					clientBoss.position = glm::vec2(spawnData.posX, spawnData.posY);
+					clientBoss.health = spawnData.health;
+					clientBoss.maxHealth = spawnData.maxHealth;
+					clientBoss.speed = spawnData.speed;
+					clientBoss.isAlive = true;
+					
+					bossNotification = "BOSS SPAWNED!";
+					bossNotificationTimer = 3.0f;
+					
+					std::cout << "[BossFight] Boss spawned!" << std::endl;
+				}
+				else if (p.header == headerBossFightBossUpdate)
+				{
+					auto updateData = *(BossFightBossUpdateData*)data;
+					clientBoss.position = glm::vec2(updateData.posX, updateData.posY);
+					clientBoss.velocity = glm::vec2(updateData.velX, updateData.velY);
+					clientBoss.health = updateData.health;
+					clientBoss.currentPhase = static_cast<BossFight::BossPhase>(updateData.currentPhase);
+					clientBoss.currentTargetId = updateData.targetPlayerId;
+				}
+				else if (p.header == headerBossFightBossAttack)
+				{
+					auto attackData = *(BossFightBossAttackData*)data;
+					lastBossAttack = static_cast<BossFight::BossAttackType>(attackData.attackType);
+					bossAttackAnimTimer = 1.0f;
+					
+					if (lastBossAttack == BossFight::BossAttackType::CIRCLE_SPRAY)
+					{
+						bossNotification = "CIRCLE SPRAY!";
+						bossNotificationTimer = 2.0f;
+					}
+					else if (lastBossAttack == BossFight::BossAttackType::MELEE)
+					{
+						bossNotification = "BOSS ATTACKS!";
+						bossNotificationTimer = 1.0f;
+					}
+					
+					std::cout << "[BossFight] Boss attack: " << (int)lastBossAttack << std::endl;
+				}
+				else if (p.header == headerBossFightCircleSpray)
+				{
+					auto sprayData = *(BossFightCircleSprayData*)data;
+					bossNotification = "CIRCLE SPRAY ATTACK!";
+					bossNotificationTimer = 2.0f;
+					
+					std::cout << "[BossFight] Boss circle spray at (" << sprayData.centerX << ", " << sprayData.centerY << ")" << std::endl;
+
+					// Spawn client-side bullets
+					float angleStep = 2.0f * 3.14159f / sprayData.bulletCount;
+					for (int i = 0; i < sprayData.bulletCount; i++) {
+						float angle = i * angleStep;
+						ClientBossBullet b;
+						b.pos = glm::vec2(sprayData.centerX, sprayData.centerY);
+						b.velocity = glm::vec2(std::cos(angle), std::sin(angle)) * sprayData.bulletSpeed;
+						b.lifetime = 5.0f;
+						clientBossBullets.push_back(b);
+					}
+				}
+				else if (p.header == headerBossFightBossDeath)
+				{
+					auto deathData = *(BossFightBossDeathData*)data;
+					clientBoss.isAlive = false;
+					bossNotification = "BOSS DEFEATED!";
+					bossNotificationTimer = 5.0f;
+					
+					std::cout << "[BossFight] Boss defeated by player " << deathData.lastHitPlayerCid << std::endl;
+				}
+				else if (p.header == headerBossFightPlayerRespawn)
+				{
+					auto respawnData = *(BossFightPlayerRespawnData*)data;
+					auto it = players.find(respawnData.cid);
+					if (it != players.end())
+					{
+						it->second.pos = glm::vec2(respawnData.posX, respawnData.posY);
+						it->second.lastPos = it->second.pos;
+						it->second.life = it->second.maxLife;
+					}
+					
+					if (respawnData.cid == cid)
+					{
+						bossNotification = "RESPAWNED!";
+						bossNotificationTimer = 2.0f;
+					}
+					
+					std::cout << "[BossFight] Player " << respawnData.cid << " respawned" << std::endl;
+				}
+				else if (p.header == headerBossFightMatchEnd)
+				{
+					auto endData = *(BossFightMatchEndData*)data;
+					matchEnded = true;
+					
+					if (endData.victory)
+					{
+						bossNotification = "VICTORY!";
+					}
+					else
+					{
+						bossNotification = "DEFEATED!";
+					}
+					bossNotificationTimer = 10.0f;
+					
+					std::cout << "[BossFight] Match ended - Victory: " << endData.victory << std::endl;
+				}
+				else if (p.header == headerBossFightPlayerDamage)
+				{
+					auto damageData = *(BossFightPlayerDamageData*)data;
+					if (damageData.cid == cid)
+					{
+						auto& player = players[cid];
+						player.life -= damageData.damage;
+						if (player.life <= 0)
+						{
+							player.life = 0;
+						}
+						player.hitTime = phisics::Entity::invincibilityTime;
+						
+						std::cout << "[BossFight] You took " << damageData.damage << " damage! HP: " << player.life << std::endl;
+					}
+				}
+				else if (p.header == headerHordeBossTeleport)
+				{
+					if (currentGameMode == GameMode::HORDE_DEFENSE)
+					{
+						struct BossTeleportData { int32_t enemyId; float x, y; };
+						BossTeleportData* teleportData = (BossTeleportData*)data;
+						
+						// Find boss local enemy
+						for (auto& [id, enemy] : hordeEnemies) {
+							if (id == teleportData->enemyId) {
+								// Teleport effect (poof)
+								// Simply update pos for now, server handles sync
+								enemy.position = {teleportData->x, teleportData->y};
+								// std::cout << "Boss Teleported!" << std::endl;
+								break;
+							}
+						}
+					}
+				}
+				else if (p.header == headerHordeBossAttack)
+				{
+					if (currentGameMode == GameMode::HORDE_DEFENSE)
+					{
+						struct BossAttackData { 
+							int32_t enemyId; 
+							float startX, startY;
+							float dirX, dirY;
+						};
+						BossAttackData* attackData = (BossAttackData*)data;
+						
+						// Spawn a visual projectile using hordeBossBullets (like Boss Fight mode)
+						ClientBossBullet b;
+						b.pos = {attackData->startX, attackData->startY};
+						b.velocity = glm::vec2(attackData->dirX, attackData->dirY) * 8.0f; // Bullet speed
+						b.lifetime = 10.0f; // Lifetime before auto-despawn
+						
+						hordeBossBullets.push_back(b);
+					}
+				}
 				enet_packet_destroy(event.packet);
 
 				break;
 			}
 			case ENET_EVENT_TYPE_DISCONNECT:
 			{
-				//std::cout << "disconect\n";
-				exit(0);
-
+				// Server disconnected - reset client state and return to menu
+				std::cout << "Disconnected from server" << std::endl;
+				joined = false;
+				server = nullptr;
+				matchEnded = true;  // Signal match end for UI
 				break;
 			}
 		}
 	}
 
 }
-
-void closeFunction()
+#include <AccountManager.h>
+void closeFunction(AccountManager &accountManager)
 {
 	if (!server) { return; }
-
+	
 	ENetEvent event;
+
+	Packet p;
+	p.header = gameEndHeader;
+	p.cid = cid;
+
+				// If you want to send some data (e.g., final score)
+
+	auto& player = players[cid];
+	int32_t finalScore = players[cid].kills; // Example: using kills as final score
+	Account* account = accountManager.getAccount(player.name);
+	account->totalScore += finalScore;
+	accountManager.updateAccount(*account);
+	std::cout << "Account old info" << account->username << " " << account->email << " total score: " << account->totalScore - finalScore << "\n";
+	sendPacket(server, p, (const char*)&finalScore, sizeof(int32_t), true, 1);
 
 	enet_peer_disconnect(server, 0);
 	//wait for disconect
@@ -739,42 +1179,64 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 		float posy = 0;
 		float posx = 0;
 		constexpr float CONTROLLER_MARGIN = 0.5;
+		
+		// Block player inputs when deathmatch match has ended (only ESC allowed)
+		bool inputBlocked = (matchEnded && currentGameMode == GameMode::DEATHMATCH);
 
-		if (platform::isKeyHeld(platform::Button::Up)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Up)
 			|| platform::isKeyHeld(platform::Button::W)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Up].held
 			|| platform::getControllerButtons().LStick.y < -CONTROLLER_MARGIN
-			)
+			))
 		{
 			posy = -1;
 		}
-		if (platform::isKeyHeld(platform::Button::Down)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Down)
 			|| platform::isKeyHeld(platform::Button::S)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Down].held
 			|| platform::getControllerButtons().LStick.y > CONTROLLER_MARGIN
-			)
+			))
 		{
 			posy = 1;
 		}
-		if (platform::isKeyHeld(platform::Button::Left)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Left)
 			|| platform::isKeyHeld(platform::Button::A)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Left].held
 			|| platform::getControllerButtons().LStick.x < -CONTROLLER_MARGIN
-			)
+			))
 		{
 			posx = -1;
 		}
-		if (platform::isKeyHeld(platform::Button::Right)
+		if (!inputBlocked && (platform::isKeyHeld(platform::Button::Right)
 			|| platform::isKeyHeld(platform::Button::D)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Right].held
 			|| platform::getControllerButtons().LStick.x > CONTROLLER_MARGIN
-			)
+			))
 		{
 			posx = 1;
 		}
 
-		if (platform::isKeyPressedOn(platform::Button::Enter))
+		// Boss Fight: Start match when Enter is pressed during waiting state
+		if (currentGameMode == GameMode::BOSS_FIGHT && 
+		    currentMatchState == MatchState::MATCH_WAITING && 
+		    bossFightState == BossFight::BossFightState::WAITING)
 		{
+			if (platform::isKeyPressedOn(platform::Button::Enter))
+			{
+				// Send boss fight start request to server
+				if (joined && server)
+				{
+					Packet p;
+					p.header = headerBossFightStartRequest;
+					p.cid = cid;
+					sendPacket(server, p, nullptr, 0, true, 0);
+					std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+				}
+			}
+		}
+		else if (platform::isKeyPressedOn(platform::Button::Enter))
+		{
+			// Fullscreen toggle (only when not in boss fight waiting state)
 			platform::setFullScreen(!platform::isFullScreen());
 		}
 		
@@ -885,8 +1347,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			culldown -= deltaTime;
 		}
 
-		// Only allow shooting if player is alive
-		if ((platform::isLMouseHeld() 
+		// Only allow shooting if player is alive and inputs not blocked
+		if (!inputBlocked && (platform::isLMouseHeld() 
 			||
 			platform::getControllerButtons().LT > CONTROLLER_MARGIN
 			)
@@ -948,6 +1410,9 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
 				ownBullets.push_back(b);
 				
+				// Play shooting sound
+				AudioManager::getInstance().playShoot();
+				
 				// Left bullet (rotated counterclockwise)
 				phisics::Bullet bLeft = b;
 				float cosLeft = std::cos(-spreadAngle);
@@ -981,6 +1446,9 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				p.header = headerSendBullet;
 				sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
 				ownBullets.push_back(b);
+				
+				// Play shooting sound
+				AudioManager::getInstance().playShoot();
 			}
 
 			if (hasBatery)
@@ -1089,12 +1557,18 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				// Draw all enemies
 				for (const auto& [enemyId, enemy] : hordeEnemies)
 				{
-					// Calculate screen position
+					// Size multiplier
+					// OLD BOSS was 5.0f. New Elites are 2.0f. New Bosses are 5.0f.
+					float sizeMultiplier = 1.0f;
+					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.0f;
+					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.0f;
+
+					// Calculate screen position and size
 					glm::vec4 enemyRect = {
 						enemy.position.x * worldMagnification,
 						enemy.position.y * worldMagnification,
-						1.0f * worldMagnification,
-						1.0f * worldMagnification
+						sizeMultiplier * worldMagnification,
+						sizeMultiplier * worldMagnification
 					};
 					
 					// Color based on enemy type
@@ -1113,43 +1587,243 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						case HordeDefense::EnemyType::EXPLODER:
 							enemyColor = {0.9f, 0.2f, 0.2f, 1.0f};  // Red
 							break;
-						case HordeDefense::EnemyType::BOSS:
-							enemyColor = {0.8f, 0.1f, 0.9f, 1.0f};  // Purple
+						case HordeDefense::EnemyType::ELITE:
+							// Elite: Purple "Mini-Boss"
+							enemyColor = {0.6f, 0.0f, 0.8f, 1.0f};
 							break;
+						case HordeDefense::EnemyType::BOSS_WAVE5: // Summoner (Gold)
+							enemyColor = {1.0f, 0.8f, 0.0f, 1.0f}; 
+							break;
+						case HordeDefense::EnemyType::BOSS_WAVE10: // Bullet Hell (Red/Black Pulse)
+						{
+							float pulse = (std::sin(glfwGetTime() * 8.0f) + 1.0f) * 0.5f;
+							enemyColor = glm::mix(glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), glm::vec4(0.1f, 0.0f, 0.0f, 1.0f), pulse);
+							break;
+						}
+						case HordeDefense::EnemyType::BOSS_WAVE15: // Explosive (Orange/Red)
+							enemyColor = {1.0f, 0.4f, 0.0f, 1.0f};
+							break;
+						case HordeDefense::EnemyType::BOSS_WAVE20: // Final Boss (White/Cyan Pulse)
+						{
+							float pulse = (std::sin(glfwGetTime() * 10.0f) + 1.0f) * 0.5f;
+							enemyColor = glm::mix(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), pulse);
+							break;
+						}
 						default:
 							enemyColor = {1.0f, 1.0f, 1.0f, 1.0f};
 							break;
 					}
-					
-					// Draw enemy body
+				
+				// Choose sprite texture based on enemy type
+				gl2d::Texture* enemyTexture = nullptr;
+				switch (enemy.type)
+				{
+					case HordeDefense::EnemyType::ZOMBIE:
+						enemyTexture = &textures.zombieSprite;
+						break;
+					case HordeDefense::EnemyType::RUNNER:
+						enemyTexture = &textures.runnerSprite;
+						break;
+					case HordeDefense::EnemyType::TANK:
+						enemyTexture = &textures.tankSprite;
+						break;
+					case HordeDefense::EnemyType::EXPLODER:
+						enemyTexture = &textures.exploderSprite;
+						break;
+					case HordeDefense::EnemyType::ELITE:
+						enemyTexture = &textures.eliteSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE5:
+						enemyTexture = &textures.bossSummonerSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE10:
+						enemyTexture = &textures.bossBulletHellSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE15:
+						enemyTexture = &textures.bossExploderSprite;
+						break;
+					case HordeDefense::EnemyType::BOSS_WAVE20:
+						enemyTexture = &textures.bossFinalSprite;
+						break;
+					default:
+						enemyTexture = &textures.zombieSprite; // Fallback
+						break;
+				}
+				
+				// Draw enemy with sprite (apply color tint for effects)
+				if (enemyTexture && enemyTexture->id != 0) {
+					renderer.renderRectangle(enemyRect, enemyColor, {}, 0.f, *enemyTexture);
+				} else {
+					// Fallback to colored rectangle if texture not loaded
 					renderer.renderRectangle(enemyRect, enemyColor);
+				}
 					
-					// Draw health bar above enemy
-					float healthPercent = enemy.health / enemy.maxHealth;
-					if (healthPercent < 1.0f)  // Only show if damaged
+					// Draw Boss Helper UI (For actual Bosses only, not Elites)
+					bool isBoss = (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5);
+					if (isBoss)
 					{
-						float healthBarWidth = 1.0f * worldMagnification;
-						float healthBarHeight = 0.1f * worldMagnification;
-						float healthBarY = (enemy.position.y - 0.2f) * worldMagnification;
+						// "BOSS" Label (add type name)
+						const char* bossName = "BOSS";
+						if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE5) bossName = "SUMMONER";
+						else if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE10) bossName = "BULLET HELL";
+						else if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE15) bossName = "EXPLODER";
+						else if (enemy.type == HordeDefense::EnemyType::BOSS_WAVE20) bossName = "THE END";
+
+						glm::vec2 labelPos = {enemyRect.x + (enemyRect.z / 2) - 20, enemyRect.y - 60};
+						renderer.renderText(labelPos, bossName, textures.font, {1, 0, 0, 1}, 1.0f);
 						
-						// Background (red)
-						glm::vec4 bgRect = {
-							enemy.position.x * worldMagnification,
-							healthBarY,
-							healthBarWidth,
-							healthBarHeight
-						};
-						renderer.renderRectangle(bgRect, {0.3f, 0.0f, 0.0f, 0.8f});
+						// Boss Health Bar
+						float healthPerc = enemy.health / enemy.maxHealth;
+						glm::vec4 healthBarBg = {enemyRect.x, enemyRect.y - 25, enemyRect.z, 15};
+						glm::vec4 healthBarFill = {enemyRect.x, enemyRect.y - 25, enemyRect.z * healthPerc, 15};
 						
-						// Foreground (green)
-						glm::vec4 fgRect = {
-							enemy.position.x * worldMagnification,
-							healthBarY,
-							healthBarWidth * healthPercent,
-							healthBarHeight
-						};
-						renderer.renderRectangle(fgRect, {0.0f, 1.0f, 0.0f, 0.9f});
+						renderer.renderRectangle(healthBarBg, {0.2f, 0.2f, 0.2f, 1.0f});
+						renderer.renderRectangle(healthBarFill, {1.0f, 0.0f, 0.0f, 1.0f});
 					}
+					else 
+					{
+						// Normal Enemy Health Bar (Only if damaged)
+						if (enemy.health < enemy.maxHealth) {
+							float healthPerc = enemy.health / enemy.maxHealth;
+							glm::vec4 healthBarBg = {enemyRect.x, enemyRect.y - 10, enemyRect.z, 5};
+							glm::vec4 healthBarFill = {enemyRect.x, enemyRect.y - 10, enemyRect.z * healthPerc, 5};
+							
+							renderer.renderRectangle(healthBarBg, {0.2f, 0.2f, 0.2f, 1.0f});
+							renderer.renderRectangle(healthBarFill, {0.0f, 1.0f, 0.0f, 1.0f});
+						}
+					}
+				}
+			}
+			
+			// ========================================================================
+			// HORDE DEFENSE - Boss Bullet Rendering & Collision
+			// ========================================================================
+			if (currentGameMode == GameMode::HORDE_DEFENSE)
+			{
+				auto myPlayerIt = players.find(cid);
+				glm::vec2 playerPos = myPlayerIt != players.end() ? myPlayerIt->second.pos : glm::vec2(0,0);
+				
+				for (auto it = hordeBossBullets.begin(); it != hordeBossBullets.end(); ) {
+					// Update position
+					it->pos += it->velocity * deltaTime;
+					it->lifetime -= deltaTime;
+					
+					// Lifetime check
+					if (it->lifetime <= 0) {
+						it = hordeBossBullets.erase(it);
+						continue;
+					}
+					
+					// Collision with local player
+					float playerLeft = playerPos.x;
+					float playerRight = playerPos.x + 0.8f;
+					float playerTop = playerPos.y;
+					float playerBottom = playerPos.y + 0.8f;
+					
+					if (it->pos.x >= playerLeft && it->pos.x <= playerRight &&
+						it->pos.y >= playerTop && it->pos.y <= playerBottom)
+					{
+						// Hit local player!
+						it = hordeBossBullets.erase(it);
+						
+						// Send damage to server (1 damage per boss bullet)
+						int damage = 1;
+						Packet p;
+						p.cid = cid;
+						p.header = headerHordePlayerTakeDamage;
+						sendPacket(server, p, (const char*)&damage, sizeof(damage), true, 1);
+						
+						std::cout << "Boss bullet hit you! Sending 1 damage to server." << std::endl;
+						continue;
+					}
+					
+					// Render bullet (purple color)
+					glm::vec4 bulletRect = {
+						it->pos.x * worldMagnification,
+						it->pos.y * worldMagnification,
+						0.5f * worldMagnification,
+						0.5f * worldMagnification
+					};
+					renderer.renderRectangle(bulletRect, {0.8f, 0.0f, 1.0f, 1.0f}); // Purple bullets
+					
+					++it;
+				}
+			}
+			
+			// ========================================================================
+			// BOSS FIGHT RENDERING
+			// ========================================================================
+			if (currentGameMode == GameMode::BOSS_FIGHT)
+			{
+				// Draw boss if alive
+				if (clientBoss.isAlive)
+				{
+					// Calculate boss screen position (boss is 5x5 tiles)
+					float bossSize = 5.0f;
+					float bossSizeScreen = bossSize * worldMagnification;
+					
+					// Server uses center position, so we need to offset for top-left rendering
+					glm::vec4 bossRect = {
+						(clientBoss.position.x - bossSize/2.0f) * worldMagnification,
+						(clientBoss.position.y - bossSize/2.0f) * worldMagnification,
+						bossSizeScreen,
+						bossSizeScreen
+					};
+					
+					// Boss color - dark purple/red
+					glm::vec4 bossColor = {0.6f, 0.1f, 0.3f, 1.0f};
+					
+					// Draw boss body
+					renderer.renderRectangle(bossRect, bossColor);
+					
+					// Draw boss health bar (width of boss)
+					float healthPercent = clientBoss.health / clientBoss.maxHealth;
+					float healthBarWidth = bossSizeScreen;
+					float healthBarHeight = 0.2f * worldMagnification;
+					float healthBarY = (clientBoss.position.y - bossSize/2.0f - 0.5f) * worldMagnification;
+					
+					// Background (red)
+					glm::vec4 bgRect = {
+						(clientBoss.position.x - bossSize/2.0f) * worldMagnification,
+						healthBarY,
+						healthBarWidth,
+						healthBarHeight
+					};
+					renderer.renderRectangle(bgRect, {0.5f, 0.0f, 0.0f, 0.9f});
+					
+					// Foreground (green to red gradient based on health)
+					glm::vec4 healthColor = {1.0f - healthPercent, healthPercent, 0.0f, 1.0f};
+					glm::vec4 fgRect = {
+						(clientBoss.position.x - bossSize/2.0f) * worldMagnification,
+						healthBarY,
+						healthBarWidth * healthPercent,
+						healthBarHeight
+					};
+					renderer.renderRectangle(fgRect, healthColor);
+				}
+
+				// Update and Render Boss Bullets
+				for (auto it = clientBossBullets.begin(); it != clientBossBullets.end(); ) {
+					// Update
+					it->pos += it->velocity * deltaTime;
+					it->lifetime -= deltaTime;
+
+					if (it->lifetime <= 0) {
+						it = clientBossBullets.erase(it);
+						continue;
+					}
+
+					// Render
+					glm::vec4 bulletRect = {
+						it->pos.x * worldMagnification,
+						it->pos.y * worldMagnification,
+						0.5f * worldMagnification,
+						0.5f * worldMagnification
+					};
+					// Orange/Red bullets
+					renderer.renderRectangle(bulletRect, {1.0f, 0.5f, 0.0f, 1.0f});
+
+					++it;
 				}
 			}
 	#pragma endregion
@@ -1203,6 +1877,54 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					}
 				}
 			}
+			
+			// Horde Defense: Check enemy bullets (cid == -1) against LOCAL player
+			if (currentGameMode == GameMode::HORDE_DEFENSE && bullets[i].cid == -1)
+			{
+				// Simple AABB collision with local player
+				auto myPlayerIt = players.find(cid);
+				if (myPlayerIt != players.end()) {
+					glm::vec2 bulletPos = bullets[i].pos;
+					float playerLeft = myPlayerIt->second.pos.x;
+					float playerRight = myPlayerIt->second.pos.x + 0.8f;
+					float playerTop = myPlayerIt->second.pos.y;
+					float playerBottom = myPlayerIt->second.pos.y + 0.8f;
+					
+					if (bulletPos.x >= playerLeft && bulletPos.x <= playerRight &&
+					    bulletPos.y >= playerTop && bulletPos.y <= playerBottom)
+					{
+						// Hit local player!
+						bullets.erase(bullets.begin() + i);
+						i--;
+						
+						// Send damage to server (1 damage per boss bullet)
+						int damage = 1;
+						Packet p;
+						p.cid = cid;
+						p.header = headerHordePlayerTakeDamage;
+						sendPacket(server, p, (const char*)&damage, sizeof(damage), true, 1);
+						
+						std::cout << "Boss bullet hit you! Sending 1 damage to server." << std::endl;
+						continue;
+					}
+				}
+			}
+			
+			// Visual fix: Check collision with Boss
+			if (currentGameMode == GameMode::BOSS_FIGHT && clientBoss.isAlive)
+			{
+				glm::vec2 bossCenter = clientBoss.position;
+				float hitboxHalf = 2.5f; // Boss is 5x5
+				glm::vec2 bulletPos = bullets[i].pos;
+
+				if (bulletPos.x >= bossCenter.x - hitboxHalf && bulletPos.x <= bossCenter.x + hitboxHalf &&
+					bulletPos.y >= bossCenter.y - hitboxHalf && bulletPos.y <= bossCenter.y + hitboxHalf) 
+				{
+					bullets.erase(bullets.begin() + i);
+					i--;
+					continue;
+				}
+			}
 		}
 
 		for (int i = 0; i < bullets.size(); i++)
@@ -1243,6 +1965,22 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				}
 			}
 			
+			// Visual fix: Check collision with Boss (damage handled by server)
+			if (currentGameMode == GameMode::BOSS_FIGHT && clientBoss.isAlive)
+			{
+				glm::vec2 bossCenter = clientBoss.position;
+				float hitboxHalf = 2.5f; // Boss is 5x5
+				glm::vec2 bulletPos = ownBullets[i].pos;
+
+				if (bulletPos.x >= bossCenter.x - hitboxHalf && bulletPos.x <= bossCenter.x + hitboxHalf &&
+					bulletPos.y >= bossCenter.y - hitboxHalf && bulletPos.y <= bossCenter.y + hitboxHalf) 
+				{
+					ownBullets.erase(ownBullets.begin() + i);
+					i--;
+					continue;
+				}
+			}
+			
 			// Check collision with enemies (Horde Defense mode)
 			if (currentGameMode == GameMode::HORDE_DEFENSE && i < ownBullets.size())
 			{
@@ -1250,13 +1988,25 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				
 				for (auto& [enemyId, enemy] : hordeEnemies)
 				{
-					// Simple circle-circle collision (bullet center vs enemy center)
-					glm::vec2 bulletCenter = ownBullets[i].pos + glm::vec2(0.5f, 0.5f);
-					glm::vec2 enemyCenter = enemy.position + glm::vec2(0.5f, 0.5f);
-					float distance = glm::length(bulletCenter - enemyCenter);
-					float collisionRadius = 0.7f;  // Combined radius for collision
+					// AABB Collision (Axis-Aligned Bounding Box) for precise hit detection
+					// This fixes issues with the large square Boss hitbox
+					float sizeMultiplier = 1.0f;
+					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.0f;
+					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.0f;
 					
-					if (distance < collisionRadius)
+					// Enemy bounding box
+					float enemyLeft = enemy.position.x;
+					float enemyRight = enemy.position.x + sizeMultiplier;
+					float enemyTop = enemy.position.y;
+					float enemyBottom = enemy.position.y + sizeMultiplier;
+					
+					// Bullet bounding box (assuming ~0.5 size for bullet point)
+					float bulletX = ownBullets[i].pos.x;
+					float bulletY = ownBullets[i].pos.y;
+					
+					// Check if bullet is inside enemy box
+					if (bulletX >= enemyLeft && bulletX <= enemyRight &&
+						bulletY >= enemyTop && bulletY <= enemyBottom)
 					{
 						// Bullet hit enemy!
 						// Send notification to server
@@ -1358,7 +2108,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						if (player.speedBoostWaves > 0)
 						{
 							char buffText[32];
-							snprintf(buffText, sizeof(buffText), "[Speed: %d]", player.speedBoostWaves, player.speedBoostWaves > 1 ? "s" : "");
+							snprintf(buffText, sizeof(buffText), "[Speed: %d wave%s]", player.speedBoostWaves, player.speedBoostWaves > 1 ? "s" : "");
 							renderer.renderText(glm::vec2(buffX, buffY), buffText, textures.font, glm::vec4(0.2f, 0.8f, 1.0f, 1.0f), 0.5f, 4.f, 3.f, false);
 							buffY += 25.0f;
 						}
@@ -1386,97 +2136,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					}
 				}
 				
-				// Damage Leaderboard (top-left corner) - Real-time ranking by damage dealt
-				{
-					// Create sorted list of players by damage dealt
-					std::vector<std::pair<int32_t, phisics::Entity*>> sortedPlayers;
-					for (auto& playerPair : players)
-					{
-						sortedPlayers.push_back({playerPair.first, &playerPair.second});
-					}
-					
-					// Sort by damage dealt (descending order)
-					std::sort(sortedPlayers.begin(), sortedPlayers.end(), 
-						[](const auto& a, const auto& b) {
-							return a.second->totalDamageDealt > b.second->totalDamageDealt;
-						});
-					
-					// Leaderboard background
-					float leaderboardX = 20.0f;
-					float leaderboardY = 50.0f;
-					float leaderboardW = 460.0f;
-					float leaderboardH = 50.0f + (sortedPlayers.size() * 32.0f);
-					
-					auto leaderboardBox = Ui::Box()
-						.xLeft(leaderboardX)
-						.yTop(leaderboardY)
-						.xDimensionPixels(leaderboardW)
-						.yDimensionPixels(leaderboardH);
-					renderer.renderRectangle(leaderboardBox, {0.0f, 0.0f, 0.0f, 0.7f});
-					
-					// Header
-					glm::vec2 headerPos(leaderboardX + 10.0f, leaderboardY + 10.0f);
-					renderer.renderText(headerPos, "DAMAGE LEADERBOARD", textures.font, 
-						glm::vec4(1.0f, 0.8f, 0.2f, 1.0f), 0.65f, 4.f, 3.f, false);
-					
-					// Column headers
-					glm::vec2 colHeaderPos(leaderboardX + 10.0f, leaderboardY + 38.0f);
-					renderer.renderText(colHeaderPos, "Rank  Player   Damage", textures.font, 
-						glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), 0.45f, 4.f, 3.f, false);
-					
-					// Player rankings
-					float rankY = leaderboardY + 62.0f;
-					int rank = 1;
-					for (const auto& playerPair : sortedPlayers)
-					{
-						const auto& player = *playerPair.second;
-						bool isLocalPlayer = (playerPair.first == cid);
-						
-						// Rank-based color
-						glm::vec4 rankColor;
-						if (rank == 1)
-							rankColor = glm::vec4(1.0f, 0.85f, 0.0f, 1.0f);  // Gold for 1st
-						else if (rank == 2)
-							rankColor = glm::vec4(0.85f, 0.85f, 0.85f, 1.0f);  // Silver for 2nd
-						else if (rank == 3)
-							rankColor = glm::vec4(0.8f, 0.5f, 0.3f, 1.0f);  // Bronze for 3rd
-						else
-							rankColor = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);  // Gray for others
-						
-						// Local player highlight
-						if (isLocalPlayer)
-						{
-							auto highlightBox = Ui::Box()
-								.xLeft(leaderboardX + 5.0f)
-								.yTop(rankY - 3.0f)
-								.xDimensionPixels(leaderboardW - 10.0f)
-								.yDimensionPixels(28.0f);
-							renderer.renderRectangle(highlightBox, {0.2f, 0.4f, 0.6f, 0.4f});
-							rankColor = glm::vec4(0.3f, 1.0f, 0.5f, 1.0f);  // Bright green for local player
-						}
-								// Rank number
-					char rankText[8];
-					snprintf(rankText, sizeof(rankText), "%d.", rank);
-					renderer.renderText(glm::vec2(leaderboardX + 15.0f, rankY), rankText, 
-						textures.font, rankColor, 0.52f, 4.f, 3.f, false);
-					
-					// Player name (truncate if too long) - smaller font size
-					char nameText[20];
-					strncpy(nameText, player.name, 14);
-					nameText[14] = '\0';
-					renderer.renderText(glm::vec2(leaderboardX + 130.0f, rankY), nameText, 
-						textures.font, rankColor, 0.4f, 4.f, 3.f, false);
-					
-					// Damage dealt
-					char damageText[16];
-					snprintf(damageText, sizeof(damageText), "%d", player.totalDamageDealt);
-					renderer.renderText(glm::vec2(leaderboardX + 300.0f, rankY), damageText, 
-						textures.font, rankColor, 0.52f, 4.f, 3.f, false);
-						
-						rankY += 32.0f;
-						rank++;
-					}
-				}
+
 				
 				// Wave notifications (center screen)
 				if (waveNotificationTimer > 0.0f)
@@ -1691,77 +2351,179 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				renderer.renderRectangle(pos, {1.f,1.f,1.f,1.f}, {}, 0.f, textures.battery);
 			}
 			
-			// Display scoreboard (top left) - Only for Deathmatch mode
-			if (currentGameMode == GameMode::DEATHMATCH)
+			// LEADERBOARD (Universal for all modes)
 			{
-				// Use fully pixel-based positioning for perfect alignment
-				float xPixel = 20.0f;  // 20 pixels from left edge
-				float yPixel = 40.0f;  // 20 pixels from top edge
-				float lineHeightPixel = 40.0f;  // 40 pixels between lines
-				float paddingPixel = 10.0f;  // Padding around background
+				struct DisplayEntry {
+					std::string name;
+					int value;
+					int extraValue;
+					int32_t cid;
+				};
+				std::vector<DisplayEntry> displayList;
+				std::string metricLabel = "Score";
 				
-				// Create sorted player list by kills first (to calculate proper height)
-				std::vector<std::pair<int32_t, phisics::Entity*>> sortedPlayers;
-				for (auto& p : players)
+				// 1. Determine Source of Data
+				if (activeLeaderboard.count > 0)
 				{
-					sortedPlayers.push_back({p.first, &p.second});
+					// Use Server Packet Data
+					for (int i=0; i < activeLeaderboard.count; ++i)
+					{
+						const auto& e = activeLeaderboard.entries[i];
+						displayList.push_back({e.playerName, e.value, e.extraValue, e.cid});
+					}
+					
+					if (activeLeaderboard.gameMode == (int)GameMode::DEATHMATCH) metricLabel = "Kills";
+					else if (activeLeaderboard.gameMode == (int)GameMode::HORDE_DEFENSE) metricLabel = "Wave"; // Changed from Damage
+					else if (activeLeaderboard.gameMode == (int)GameMode::BOSS_FIGHT) metricLabel = "Score";
 				}
-				std::sort(sortedPlayers.begin(), sortedPlayers.end(), 
-					[](const auto& a, const auto& b) {
-						return a.second->kills > b.second->kills;
-					});
-				
-				int displayCount = std::min((int)sortedPlayers.size(), 5);
-				
-				// Semi-transparent background for scoreboard (pixel-based)
-				float bgWidthPixel = 400.0f;  // Wide enough for text
-				float bgHeightPixel = lineHeightPixel * (displayCount + 1) + (paddingPixel * 2);  // Title + players + padding
-				// auto bgBox = Ui::Box()
-				// 	.xLeft(xPixel - paddingPixel)
-				// 	.yTop(yPixel - paddingPixel)
-				// 	.xDimensionPixels(bgWidthPixel)
-				// 	.yDimensionPixels(bgHeightPixel);
-				// renderer.renderRectangle(bgBox, {0.0f, 0.0f, 0.0f, 0.85f});  // Dark background for contrast
-				
-				// Title
-				glm::vec2 titlePos = glm::vec2(xPixel, yPixel);
-				renderer.renderText(titlePos, "SCOREBOARD", textures.font, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), 1.0f, 4.f, 3.f, false);
-				yPixel += lineHeightPixel;
-				
-				// Display top 5 players with separate columns for perfect alignment
-				for (int i = 0; i < displayCount; i++)
+				else
 				{
-					auto& playerEntry = sortedPlayers[i];
+					// Fallback: Local Sorting (Old Method)
+					// This ensures the leaderboard is visible immediately even before the first packet arrives
+					std::vector<std::pair<int32_t, phisics::Entity*>> sortedPlayers;
+					for (auto& p : players)
+					{
+						sortedPlayers.push_back({p.first, &p.second});
+					}
 					
-					// Define fixed X positions for each column
-					float rankX = xPixel;
-					float nameX = xPixel + 50.0f;   // Rank column width
-					float killsX = xPixel + 400.0f;  // Name column width
-					float slashX = xPixel + 440.0f;  // Kills column width
-					float deathsX = xPixel + 470.0f; // Slash width
+					auto sortFunc = [currentGameMode](const auto& a, const auto& b) {
+						if (currentGameMode == GameMode::DEATHMATCH) {
+							return a.second->kills > b.second->kills;
+						} else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+							// For HD, sort by Waves Survived
+							if (a.second->wavesSurvived != b.second->wavesSurvived)
+								return a.second->wavesSurvived > b.second->wavesSurvived;
+							return a.second->totalDamageDealt > b.second->totalDamageDealt;
+						}
+						// For Boss Fight
+						return a.second->totalDamageDealt > b.second->totalDamageDealt;
+					};
 
-					// Highlight own player with bright yellow, others with white
-					glm::vec4 textColor = (playerEntry.first == cid) ? 
-						glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+					if (currentGameMode == GameMode::DEATHMATCH) {
+						metricLabel = "Kills";
+					} else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+						metricLabel = "Wave"; 
+					} else if (currentGameMode == GameMode::BOSS_FIGHT) {
+						metricLabel = "Score"; 
+					}
 					
-					// Render each column separately at fixed positions
-					char rankText[8];
-					snprintf(rankText, sizeof(rankText), "%d.", i + 1);
-					renderer.renderText(glm::vec2(rankX, yPixel), rankText, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					std::sort(sortedPlayers.begin(), sortedPlayers.end(), sortFunc);
 					
-					renderer.renderText(glm::vec2(nameX, yPixel), playerEntry.second->name, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					int count = std::min((int)sortedPlayers.size(), 5);
+					for (int i=0; i<count; ++i)
+					{
+						const auto& p = *sortedPlayers[i].second;
+						int val = 0;
+						int extraVal = 0;
+						if (currentGameMode == GameMode::DEATHMATCH) {
+							val = p.kills;
+							extraVal = p.deaths;
+						}
+						else if (currentGameMode == GameMode::HORDE_DEFENSE) {
+							val = p.wavesSurvived;
+							extraVal = p.totalDamageDealt;
+						}
+						else {
+							val = p.totalDamageDealt;
+						}
+						
+						displayList.push_back({p.name, val, extraVal, sortedPlayers[i].first});
+					}
+				}
+				
+				// 2. Render
+				if (!displayList.empty())
+				{
+					float leaderboardX = 20.0f;
+				float leaderboardY = 50.0f;
+				
+				// Dynamic width based on columns (HD has 4 columns, others have 3)
+				float leaderboardW = (activeLeaderboard.gameMode == (int)GameMode::HORDE_DEFENSE) ? 540.0f : 460.0f;
+				
+				// Dynamic height based on number of entries
+				float leaderboardH = 50.0f + (displayList.size() * 32.0f);
 					
-					char killsText[8];
-					snprintf(killsText, sizeof(killsText), "%d", playerEntry.second->kills);
-					renderer.renderText(glm::vec2(killsX, yPixel), killsText, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					auto leaderboardBox = Ui::Box()
+						.xLeft(leaderboardX)
+						.yTop(leaderboardY)
+						.xDimensionPixels(leaderboardW)
+						.yDimensionPixels(leaderboardH);
+					renderer.renderRectangle(leaderboardBox, {0.0f, 0.0f, 0.0f, 0.7f});
 					
-					renderer.renderText(glm::vec2(slashX, yPixel), "/", textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					// Header
+					glm::vec2 headerPos(leaderboardX + 10.0f, leaderboardY + 10.0f);
+					renderer.renderText(headerPos, "LEADERBOARD", textures.font, 
+						glm::vec4(1.0f, 0.8f, 0.2f, 1.0f), 0.65f, 4.f, 3.f, false);
 					
-					char deathsText[8];
-					snprintf(deathsText, sizeof(deathsText), "%d", playerEntry.second->deaths);
-					renderer.renderText(glm::vec2(deathsX, yPixel), deathsText, textures.font, textColor, 0.9f, 4.f, 3.f, false);
+					// Column headers
+					glm::vec2 colHeaderPos(leaderboardX + 10.0f, leaderboardY + 38.0f);
+					char colHeader[64];
+					if (activeLeaderboard.gameMode == (int)GameMode::HORDE_DEFENSE) {
+						// Special header for HD with two columns
+						snprintf(colHeader, sizeof(colHeader), "Rank  Player   Wave   Damage");
+					} else {
+						snprintf(colHeader, sizeof(colHeader), "Rank  Player   %s", metricLabel.c_str());
+					}
+					renderer.renderText(colHeaderPos, colHeader, textures.font, 
+						glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), 0.45f, 4.f, 3.f, false);
 					
-					yPixel += lineHeightPixel;
+					// Rows
+					float rankY = leaderboardY + 62.0f;
+					for (int i=0; i < (int)displayList.size(); ++i)
+					{
+						int rank = i + 1;
+						const auto& entry = displayList[i];
+						bool isLocalPlayer = (entry.cid == cid);
+						
+						// Colors
+						glm::vec4 rankColor;
+						if (rank == 1) rankColor = glm::vec4(1.0f, 0.85f, 0.0f, 1.0f);
+						else if (rank == 2) rankColor = glm::vec4(0.85f, 0.85f, 0.85f, 1.0f);
+						else if (rank == 3) rankColor = glm::vec4(0.8f, 0.5f, 0.3f, 1.0f);
+						else rankColor = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+						
+						// Highlight local
+						if (isLocalPlayer)
+						{
+							auto highlightBox = Ui::Box()
+								.xLeft(leaderboardX + 5.0f)
+								.yTop(rankY - 20.0f)
+								.xDimensionPixels(leaderboardW - 10.0f)
+								.yDimensionPixels(28.0f);
+							renderer.renderRectangle(highlightBox, {0.2f, 0.4f, 0.6f, 0.4f});
+							rankColor = glm::vec4(0.3f, 1.0f, 0.5f, 1.0f);
+						}
+
+						// Rank
+						char rankText[8];
+						snprintf(rankText, sizeof(rankText), "%d.", rank);
+						renderer.renderText(glm::vec2(leaderboardX + 15.0f, rankY), rankText, 
+							textures.font, rankColor, 0.52f, 4.f, 3.f, false);
+						
+						// Name
+						char nameText[20];
+						strncpy(nameText, entry.name.c_str(), 14);
+						nameText[14] = '\0';
+						renderer.renderText(glm::vec2(leaderboardX + 130.0f, rankY), nameText, 
+							textures.font, rankColor, 0.4f, 4.f, 3.f, false);
+						
+						// Value 1 (Primary)
+						char valText[32];
+						snprintf(valText, sizeof(valText), "%d", entry.value);
+						
+						renderer.renderText(glm::vec2(leaderboardX + 300.0f, rankY), valText, 
+							textures.font, rankColor, 0.52f, 4.f, 3.f, false);
+							
+						// Value 2 (Secondary - e.g. Damage in HD)
+						if (activeLeaderboard.gameMode == (int)GameMode::HORDE_DEFENSE) {
+							char extraValText[32];
+							snprintf(extraValText, sizeof(extraValText), "%d", entry.extraValue);
+							renderer.renderText(glm::vec2(leaderboardX + 420.0f, rankY), extraValText, 
+								textures.font, rankColor, 0.52f, 4.f, 3.f, false);
+						}
+							
+						rankY += 32.0f;
+					}
 				}
 			}
 			
@@ -1773,6 +2535,209 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				glm::vec4 msgColor = glm::vec4(1.0f, 0.8f, 0.2f, alpha);
 				renderer.renderText(killMsgPos, lastKillMessage.c_str(), textures.font, msgColor, 0.6f);
 				killMessageTimer -= deltaTime;
+			}
+			
+			// Boss Fight UI
+			if (currentGameMode == GameMode::BOSS_FIGHT)
+			{
+				// Show Start button at top middle (same line as health bar) when waiting for match to start
+				if (currentMatchState == MatchState::MATCH_WAITING && bossFightState == BossFight::BossFightState::WAITING)
+				{
+					// Determine host: assume lowest CID among connected players is host
+					bool isHostCandidate = true;
+					if (!players.empty())
+					{
+						int32_t minCid = cid;
+						for (const auto& kv : players)
+						{
+							if (kv.first < minCid) minCid = kv.first;
+						}
+						isHostCandidate = (cid == minCid);
+					}
+					
+					if (isHostCandidate)
+					{
+						// Button position: top middle, same Y as health bar (0.02 = 2% from top)
+						float centerX = 0.5f * renderer.windowW;
+						float buttonY = 0.02f * renderer.windowH;  // Same Y as health bar
+						float buttonW = 250.0f;
+						float buttonH = 50.0f;
+						float buttonX = centerX - buttonW * 0.5f;
+
+						// Check hover/pressed
+						glm::vec2 mousePos = platform::getRelMousePosition();
+						bool mouseOver = (mousePos.x >= buttonX && mousePos.x <= buttonX + buttonW &&
+										  mousePos.y >= buttonY && mousePos.y <= buttonY + buttonH);
+						bool mousePressed = platform::isLMouseHeld();
+
+						// Colors: normal/hover/pressed
+						glm::vec4 btnNormal = glm::vec4(0.20f, 0.60f, 0.20f, 0.90f);
+						glm::vec4 btnHover  = glm::vec4(0.30f, 0.70f, 0.30f, 0.95f);
+						glm::vec4 btnPress  = glm::vec4(0.15f, 0.50f, 0.15f, 0.95f);
+						glm::vec4 buttonColor = mouseOver ? (mousePressed ? btnPress : btnHover) : btnNormal;
+
+						// Border then background
+						auto borderBox = Ui::Box()
+							.xLeft(buttonX - 2.0f).yTop(buttonY - 2.0f)
+							.xDimensionPixels(buttonW + 4.0f).yDimensionPixels(buttonH + 4.0f);
+						renderer.renderRectangle(borderBox, {0.0f, 0.0f, 0.0f, 0.80f});
+
+						auto buttonBox = Ui::Box()
+							.xLeft(buttonX).yTop(buttonY)
+							.xDimensionPixels(buttonW).yDimensionPixels(buttonH);
+						renderer.renderRectangle(buttonBox, buttonColor);
+
+						// Centered text using gl2d metrics
+						const char* startText = "START";
+						float textScale = 0.9f;
+						auto textSize = renderer.getTextSize(startText, textures.font, textScale);
+						glm::vec2 startTextPos = {
+							centerX - textSize.x * 0.5f,
+							buttonY + (buttonH - textSize.y) * 0.5f
+						};
+						renderer.renderText(startTextPos, startText, textures.font,
+							glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), textScale, 4.f, 3.f, false);
+
+						// Activate on click or Enter/Controller Start
+						bool activate = (mouseOver && platform::isLMousePressed())
+							|| platform::isKeyPressedOn(platform::Button::Enter)
+							|| platform::getControllerButtons().buttons[platform::ControllerButtons::Start].pressed;
+						if (activate)
+						{
+							if (joined && server)
+							{
+								Packet p;
+								p.header = headerBossFightStartRequest; // server handles manual start for boss fight
+								p.cid = cid;
+								sendPacket(server, p, nullptr, 0, true, 0);
+								std::cout << "Sent boss fight start request to server (CID: " << cid << ")" << std::endl;
+							}
+						}
+					}
+				}
+				
+				// Boss status display (when boss is active)
+				if (clientBoss.isAlive)
+				{
+					char bossStatusText[256];
+					snprintf(bossStatusText, sizeof(bossStatusText), 
+						"BOSS | HP: %.0f/%.0f | Phase: %d",
+						clientBoss.health, clientBoss.maxHealth,
+						static_cast<int>(clientBoss.currentPhase) + 1);
+					
+					glm::vec2 statusPos = glm::vec2(0.05f * renderer.windowW, 50.0f);
+					renderer.renderText(statusPos, bossStatusText, textures.font, 
+						glm::vec4(1.0f, 0.2f, 0.2f, 1.0f), 0.8f, 4.f, 3.f, false);
+				}
+				
+				// DEBUG: Boss Fight debug UI (only in debug builds or when needed)
+				#ifdef _DEBUG
+				// Boss status at top
+				char bossStatusText[256];
+				if (clientBoss.isAlive)
+				{
+					snprintf(bossStatusText, sizeof(bossStatusText), 
+						"[DEBUG] Boss Alive | Pos: (%.1f, %.1f) | HP: %.0f/%.0f | Phase: %d",
+						clientBoss.position.x, clientBoss.position.y,
+						clientBoss.health, clientBoss.maxHealth,
+						static_cast<int>(clientBoss.currentPhase) + 1);
+				}
+				else
+				{
+					snprintf(bossStatusText, sizeof(bossStatusText), "[DEBUG] Boss Not Spawned");
+				}
+				
+				glm::vec2 debugPos = glm::vec2(0.05f * renderer.windowW, 0.03f * renderer.windowH);
+				renderer.renderText(debugPos, bossStatusText, textures.font, 
+					glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), 0.5f, 4.f, 3.f, false);
+				
+				// Player position debug
+				char playerPosText[128];
+				snprintf(playerPosText, sizeof(playerPosText), 
+					"[DEBUG] Player Pos: (%.1f, %.1f) | Camera: (%.1f, %.1f)",
+					player.pos.x, player.pos.y,
+					c.position.x, c.position.y);
+				glm::vec2 playerDebugPos = glm::vec2(0.05f * renderer.windowW, 0.06f * renderer.windowH);
+				renderer.renderText(playerDebugPos, playerPosText, textures.font,
+					glm::vec4(0.5f, 1.0f, 0.5f, 1.0f), 0.5f, 4.f, 3.f, false);
+				
+				// Proximity damage radius slider
+				static float proximityRadius = 3.0f;
+				float sliderX = 0.70f * renderer.windowW;
+				float sliderY = 0.03f * renderer.windowH;
+				float sliderW = 150.0f;
+				float sliderH = 20.0f;
+				
+				// Slider label
+				char sliderLabel[64];
+				snprintf(sliderLabel, sizeof(sliderLabel), "Damage Zone: %.1f tiles", proximityRadius);
+				glm::vec2 labelPos = glm::vec2(sliderX - 150.0f, sliderY + 3.0f);
+				renderer.renderText(labelPos, sliderLabel, textures.font,
+					glm::vec4(1.0f, 0.8f, 0.2f, 1.0f), 0.5f, 4.f, 3.f, false);
+				
+				// Slider background
+				auto sliderBg = Ui::Box().xLeft(sliderX).yTop(sliderY).xDimensionPixels(sliderW).yDimensionPixels(sliderH);
+				renderer.renderRectangle(sliderBg, glm::vec4(0.3f, 0.3f, 0.3f, 0.8f));
+				
+				// Slider handle
+				float handleX = sliderX + (proximityRadius / 10.0f) * sliderW;
+				auto sliderHandle = Ui::Box().xLeft(handleX - 5.0f).yTop(sliderY - 5.0f).xDimensionPixels(10.0f).yDimensionPixels(sliderH + 10.0f);
+				renderer.renderRectangle(sliderHandle, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+				
+				// Handle slider interaction
+				bool sliderMouseOver = (platform::getRelMousePosition().x >= sliderX && 
+										platform::getRelMousePosition().x <= sliderX + sliderW &&
+										platform::getRelMousePosition().y >= sliderY - 10.0f && 
+										platform::getRelMousePosition().y <= sliderY + sliderH + 10.0f);
+				
+				if (sliderMouseOver && platform::isLMouseHeld())
+				{
+					float mouseX = platform::getRelMousePosition().x;
+					float normalizedX = (mouseX - sliderX) / sliderW;
+					normalizedX = std::max(0.0f, std::min(1.0f, normalizedX));
+					proximityRadius = normalizedX * 10.0f;
+				}
+				
+				// Respawn button
+				float btnX = 0.40f * renderer.windowW;
+				float btnY = 0.09f * renderer.windowH;
+				float btnW = 200.0f;
+				float btnH = 35.0f;
+				
+				auto btnBox = Ui::Box().xLeft(btnX).yTop(btnY).xDimensionPixels(btnW).yDimensionPixels(btnH);
+				
+				// Check if mouse is over button
+				bool mouseOver = (platform::getRelMousePosition().x >= btnX && 
+								  platform::getRelMousePosition().x <= btnX + btnW &&
+								  platform::getRelMousePosition().y >= btnY && 
+								  platform::getRelMousePosition().y <= btnY + btnH);
+				
+				glm::vec4 btnColor = mouseOver ? glm::vec4(0.8f, 0.2f, 0.2f, 0.9f) : glm::vec4(0.6f, 0.1f, 0.1f, 0.8f);
+				renderer.renderRectangle(btnBox, btnColor);
+				
+				// Button text
+				glm::vec2 btnTextPos = glm::vec2(btnX + 20.0f, btnY + 10.0f);
+				renderer.renderText(btnTextPos, "Respawn Boss (Click)", textures.font,
+					glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 0.6f, 4.f, 3.f, false);
+				
+				// Handle button click
+				if (mouseOver && platform::isLMousePressed())
+				{
+					// Send request to server to respawn boss at player position
+					Packet respawnPacket;
+					respawnPacket.cid = cid;
+					respawnPacket.header = headerBossFightDebugRespawnBoss;
+					
+					BossFightDebugRespawnBossData respawnRequest;
+					respawnRequest.posX = player.pos.x;
+					respawnRequest.posY = player.pos.y;
+					
+					sendPacket(server, respawnPacket, (char*)&respawnRequest, sizeof(respawnRequest), true, 1);
+					
+					std::cout << "[DEBUG] Requested boss respawn at player position (" 
+							  << player.pos.x << ", " << player.pos.y << ")" << std::endl;
+				}
+				#endif // _DEBUG
 			}
 			
 			// Display match end screen (Deathmatch only)
@@ -1857,10 +2822,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 	#pragma endregion
 
 
-
+	}
 
 	}
 
 	
-
-}

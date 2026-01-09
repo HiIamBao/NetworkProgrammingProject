@@ -2,6 +2,9 @@
 #include <iostream>
 #include <chrono>
 #include <cstring>
+#include <cstdio>
+#include <vector>
+#include <sstream>
 #include <algorithm>
 
 // Platform-specific includes
@@ -16,6 +19,8 @@
     #include <arpa/inet.h>
     #include <unistd.h>
     #include <fcntl.h>
+    #include <ifaddrs.h>
+    #include <net/if.h>
     #define SOCKET int
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
@@ -123,9 +128,103 @@ void LANDiscovery::broadcastLoop() {
                      mapId);
         }
         
+#ifdef _WIN32
+        // Windows: Send to global broadcast address
+        // (For robust multi-interface support on Windows, GetAdaptersAddresses is needed,
+        // but this simple fallback usually works if the primary interface is correct)
+         sendto(sockfd, message, strlen(message), 0, 
+               (sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+#else
+        // Linux/Unix: specific broadcast to each interface
+        struct ifaddrs *ifaddr, *ifa;
+        bool sent_to_any = false;
+
+        if (getifaddrs(&ifaddr) != -1) {
+            for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+                if (ifa->ifa_addr == NULL) continue;
+                if (ifa->ifa_addr->sa_family != AF_INET) continue;
+                
+                // Debug: Print found interface
+                // std::cout << "Checking interface: " << ifa->ifa_name << " Flags: " << ifa->ifa_flags << std::endl;
+
+                bool is_up = (ifa->ifa_flags & IFF_UP);
+                bool supports_broadcast = (ifa->ifa_flags & IFF_BROADCAST);
+                bool is_p2p = (ifa->ifa_flags & IFF_POINTOPOINT);
+                bool is_tailscale = (strstr(ifa->ifa_name, "tailscale") != NULL || strstr(ifa->ifa_name, "tun") != NULL);
+
+                // Allow if UP and (Broadcast OR (P2P + Tailscale special handling))
+                if (is_up && (supports_broadcast || (is_p2p && is_tailscale))) {
+                    
+                    sockaddr_in* target_addr = NULL;
+                    
+                    if (supports_broadcast && ifa->ifa_broadaddr != NULL) {
+                        target_addr = (sockaddr_in*)ifa->ifa_broadaddr;
+                    } 
+                    else if (is_p2p && ifa->ifa_dstaddr != NULL) {
+                        // For P2P VPNs, use destination address or specific broadcast logic?
+                        // Standard broadcast won't work on strict P2P without a broadcast IP.
+                        // Tailscale magic: usually 100.x.y.255 is not standard.
+                        // Best effort: Try sending to the "destination" address if it's a P2P link,
+                        // OR if it's Tailscale, we might need to rely on the generic broadcast 
+                        // if specific addressing fails, BUT the user says it's "unknown".
+                        //
+                        // However, simply sending to 255.255.255.255 BINDING to this interface might work better.
+                        // But sendto() logic here uses specific destination address.
+                        
+                        // Let's rely on standard broadcast logic first.
+                        // If P2P, we often don't have a broadcast address.
+                        // But for Tailscale specifically, it often emulates a network.
+                        
+                        // User reported interface is "unknown", failing checks.
+                        // Let's trust ifa_broadaddr if present even if flag is weird,
+                        // OR use a fallback address if it's tailscale.
+                         target_addr = (sockaddr_in*)ifa->ifa_dstaddr; // Use P2P destination
+                    }
+
+                    if (target_addr != NULL) {
+                        sockaddr_in if_bcast = *target_addr;
+                        if_bcast.sin_port = htons(BROADCAST_PORT);
+
+                        // If it's P2P/Tailscale, we might want to ensure we aren't just unicasting to gateway.
+                        // Tailscale supports "MagicDNS" and broadcast if enabled.
+                        // Let's try sending to the derived address.
+                        
+                        sendto(sockfd, message, strlen(message), 0, 
+                               (sockaddr*)&if_bcast, sizeof(if_bcast));
+                        sent_to_any = true;
+                        // std::cout << "Sent broadcast to " << ifa->ifa_name << std::endl;
+                    } else if (is_tailscale) {
+                         // Fallback for Tailscale: Try to construct a broadcast address from the IP?
+                         // Or just send to 255.255.255.255 but force the interface?
+                         // setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, ...) is root only usually.
+                         //
+                         // Let's try to just use the interface's IP but with .255? 
+                         // Too risky without mask validation.
+                         //
+                         // Simpler fix: If it's tailscale, and we can't find broadaddr, 
+                         // try to send to 255.255.255.255 but we can't bind to device easily.
+                         //
+                         // Let's assume ifa_dstaddr implies the other end for P2P.
+                    }
+                }
+            }
+            freeifaddrs(ifaddr);
+        }
+
+        // Fallback to global broadcast if enumeration failed or no interfaces found
         // Send broadcast
         sendto(sockfd, message, strlen(message), 0, 
                (sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+
+        // Tailscale Simulated Broadcast (Simulated via Unicast)
+        // Only run every ~5 seconds to avoid spamming the shell command
+        static uint64_t lastTailscaleBroadcast = 0;
+        uint64_t now = getCurrentTimeMs();
+        if (now - lastTailscaleBroadcast > 5000) {
+            broadcastToTailscalePeers(message, strlen(message));
+            lastTailscaleBroadcast = now;
+        }
+#endif
         
         // Wait before next broadcast
         std::this_thread::sleep_for(std::chrono::milliseconds(BROADCAST_INTERVAL_MS));
@@ -231,6 +330,10 @@ void LANDiscovery::listenLoop() {
         if (received > 0) {
             buffer[received] = '\0';
             
+            // DEBUG: Print everything received
+            std::cout << "DEBUG: Received UDP packet from " << inet_ntoa(senderAddr.sin_addr) 
+                      << ": " << buffer << std::endl;
+            
             // Parse message: "GAMESERVER|serverName|hostName|port|players|maxPlayers|gameMode|mapId"
             char* token = strtok(buffer, "|");
             if (token && strcmp(token, "GAMESERVER") == 0) {
@@ -314,4 +417,70 @@ std::vector<DiscoveredServer> LANDiscovery::getDiscoveredServers() {
     std::lock_guard<std::mutex> lock(discoveryMutex);
     cleanupOldServers();  // Safe to call since we already have the lock
     return discoveredServers;
+}
+
+void LANDiscovery::clearDiscoveredServers() {
+    discoveredServers.clear();
+}
+
+void LANDiscovery::broadcastToTailscalePeers(const char* message, int length)
+{
+#ifdef _WIN32
+    // Windows implementation could use 'tailscale status' via _popen if needed
+    // For now, we'll skip Windows specific implementation
+    return; 
+#else
+    // Linux implementation
+    FILE* pipe = popen("tailscale status", "r");
+    if (!pipe) {
+        // std::cerr << "Failed to run tailscale status" << std::endl;
+        return;
+    }
+
+    char buffer[256];
+    int peerCount = 0;
+
+    // Create a temporary socket for sending
+    SOCKET sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == INVALID_SOCKET) {
+        pclose(pipe);
+        return;
+    }
+
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        // Line format example:
+        // 100.102.199.13  machine-a            hungletatdac12345@  linux  idle, tx 12164 rx 11356
+        
+        // Extract IP (first token)
+        char* ipToken = strtok(buffer, " \t");
+        if (ipToken) {
+            // Basic validation: starts with 100. (common Tailscale range) or just valid IP check
+            // Tailscale IPs are in 100.64.0.0/10 usually.
+            
+            // Try to convert to sockaddr
+            sockaddr_in peerAddr;
+            memset(&peerAddr, 0, sizeof(peerAddr));
+            peerAddr.sin_family = AF_INET;
+            peerAddr.sin_port = htons(BROADCAST_PORT);
+            
+            if (inet_pton(AF_INET, ipToken, &peerAddr.sin_addr) == 1) {
+                // Check if it's not our own IP (optimization, though sendto usually handles loopback fine)
+                // For now, just send.
+                
+                sendto(sockfd, message, length, 0, 
+                       (sockaddr*)&peerAddr, sizeof(peerAddr));
+                peerCount++;
+                
+                // std::cout << "Tailscale Broadcast -> " << ipToken << std::endl;
+            }
+        }
+    }
+
+    pclose(pipe);
+    closesocket(sockfd);
+    
+    if (peerCount > 0) {
+        // std::cout << "Simulated broadcast to " << peerCount << " Tailscale peers." << std::endl;
+    }
+#endif
 }

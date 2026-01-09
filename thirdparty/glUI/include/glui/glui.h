@@ -35,6 +35,10 @@ namespace glui
 
 	void Space(float pixels);
 
+	void SameLine();
+
+	void NewLine();
+
 	void InputText(std::string name,
 		char* text, size_t textSizeWithNullChar, gl2d::Color4f color = {0,0,0,0}, const gl2d::Texture texture = {});
 
@@ -44,5 +48,9 @@ namespace glui
 
 	void BeginMenu(std::string name, const gl2d::Color4f colors, const gl2d::Texture texture);
 	void EndMenu();
+
+	// Button click callback support
+	using ButtonClickCallback = void(*)();
+	void setButtonClickCallback(ButtonClickCallback callback);
 
 };

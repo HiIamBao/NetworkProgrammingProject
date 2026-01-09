@@ -3,6 +3,7 @@
 # Clean and Build Script for MultiPlayer Game
 # This script removes all generated build files and rebuilds the project from scratch
 # It also checks for and installs missing dependencies on Ubuntu/Debian
+# NOTE: This variant prefers GCC/G++-14 packages (gcc-14, g++-14)
 
 # Parse command line arguments
 INSTALL_DEPS=true
@@ -46,7 +47,8 @@ if [ "$INSTALL_DEPS" = true ]; then
     MISSING_PACKAGES=()
     REQUIRED_PACKAGES=(
         "cmake"
-        "g++"
+        "gcc-14"
+        "g++-14"
         "libgl1-mesa-dev"
         "libx11-dev"
         "libxrandr-dev"
@@ -83,6 +85,23 @@ if [ "$INSTALL_DEPS" = true ]; then
                     exit 1
                 fi
                 echo "✅ Dependencies installed successfully!"
+                
+                # Offer to switch system gcc/g++ to the 14 versions if present
+                if command_exists g++-14 && command_exists gcc-14; then
+                    echo ""
+                    echo "ℹ️  Detected gcc-14 and g++-14 installed."
+                    read -p "Would you like to configure system gcc/g++ to point to gcc-14/g++-14 via update-alternatives? (y/N): " -n 1 -r
+                    echo ""
+                    if [[ $REPLY =~ ^[Yy]$ ]]; then
+                        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
+                                                --slave /usr/bin/g++ g++ /usr/bin/g++-14
+                        sudo update-alternatives --set gcc /usr/bin/gcc-14
+                        echo "✅ System gcc/g++ configured to gcc-14/g++-14."
+                    else
+                        echo "⚠️  Skipping update-alternatives. You can set it later if desired."
+                    fi
+                fi
+
             else
                 echo "⚠️  Skipping dependency installation. Build may fail if dependencies are missing."
                 echo "   To install manually: sudo apt-get install ${MISSING_PACKAGES[*]}"
@@ -92,7 +111,7 @@ if [ "$INSTALL_DEPS" = true ]; then
         fi
     else
         echo "⚠️  Non-Debian system detected. Please install dependencies manually."
-        echo "   Required: cmake, g++, OpenGL, X11, SQLite3, OpenSSL development libraries"
+        echo "   Required: cmake, gcc-14/g++-14 (or equivalent), OpenGL, X11, SQLite3, OpenSSL development libraries"
     fi
     echo ""
 fi
