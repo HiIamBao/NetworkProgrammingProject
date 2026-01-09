@@ -347,13 +347,13 @@ int main()
 #pragma endregion
 
 #pragma region audio
-	InitAudioDevice();
+	// InitAudioDevice();
 
-	//Music m = LoadMusicStream(RESOURCES_PATH "target.ogg");
-	Music m = {};
-	UpdateMusicStream(m);
-	//StopMusicStream(m);
-	PlayMusicStream(m);
+	// //Music m = LoadMusicStream(RESOURCES_PATH "target.ogg");
+	// Music m = {};
+	// UpdateMusicStream(m);
+	// //StopMusicStream(m);
+	// PlayMusicStream(m);
 
 #pragma endregion
 
@@ -371,8 +371,8 @@ int main()
 
 	while (!glfwWindowShouldClose(wind))
 	{
-		UpdateMusicStream(m);
-		PlayMusicStream(m);
+		// UpdateMusicStream(m);
+		// PlayMusicStream(m);
 
 	#pragma region deltaTime
 
