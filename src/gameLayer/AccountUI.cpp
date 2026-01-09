@@ -94,6 +94,9 @@ void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, const Textu
         case UIState::MATCH_MAKING:
             renderMatchMaking(renderer, font);
             break;
+        case UIState::MATCH_SUMMARY:
+            renderMatchSummary(renderer, font);
+            break;
         default:
             break;
     }
@@ -630,4 +633,70 @@ bool AccountUI::validateEmail(const std::string& email) {
             dotPos != std::string::npos && 
             dotPos > atPos && 
             email.length() > 5);
+}
+
+void AccountUI::setMatchSummary(const char* winnerName, int winnerKills, int totalPlayers, 
+                                  const std::vector<PlayerScore>& scores, int gameMode) {
+    strncpy(matchSummary.winnerName, winnerName, sizeof(matchSummary.winnerName) - 1);
+    matchSummary.winnerName[sizeof(matchSummary.winnerName) - 1] = '\0';
+    matchSummary.winnerKills = winnerKills;
+    matchSummary.totalPlayers = totalPlayers;
+    matchSummary.playerScores = scores;
+    matchSummary.gameMode = gameMode;
+}
+
+void AccountUI::renderMatchSummary(gl2d::Renderer2D& renderer, gl2d::Font& font) {
+    glui::Text("===== MATCH SUMMARY =====", UIColors::Primary);
+    glui::Space(20);
+    
+    // Display winner
+    char winnerText[128];
+    snprintf(winnerText, sizeof(winnerText), "Winner: %s", matchSummary.winnerName);
+    glui::Text(winnerText, glm::vec4(1.0f, 0.84f, 0.0f, 1.0f));  // Gold color
+    
+    char killsText[64];
+    snprintf(killsText, sizeof(killsText), "Kills: %d", matchSummary.winnerKills);
+    glui::Text(killsText, UIColors::Success);
+    
+    glui::Space(20);
+    glui::Text("===== FINAL SCOREBOARD =====", UIColors::White);
+    glui::Space(10);
+    
+    // Display all player scores sorted by kills (descending)
+    std::vector<PlayerScore> sortedScores = matchSummary.playerScores;
+    std::sort(sortedScores.begin(), sortedScores.end(), 
+              [](const PlayerScore& a, const PlayerScore& b) {
+                  return a.kills > b.kills;  // Sort by kills descending
+              });
+    
+    // Display each player's score
+    for (size_t i = 0; i < sortedScores.size(); i++) {
+        const auto& score = sortedScores[i];
+        
+        // Color based on rank
+        glm::vec4 color = UIColors::White;
+        if (i == 0) color = glm::vec4(1.0f, 0.84f, 0.0f, 1.0f);  // Gold
+        else if (i == 1) color = glm::vec4(0.75f, 0.75f, 0.75f, 1.0f);  // Silver
+        else if (i == 2) color = glm::vec4(0.8f, 0.5f, 0.2f, 1.0f);  // Bronze
+        
+        char scoreText[128];
+        snprintf(scoreText, sizeof(scoreText), "%d. %s - Kills: %d | Deaths: %d | Score: %d",
+                 (int)(i + 1), score.playerName, score.kills, score.deaths, score.score);
+        glui::Text(scoreText, color);
+        glui::Space(5);
+    }
+    
+    glui::Space(20);
+    
+    // Button to return to browse rooms
+    if (glui::Button("Return to Browse Rooms", UIColors::Primary)) {
+        setState(UIState::BROWSE_ROOMS);
+    }
+    
+    glui::Space(10);
+    
+    // Alternative: Return to main menu
+    if (glui::Button("Return to Main Menu", UIColors::Panel)) {
+        setState(UIState::MAIN_MENU);
+    }
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include<cstdint>
 #include<enet/enet.h>
-
+#include <vector>
 struct Packet
 {
 	int32_t header = 0;
@@ -313,13 +313,7 @@ enum class MatchState {
     MATCH_ENDED = 2,
 };
 
-struct PlayerScore {
-    int32_t cid;
-    char playerName[32];
-    int kills;
-    int deaths;
-    int score;  // Kills - Deaths
-};
+
 
 struct MatchStartData {
     int gameMode;
@@ -328,13 +322,23 @@ struct MatchStartData {
     int mapId;          // Map selection (0=default, 1=industrial, 2=warehouse, 3=boss arena)
 };
 
+struct PlayerScore {
+    int32_t cid;
+    char playerName[32];
+    int kills;
+    int deaths;
+    int score;  // Kills - Deaths
+    int totalDamageDealt;
+};
+
+constexpr int MAX_SCOREBOARD_PLAYERS = 16;
 struct MatchEndData {
     int32_t winnerCid;
     char winnerName[32];
     int winnerKills;
     int winnerDeaths;
     int totalPlayers;
-    // Followed by array of PlayerScore for all players
+    PlayerScore scores[MAX_SCOREBOARD_PLAYERS];
 };
 
 struct PlayerKillData {

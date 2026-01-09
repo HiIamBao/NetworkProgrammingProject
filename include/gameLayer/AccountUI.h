@@ -7,6 +7,7 @@
 #include "AccountManager.h"
 #include "SessionManager.h"
 #include "serverClient.h"  // For Textures struct
+#include "packet.h"  // For PlayerScore struct
 
 enum class UIState {
     MAIN_MENU,
@@ -18,7 +19,8 @@ enum class UIState {
     MATCH_MAKING,
     HOST_SERVER,
     JOIN_SERVER,
-    IN_GAME
+    IN_GAME,
+    MATCH_SUMMARY
 };
 
 namespace UIColors {
@@ -69,6 +71,16 @@ private:
     std::vector<MatchRecord> matchHistoryCache;
     int matchHistorySelectedMode = 0;  // 0=Deathmatch, 1=Horde, 2=Boss
     
+    // Match Summary UI state (for post-match scoreboard)
+    struct MatchSummaryData {
+        char winnerName[32];
+        int winnerKills;
+        int totalPlayers;
+        std::vector<PlayerScore> playerScores;
+        int gameMode;  // To know which game mode the match was
+    };
+    MatchSummaryData matchSummary;
+    
 public:
     AccountUI(AccountManager* accMgr, SessionManager* sessMgr);
     ~AccountUI();
@@ -94,6 +106,10 @@ public:
     int getMatchmakingSelectedGameMode() const { return mmSelectedGameMode; }
     int getMatchmakingSelectedMaxPlayersIndex() const { return mmSelectedMaxPlayersIdx; }
     
+    // Match Summary
+    void setMatchSummary(const char* winnerName, int winnerKills, int totalPlayers, 
+                         const std::vector<PlayerScore>& scores, int gameMode);
+    
 private:
     // Screen rendering
     void renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font);
@@ -102,6 +118,7 @@ private:
     void renderAccountInfo(gl2d::Renderer2D& renderer, gl2d::Font& font);
     void renderLeaderboard(gl2d::Renderer2D& renderer, gl2d::Font& font);
     void renderMatchMaking(gl2d::Renderer2D& renderer, gl2d::Font& font);
+    void renderMatchSummary(gl2d::Renderer2D& renderer, gl2d::Font& font);
     
     // Actions
     void attemptLogin();

@@ -331,8 +331,8 @@ void LANDiscovery::listenLoop() {
             buffer[received] = '\0';
             
             // DEBUG: Print everything received
-            std::cout << "DEBUG: Received UDP packet from " << inet_ntoa(senderAddr.sin_addr) 
-                      << ": " << buffer << std::endl;
+            // std::cout << "DEBUG: Received UDP packet from " << inet_ntoa(senderAddr.sin_addr) 
+            //           << ": " << buffer << std::endl;
             
             // Parse message: "GAMESERVER|serverName|hostName|port|players|maxPlayers|gameMode|mapId"
             char* token = strtok(buffer, "|");

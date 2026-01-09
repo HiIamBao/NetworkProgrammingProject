@@ -518,6 +518,34 @@ void recieveData(ServerInstance* instance, ENetHost *server, ENetEvent &event)
 					endData.winnerDeaths = killerIt->second.deaths;
 					endData.totalPlayers = instance->connections.size();
 					
+					// Add player scores to match end data
+					int scoreIndex = 0;
+					for (auto& it : instance->connections)
+					{
+						if (scoreIndex >= MAX_SCOREBOARD_PLAYERS) break;
+						
+						PlayerScore score;
+						score.cid = it.first;
+						strncpy(score.playerName, it.second.entityData.name, sizeof(score.playerName) - 1);
+						score.kills = it.second.kills;
+						score.deaths = it.second.deaths;
+						score.score = it.second.kills - it.second.deaths;
+						score.totalDamageDealt = it.second.entityData.totalDamageDealt;
+						endData.scores[scoreIndex++] = score;
+					}
+					endData.totalPlayers = scoreIndex;
+					
+					std::cout << "DEBUG: Match End Data" << std::endl;
+					std::cout << "Winner CID: " << endData.winnerCid << " Name: " << endData.winnerName << std::endl;
+					std::cout << "Winner Kills: " << endData.winnerKills << " Deaths: " << endData.winnerDeaths << std::endl;
+					std::cout << "Total Players: " << endData.totalPlayers << std::endl;
+					for (int i = 0; i < endData.totalPlayers; i++)
+					{
+						const auto& s = endData.scores[i];
+						std::cout << " - Player: " << s.playerName << " (CID: " << s.cid << ") K: " << s.kills 
+								  << " D: " << s.deaths << " Score: " << s.score << " Damage: " << s.totalDamageDealt << std::endl;
+					}
+					
 					Packet endPacket;
 					endPacket.header = headerMatchEnd;
 					endPacket.cid = 0;
@@ -1220,6 +1248,22 @@ void serverFunction(int port, int gameMode, int mapId)
 				
 				std::cout << "[HordeDefense] Wave completed - decremented wave-based buffs" << std::endl;
 			}
+			
+			// Check for transition to VICTORY state (triggered by completeWave)
+			if (currentHordeState == HordeDefense::HordeDefenseState::VICTORY && 
+				lastHordeState != HordeDefense::HordeDefenseState::VICTORY)
+			{
+				std::cout << "[HordeDefense] Victory state detected! Ending match..." << std::endl;
+				
+				// Extract player entities for endMatch
+				std::map<int32_t, phisics::Entity> playerEntities;
+				for (const auto& [cid, client] : instance->connections) {
+					playerEntities[cid] = client.entityData;
+				}
+				
+				instance->hordeDefenseManager->endMatch(true, playerEntities);  // Victory!
+			}
+			
 			lastHordeState = currentHordeState;
 			
 			// Handle player respawning (after wave complete)
@@ -1270,7 +1314,14 @@ void serverFunction(int port, int gameMode, int mapId)
 			    instance->hordeDefenseManager->getAlivePlayers() == 0)
 			{
 				std::cout << "[HordeDefense] All players dead! Game Over!" << std::endl;
-				instance->hordeDefenseManager->endMatch(false);  // Defeat!
+				
+				// Extract player entities for endMatch
+				std::map<int32_t, phisics::Entity> playerEntities;
+				for (const auto& [cid, client] : instance->connections) {
+					playerEntities[cid] = client.entityData;
+				}
+				
+				instance->hordeDefenseManager->endMatch(false, playerEntities);  // Defeat!
 			}
 		// Note: Buff timers are now wave-based and decremented when wave completes
 	}

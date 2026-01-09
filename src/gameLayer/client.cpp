@@ -47,6 +47,11 @@ static bool receivedInitialBossModeInfo = false;
 
 // Account Manager for recording match results
 static AccountManager* g_clientAccountManager = nullptr;
+
+// Account UI for displaying match summary
+#include "AccountUI.h"
+extern AccountUI* g_accountUI;
+
 void setClientAccountManager(AccountManager* accMgr) {
     g_clientAccountManager = accMgr;
 }
@@ -482,7 +487,7 @@ void msgLoop(ENetHost *client)
 				}
 				else if (p.header == headerMatchEnd)
 				{
-					// Match ended!
+					// Match ended! (Supports Deathmatch mode)
 					auto endData = *(MatchEndData*)data;
 					
 					matchEnded = true;
@@ -491,6 +496,13 @@ void msgLoop(ENetHost *client)
 					matchWinnerKills = endData.winnerKills;
 					
 					std::cout << "Match ended! Winner: " << matchWinnerName << " with " << matchWinnerKills << " kills!" << std::endl;
+					
+					// Collect all player scores for the scoreboard
+					std::vector<PlayerScore> playerScores;
+					for (int i = 0; i < endData.totalPlayers; i++)
+					{
+						playerScores.push_back(endData.scores[i]);
+					}
 					
 					// Save ALL players' match stats to database
 					if (g_clientAccountManager) {
@@ -513,7 +525,101 @@ void msgLoop(ENetHost *client)
 							}
 						}
 					}
+					
+					// Transition to match summary screen
+					extern AccountUI* g_accountUI;
+					if (g_accountUI) {
+						g_accountUI->setMatchSummary(matchWinnerName, matchWinnerKills, 
+						                              endData.totalPlayers, playerScores, 	
+						                              static_cast<int>(currentGameMode));
+						g_accountUI->setState(UIState::MATCH_SUMMARY);
+						std::cout << "[Client] Transitioning to MATCH_SUMMARY screen" << std::endl;
+					}
 				}
+				/// DUNG headerMatchEnd cho tat ca game mode
+
+				// else if (p.header == headerHordeMatchEnd)
+				// {
+				// 	// Horde Defense match ended!
+				// 	auto endData = *(HordeMatchEndData*)data;
+				// 	matchEnded = true;
+				// 	currentMatchState = MatchState::MATCH_ENDED;
+					
+				// 	// Set winner info (MVP in Horde Defense)
+				// 	strncpy(matchWinnerName, endData.mvpPlayerName, sizeof(matchWinnerName) - 1);
+				// 	matchWinnerName[sizeof(matchWinnerName) - 1] = '\0';
+				// 	matchWinnerKills = endData.mvpKills;
+					
+				// 	// Set notification message
+				// 	if (endData.victory)
+				// 	{
+				// 		waveNotification = "VICTORY! All waves completed!";
+				// 	}
+				// 	else
+				// 	{
+				// 		waveNotification = "DEFEATED! Wave " + std::to_string(endData.finalWave);
+				// 	}
+				// 	waveNotificationTimer = 10.0f;
+					
+				// 	std::cout << "[HordeDefense] Match ended - Victory: " << endData.victory 
+				// 	          << ", Final Wave: " << endData.finalWave << std::endl;
+					
+				// 	// Collect all player scores for the scoreboard
+				// 	std::vector<PlayerScore> playerScores;
+				// 	for (const auto& playerPair : players) {
+				// 		const auto& playerEntity = playerPair.second;
+				// 		PlayerScore pScore;
+				// 		pScore.cid = playerPair.first;
+				// 		strncpy(pScore.playerName, playerEntity.name, sizeof(pScore.playerName) - 1);
+				// 		pScore.playerName[sizeof(pScore.playerName) - 1] = '\0';
+				// 		pScore.kills = playerEntity.kills;
+				// 		pScore.deaths = 0;  // Not tracked in Horde Defense
+				// 		pScore.score = playerEntity.totalDamageDealt;  // Use damage as score for Horde Defense
+				// 		playerScores.push_back(pScore);
+				// 	}
+					
+				// 	// Record match results to leaderboard
+				// 	if (g_clientAccountManager)
+				// 	{
+				// 		std::vector<MatchPlayerStats> matchStats;
+						
+				// 		// Collect stats for all players in the match
+				// 		for (const auto& [playerCid, playerEntity] : players)
+				// 		{
+				// 			MatchPlayerStats stats;
+				// 			stats.playerId = playerCid;
+				// 			stats.playerName = std::string(playerEntity.name);
+				// 			stats.roundsSurvived = endData.finalWave;  // Use final wave reached
+				// 			stats.damageDealt = playerEntity.totalDamageDealt;
+				// 			stats.kills = playerEntity.kills;
+				// 			matchStats.push_back(stats);
+							
+				// 			std::cout << "[HordeDefense] Recording stats for " << stats.playerName 
+				// 			          << ": Wave " << stats.roundsSurvived 
+				// 			          << ", Damage " << stats.damageDealt << std::endl;
+				// 		}
+						
+				// 		// Record to database
+				// 		if (g_clientAccountManager->recordHordeDefenseMatchEnd(matchStats))
+				// 		{
+				// 			std::cout << "[HordeDefense] Match results saved to leaderboard!" << std::endl;
+				// 		}
+				// 		else
+				// 		{
+				// 			std::cout << "[HordeDefense] Failed to save match results!" << std::endl;
+				// 		}
+				// 	}
+					
+				// 	// Transition to match summary screen
+				// 	extern AccountUI* g_accountUI;
+				// 	if (g_accountUI) {
+				// 		g_accountUI->setMatchSummary(matchWinnerName, matchWinnerKills, 
+				// 		                              (int)players.size(), playerScores, 
+				// 		                              static_cast<int>(currentGameMode));
+				// 		g_accountUI->setState(UIState::MATCH_SUMMARY);
+				// 		std::cout << "[Client] Transitioning to MATCH_SUMMARY screen (Horde Defense)" << std::endl;
+				// 	}
+				// }
 				else if (p.header == headerMatchStart)
 				{
 					// Match started OR game mode update (sent on connection)
@@ -868,61 +974,12 @@ void msgLoop(ENetHost *client)
 						std::cout << "Item purchase failed: " << response.message << std::endl;
 					}
 				}
-				else if (p.header == headerHordeMatchEnd)
-				{
-					auto endData = *(HordeMatchEndData*)data;
-					matchEnded = true;
-					
-					if (endData.victory)
-					{
-						waveNotification = "VICTORY! All waves completed!";
-					}
-					else
-					{
-						waveNotification = "DEFEATED! Wave " + std::to_string(endData.finalWave);
-					}
-					waveNotificationTimer = 10.0f;
-					
-					std::cout << "[HordeDefense] Match ended - Victory: " << endData.victory 
-					          << ", Final Wave: " << endData.finalWave << std::endl;
-					
-					// Record match results to leaderboard
-					if (g_clientAccountManager)
-					{
-						std::vector<MatchPlayerStats> matchStats;
-						
-						// Collect stats for all players in the match
-						for (const auto& [playerCid, playerEntity] : players)
-						{
-							MatchPlayerStats stats;
-							stats.playerId = playerCid;
-							stats.playerName = std::string(playerEntity.name);
-							stats.roundsSurvived = endData.finalWave;  // Use final wave reached
-							stats.damageDealt = playerEntity.totalDamageDealt;
-							stats.kills = playerEntity.kills;
-							matchStats.push_back(stats);
-							
-							std::cout << "[HordeDefense] Recording stats for " << stats.playerName 
-							          << ": Wave " << stats.roundsSurvived 
-							          << ", Damage " << stats.damageDealt << std::endl;
-						}
-						
-						// Record to database
-						if (g_clientAccountManager->recordHordeDefenseMatchEnd(matchStats))
-						{
-							std::cout << "[HordeDefense] Match results saved to leaderboard!" << std::endl;
-						}
-						else
-						{
-							std::cout << "[HordeDefense] Failed to save match results!" << std::endl;
-						}
-					}
-				}
+			
 
-				// ========================================================================
-				// BOSS FIGHT PACKET HANDLERS
-				// ========================================================================
-				else if (p.header == headerBossFightStateUpdate)
+			// ========================================================================
+			// BOSS FIGHT PACKET HANDLERS
+			// ========================================================================
+			else if (p.header == headerBossFightStateUpdate)
 				{
 					auto stateData = *(BossFightStateUpdateData*)data;
 					bossFightState = static_cast<BossFight::BossFightState>(stateData.gameState);
