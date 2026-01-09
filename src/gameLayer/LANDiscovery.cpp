@@ -2,6 +2,9 @@
 #include <iostream>
 #include <chrono>
 #include <cstring>
+#include <cstdio>
+#include <vector>
+#include <sstream>
 #include <algorithm>
 
 // Platform-specific includes
@@ -209,9 +212,17 @@ void LANDiscovery::broadcastLoop() {
         }
 
         // Fallback to global broadcast if enumeration failed or no interfaces found
-        if (!sent_to_any) {
-             sendto(sockfd, message, strlen(message), 0, 
+        // Send broadcast
+        sendto(sockfd, message, strlen(message), 0, 
                (sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+
+        // Tailscale Simulated Broadcast (Simulated via Unicast)
+        // Only run every ~5 seconds to avoid spamming the shell command
+        static uint64_t lastTailscaleBroadcast = 0;
+        uint64_t now = getCurrentTimeMs();
+        if (now - lastTailscaleBroadcast > 5000) {
+            broadcastToTailscalePeers(message, strlen(message));
+            lastTailscaleBroadcast = now;
         }
 #endif
         
@@ -319,6 +330,10 @@ void LANDiscovery::listenLoop() {
         if (received > 0) {
             buffer[received] = '\0';
             
+            // DEBUG: Print everything received
+            std::cout << "DEBUG: Received UDP packet from " << inet_ntoa(senderAddr.sin_addr) 
+                      << ": " << buffer << std::endl;
+            
             // Parse message: "GAMESERVER|serverName|hostName|port|players|maxPlayers|gameMode|mapId"
             char* token = strtok(buffer, "|");
             if (token && strcmp(token, "GAMESERVER") == 0) {
@@ -405,6 +420,67 @@ std::vector<DiscoveredServer> LANDiscovery::getDiscoveredServers() {
 }
 
 void LANDiscovery::clearDiscoveredServers() {
-    std::lock_guard<std::mutex> lock(discoveryMutex);
     discoveredServers.clear();
+}
+
+void LANDiscovery::broadcastToTailscalePeers(const char* message, int length)
+{
+#ifdef _WIN32
+    // Windows implementation could use 'tailscale status' via _popen if needed
+    // For now, we'll skip Windows specific implementation
+    return; 
+#else
+    // Linux implementation
+    FILE* pipe = popen("tailscale status", "r");
+    if (!pipe) {
+        // std::cerr << "Failed to run tailscale status" << std::endl;
+        return;
+    }
+
+    char buffer[256];
+    int peerCount = 0;
+
+    // Create a temporary socket for sending
+    SOCKET sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == INVALID_SOCKET) {
+        pclose(pipe);
+        return;
+    }
+
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        // Line format example:
+        // 100.102.199.13  machine-a            hungletatdac12345@  linux  idle, tx 12164 rx 11356
+        
+        // Extract IP (first token)
+        char* ipToken = strtok(buffer, " \t");
+        if (ipToken) {
+            // Basic validation: starts with 100. (common Tailscale range) or just valid IP check
+            // Tailscale IPs are in 100.64.0.0/10 usually.
+            
+            // Try to convert to sockaddr
+            sockaddr_in peerAddr;
+            memset(&peerAddr, 0, sizeof(peerAddr));
+            peerAddr.sin_family = AF_INET;
+            peerAddr.sin_port = htons(BROADCAST_PORT);
+            
+            if (inet_pton(AF_INET, ipToken, &peerAddr.sin_addr) == 1) {
+                // Check if it's not our own IP (optimization, though sendto usually handles loopback fine)
+                // For now, just send.
+                
+                sendto(sockfd, message, length, 0, 
+                       (sockaddr*)&peerAddr, sizeof(peerAddr));
+                peerCount++;
+                
+                // std::cout << "Tailscale Broadcast -> " << ipToken << std::endl;
+            }
+        }
+    }
+
+    pclose(pipe);
+    closesocket(sockfd);
+    
+    if (peerCount > 0) {
+        // std::cout << "Simulated broadcast to " << peerCount << " Tailscale peers." << std::endl;
+    }
+#endif
 }

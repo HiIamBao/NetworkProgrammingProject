@@ -75,4 +75,5 @@ private:
     // Helper functions
     void cleanupOldServers();
     uint64_t getCurrentTimeMs();
+    void broadcastToTailscalePeers(const char* message, int length);
 };
