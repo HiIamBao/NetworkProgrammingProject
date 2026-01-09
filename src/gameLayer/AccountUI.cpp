@@ -176,16 +176,11 @@ void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
         std::string welcomeText = "Welcome, " + currentUsername + "!";
         glui::Text(welcomeText.c_str(), UIColors::Success);
         
-        if (currentAccount) {
-            char levelText[64];
-            sprintf(levelText, "Level %d | Score: %d", currentAccount->level, currentAccount->totalScore);
-            glui::Text(levelText, UIColors::White);
-        }
-        
         glui::Space(20);
         
         // Menu buttons for logged in user
-        if (glui::Button("View Account Info", UIColors::Panel)) {
+        if (glui::Button("Match History", UIColors::Panel)) {
+            refreshMatchHistory();
             setState(UIState::ACCOUNT_INFO);
         }
         
@@ -321,54 +316,62 @@ void AccountUI::renderRegisterScreen(gl2d::Renderer2D& renderer, gl2d::Font& fon
 }
 
 void AccountUI::renderAccountInfo(gl2d::Renderer2D& renderer, gl2d::Font& font) {
-    glui::Text("===== ACCOUNT INFO =====", UIColors::Primary);
-    glui::Space(20);
+    glui::Text("===== MATCH HISTORY =====", UIColors::Primary);
+    glui::Space(10);
     
-    if (currentAccount) {
-        char buffer[256];
-        
-        sprintf(buffer, "Username: %s", currentAccount->username.c_str());
-        glui::Text(buffer, UIColors::White);
-        
-        sprintf(buffer, "Email: %s", currentAccount->email.c_str());
-        glui::Text(buffer, UIColors::White);
-        
-        glui::Space(10);
-        
-        sprintf(buffer, "Level: %d", currentAccount->level);
-        glui::Text(buffer, UIColors::Success);
-        
-        sprintf(buffer, "Total Score: %d", currentAccount->totalScore);
-        glui::Text(buffer, UIColors::Success);
-        
-        glui::Space(10);
-        
-        sprintf(buffer, "Games Played: %d", currentAccount->gamesPlayed);
-        glui::Text(buffer, UIColors::White);
-        
-        sprintf(buffer, "Games Won: %d", currentAccount->gamesWon);
-        glui::Text(buffer, UIColors::White);
-        
-        sprintf(buffer, "Win Rate: %.1f%%", currentAccount->winRate * 100.0f);
-        glui::Text(buffer, UIColors::Warning);
-        
-        if (currentAccount->ranking > 0) {
-            sprintf(buffer, "Ranking: %d", currentAccount->ranking);
-            glui::Text(buffer, UIColors::Primary);
+    // Mode tabs: Deathmatch, Horde Defense, Boss Fight
+    const char* modeTabs[] = {"Deathmatch", "Horde Defense", "Boss Fight"};
+    for (int i = 0; i < 3; i++) {
+        char label[64];
+        if (matchHistorySelectedMode == i) {
+            snprintf(label, sizeof(label), ">>> %s <<<##mh_mode%d", modeTabs[i], i);
+        } else {
+            snprintf(label, sizeof(label), "    %s    ##mh_mode%d", modeTabs[i], i);
         }
         
-        glui::Space(10);
+        glm::vec4 color = (matchHistorySelectedMode == i) ? UIColors::Success : UIColors::Panel;
+        if (glui::Button(label, color)) {
+            matchHistorySelectedMode = i;
+            refreshMatchHistory();
+        }
         
-        sprintf(buffer, "Member Since: %s", currentAccount->createdAt.c_str());
-        glui::Text(buffer, UIColors::White);
+        glui::SameLine();
+    }
+    glui::NewLine();
+    glui::Space(10);
+    
+    // Display match history
+    if (matchHistoryCache.empty()) {
+        glui::Text("No matches found for this mode", UIColors::White);
     } else {
-        glui::Text("Failed to load account info", UIColors::Error);
+        char buffer[256];
+        int displayCount = std::min(10, (int)matchHistoryCache.size());
+        
+        for (int i = 0; i < displayCount; i++) {
+            const MatchRecord& record = matchHistoryCache[i];
+            
+            // Result color
+            glm::vec4 resultColor = record.result == 1 ? UIColors::Success : UIColors::Error;
+            const char* resultText = record.result == 1 ? "WIN" : "LOSS";
+            
+            // Format based on game mode
+            if (record.gameMode == 0) {  // Deathmatch
+                snprintf(buffer, sizeof(buffer), "[%s] %s - %d kills", resultText, record.playedAt.c_str(), record.score);
+            } else if (record.gameMode == 1) {  // Horde Defense
+                snprintf(buffer, sizeof(buffer), "[%s] %s - %d damage (%s)", resultText, record.playedAt.c_str(), record.score, record.extraData.c_str());
+            } else {  // Boss Fight
+                snprintf(buffer, sizeof(buffer), "[%s] %s - %d score (%s)", resultText, record.playedAt.c_str(), record.score, record.extraData.c_str());
+            }
+            
+            glui::Text(buffer, resultColor);
+            glui::Space(3);
+        }
     }
     
-    glui::Space(20);
+    glui::Space(10);
     
     if (glui::Button("Refresh", UIColors::Primary)) {
-        refreshAccountInfo();
+        refreshMatchHistory();
     }
     
     if (glui::Button("Back", UIColors::Panel)) {
@@ -554,6 +557,12 @@ void AccountUI::refreshAccountInfo() {
 
 void AccountUI::refreshLeaderboard() {
     leaderboardCache = accountManager->getTopPlayersForMode(leaderboardSelectedMode, 100);
+}
+
+void AccountUI::refreshMatchHistory() {
+    if (isLoggedIn) {
+        matchHistoryCache = accountManager->getMatchHistory(currentUsername, matchHistorySelectedMode, 20);
+    }
 }
 
 void AccountUI::logout() {

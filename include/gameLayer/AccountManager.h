@@ -14,6 +14,17 @@ struct MatchPlayerStats {
     int damageDealt;    // For Boss Fight and Horde Defense
 };
 
+// Match history record for displaying past matches
+struct MatchRecord {
+    int id;
+    std::string username;
+    int gameMode;           // 0=Deathmatch, 1=HordeDefense, 2=BossFight
+    int result;             // 0=Loss, 1=Win
+    int score;              // Kills (DM) or Damage (HD/BF)
+    std::string extraData;  // Optional: wave reached, boss stage, etc.
+    std::string playedAt;   // Timestamp
+};
+
 struct Account {
     int id;
     std::string username;
@@ -95,6 +106,10 @@ public:
     bool recordDeathmatchMatchEnd(const std::vector<MatchPlayerStats>& stats);
     bool recordHordeDefenseMatchEnd(const std::vector<MatchPlayerStats>& stats);
     bool recordBossFightMatchEnd(const std::vector<MatchPlayerStats>& stats, int bossStageLevel);
+    
+    // Match History
+    bool saveMatchRecord(const std::string& username, int gameMode, int result, int score, const std::string& extraData = "");
+    std::vector<MatchRecord> getMatchHistory(const std::string& username, int gameMode = -1, int limit = 20);
     
     // Query
     bool accountExists(const std::string& username);

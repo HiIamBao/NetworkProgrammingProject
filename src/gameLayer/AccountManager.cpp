@@ -126,6 +126,29 @@ bool AccountManager::createTables() {
         }
     }
     
+    // Create match_history table for storing individual match records
+    const char* matchHistorySql = R"(
+        CREATE TABLE IF NOT EXISTS match_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            game_mode INTEGER NOT NULL,
+            result INTEGER NOT NULL,
+            score INTEGER DEFAULT 0,
+            extra_data TEXT DEFAULT '',
+            played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_match_username ON match_history(username);
+        CREATE INDEX IF NOT EXISTS idx_match_mode ON match_history(game_mode);
+        CREATE INDEX IF NOT EXISTS idx_match_played_at ON match_history(played_at DESC);
+    )";
+    
+    rc = sqlite3_exec(db, matchHistorySql, nullptr, nullptr, &errMsg);
+    if (rc != SQLITE_OK && errMsg) {
+        // Ignore if already exists
+        sqlite3_free(errMsg);
+        errMsg = nullptr;
+    }
+    
     return true;
 }
 
@@ -642,6 +665,95 @@ std::vector<Account> AccountManager::getTopPlayersForMode(int mode, int limit) {
 
 
 // ============================================================================
+// MATCH HISTORY
+// ============================================================================
+
+bool AccountManager::saveMatchRecord(const std::string& username, int gameMode, int result, int score, const std::string& extraData) {
+    std::lock_guard<std::mutex> lock(accountMutex);
+    
+    if (!initialized) {
+        return false;
+    }
+    
+    const char* sql = "INSERT INTO match_history (username, game_mode, result, score, extra_data) VALUES (?, ?, ?, ?, ?)";
+    sqlite3_stmt* stmt = nullptr;
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Failed to prepare saveMatchRecord: " << sqlite3_errmsg(db) << std::endl;
+        return false;
+    }
+    
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, gameMode);
+    sqlite3_bind_int(stmt, 3, result);
+    sqlite3_bind_int(stmt, 4, score);
+    sqlite3_bind_text(stmt, 5, extraData.c_str(), -1, SQLITE_TRANSIENT);
+    
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (rc == SQLITE_DONE) {
+        std::cout << "Saved match record for " << username << " (mode=" << gameMode << ", result=" << result << ", score=" << score << ")" << std::endl;
+        return true;
+    }
+    
+    std::cerr << "Failed to save match record: " << sqlite3_errmsg(db) << std::endl;
+    return false;
+}
+
+std::vector<MatchRecord> AccountManager::getMatchHistory(const std::string& username, int gameMode, int limit) {
+    std::lock_guard<std::mutex> lock(accountMutex);
+    std::vector<MatchRecord> records;
+    
+    if (!initialized) {
+        return records;
+    }
+    
+    std::string sqlStr;
+    if (gameMode >= 0) {
+        sqlStr = "SELECT id, username, game_mode, result, score, extra_data, played_at FROM match_history "
+                 "WHERE username = ? COLLATE NOCASE AND game_mode = ? ORDER BY played_at DESC LIMIT ?";
+    } else {
+        sqlStr = "SELECT id, username, game_mode, result, score, extra_data, played_at FROM match_history "
+                 "WHERE username = ? COLLATE NOCASE ORDER BY played_at DESC LIMIT ?";
+    }
+    
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sqlStr.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Failed to prepare getMatchHistory: " << sqlite3_errmsg(db) << std::endl;
+        return records;
+    }
+    
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
+    if (gameMode >= 0) {
+        sqlite3_bind_int(stmt, 2, gameMode);
+        sqlite3_bind_int(stmt, 3, limit);
+    } else {
+        sqlite3_bind_int(stmt, 2, limit);
+    }
+    
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        MatchRecord record;
+        record.id = sqlite3_column_int(stmt, 0);
+        record.username = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        record.gameMode = sqlite3_column_int(stmt, 2);
+        record.result = sqlite3_column_int(stmt, 3);
+        record.score = sqlite3_column_int(stmt, 4);
+        
+        const char* extra = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        record.extraData = extra ? extra : "";
+        
+        const char* playedAt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
+        record.playedAt = playedAt ? playedAt : "";
+        
+        records.push_back(record);
+    }
+    
+    sqlite3_finalize(stmt);
+    return records;
+}
+
+// ============================================================================
 // MATCH END STATISTICS
 // ============================================================================
 
@@ -683,6 +795,9 @@ bool AccountManager::recordDeathmatchMatchEnd(const std::vector<MatchPlayerStats
             if (!updateAccount(*account)) {
                 success = false;
             }
+            
+            // Save match history record
+            saveMatchRecord(p.playerName, 0, isWinner ? 1 : 0, p.kills, "");
         }
     }
     return success;
@@ -738,6 +853,10 @@ bool AccountManager::recordHordeDefenseMatchEnd(const std::vector<MatchPlayerSta
             if (!updateAccount(*account)) {
                 success = false;
             }
+            
+            // Save match history record with wave info
+            std::string extraData = "Wave " + std::to_string(p.roundsSurvived);
+            saveMatchRecord(p.playerName, 1, wave20Reached ? 1 : 0, p.damageDealt, extraData);
         }
     }
     return success;
@@ -789,6 +908,10 @@ bool AccountManager::recordBossFightMatchEnd(const std::vector<MatchPlayerStats>
             if (!updateAccount(*account)) {
                 success = false;
             }
+            
+            // Save match history record with boss stage info
+            std::string extraData = "Stage " + std::to_string(bossStageLevel);
+            saveMatchRecord(p.playerName, 2, isWinner ? 1 : 0, score, extraData);
         }
     }
     return success;
