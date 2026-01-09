@@ -1585,9 +1585,9 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				{
 					// Size multiplier
 					// OLD BOSS was 5.0f. New Elites are 2.0f. New Bosses are 5.0f.
-					float sizeMultiplier = 1.0f;
-					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.0f;
-					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.0f;
+					float sizeMultiplier = 1.5f;  // Increased from 1.0f for better visibility
+					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.5f;  // Increased from 2.0f
+					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.5f;  // Slightly increased
 
 					// Calculate screen position and size
 					glm::vec4 enemyRect = {
@@ -2334,8 +2334,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			}
 	#pragma endregion
 		float xLeft = 0.95;
-		float xSize = 0.04;
-		float xAdvance = xSize - 0.025;
+		float xSize = 0.05;  // Increased from 0.04 for better visibility
+		float xAdvance = xSize - 0.03;  // Adjusted spacing
 
 		// Debug: Log health values occasionally
 		static float debugTimer = 0.0f;
