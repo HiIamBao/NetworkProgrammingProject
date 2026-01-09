@@ -77,6 +77,9 @@ bool initGame()
 	if (!g_accountManager->initialize(RESOURCES_PATH "game_accounts.db")) {
 		std::cerr << "Warning: Failed to initialize account manager" << std::endl;
 		// Continue anyway - game can run without accounts
+	} else {
+		// Clear any stale login flags from previous sessions
+		g_accountManager->clearAllLoggedInFlags();
 	}
 	
 	g_sessionManager = new SessionManager(g_accountManager);

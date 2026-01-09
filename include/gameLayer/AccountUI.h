@@ -65,6 +65,10 @@ private:
     int mmSelectedGameMode = 0;       // 0-3, same mapping as RoomUI
     int mmSelectedMaxPlayersIdx = 0;  // index into {2,4,6,8}
     
+    // Match History UI state
+    std::vector<MatchRecord> matchHistoryCache;
+    int matchHistorySelectedMode = 0;  // 0=Deathmatch, 1=Horde, 2=Boss
+    
 public:
     AccountUI(AccountManager* accMgr, SessionManager* sessMgr);
     ~AccountUI();
@@ -104,6 +108,7 @@ private:
     void attemptRegister();
     void refreshAccountInfo();
     void refreshLeaderboard();
+    void refreshMatchHistory();
     
     // Utilities
     void showMessage(const std::string& message, const glm::vec4& color);

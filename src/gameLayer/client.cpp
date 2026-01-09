@@ -54,6 +54,10 @@ void setClientAccountManager(AccountManager* accMgr) {
 // Networked Leaderboard State
 static LeaderBoardUpdateData activeLeaderboard = {};
 
+// Force disconnect state (for session control)
+std::string g_forceDisconnectReason = "";
+bool g_wasForceDisconnected = false;
+
 #pragma endregion
 
 #pragma region Horde Defense State
@@ -374,6 +378,28 @@ void msgLoop(ENetHost *client)
 				{
 					auto find = players.find(p.cid);
 					players.erase(find);
+				}
+				else if (p.header == headerForceDisconnect)
+				{
+					// Another client logged in with same account - we're being kicked
+					auto disconnectData = *(ForceDisconnectData*)data;
+					std::cout << "Force disconnect: " << disconnectData.reason << std::endl;
+					
+					// Signal to return to login screen
+					// Set joined to false so the client knows to disconnect
+					joined = false;
+					
+					// Store the disconnect reason for UI to display
+					extern std::string g_forceDisconnectReason;
+					extern bool g_wasForceDisconnected;
+					g_forceDisconnectReason = std::string(disconnectData.reason);
+					g_wasForceDisconnected = true;
+					
+					// Reset the server connection
+					if (server) {
+						enet_peer_reset(server);
+						server = nullptr;
+					}
 				}else if (p.header == headerSendBullet)
 				{
 					bullets.push_back(*(phisics::Bullet *)data);
@@ -1559,9 +1585,9 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				{
 					// Size multiplier
 					// OLD BOSS was 5.0f. New Elites are 2.0f. New Bosses are 5.0f.
-					float sizeMultiplier = 1.0f;
-					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.0f;
-					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.0f;
+					float sizeMultiplier = 1.5f;  // Increased from 1.0f for better visibility
+					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.5f;  // Increased from 2.0f
+					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.5f;  // Slightly increased
 
 					// Calculate screen position and size
 					glm::vec4 enemyRect = {
@@ -2308,8 +2334,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			}
 	#pragma endregion
 		float xLeft = 0.95;
-		float xSize = 0.04;
-		float xAdvance = xSize - 0.025;
+		float xSize = 0.05;  // Increased from 0.04 for better visibility
+		float xAdvance = xSize - 0.03;  // Adjusted spacing
 
 		// Debug: Log health values occasionally
 		static float debugTimer = 0.0f;
