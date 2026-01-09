@@ -19,6 +19,28 @@ AccountUI::~AccountUI() {
 }
 
 void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, const Textures& textures, float deltaTime) {
+    // Check for force disconnect (session control - another login kicked us)
+    extern std::string g_forceDisconnectReason;
+    extern bool g_wasForceDisconnected;
+    
+    if (g_wasForceDisconnected) {
+        // Reset our login state
+        isLoggedIn = false;
+        currentUsername.clear();
+        sessionToken.clear();
+        currentAccount = nullptr;
+        
+        // Show the disconnect message
+        showMessage(g_forceDisconnectReason, UIColors::Error);
+        
+        // Reset to main menu (login screen)
+        setState(UIState::MAIN_MENU);
+        
+        // Clear the flag
+        g_wasForceDisconnected = false;
+        g_forceDisconnectReason.clear();
+    }
+    
     // Save current camera and reset to default for UI rendering
     auto savedCamera = renderer.currentCamera;
     renderer.currentCamera.setDefault();
@@ -441,21 +463,35 @@ void AccountUI::attemptLogin() {
         return;
     }
     
-    // Attempt login (in single-player mode, just validate credentials)
-    if (accountManager->validateCredentials(username, password)) {
-        isLoggedIn = true;
-        currentUsername = username;
-        sessionToken = "local_session"; // For single-player/local mode
-        
-        // Load account info
-        currentAccount = accountManager->getAccount(username);
-        
-        showMessage("Login successful!", UIColors::Success);
-        clearInputs();
-        setState(UIState::MAIN_MENU);
-    } else {
+    // First check credentials
+    if (!accountManager->validateCredentials(username, password)) {
         showMessage("Invalid username or password", UIColors::Error);
+        return;
     }
+    
+    // Check if account is already logged in (database-level session control)
+    if (accountManager->isAccountLoggedIn(username)) {
+        showMessage("Account already logged in from another location", UIColors::Error);
+        return;
+    }
+    
+    // Mark account as logged in (in database)
+    if (!accountManager->setAccountLoggedIn(username, true)) {
+        showMessage("Failed to establish session", UIColors::Error);
+        return;
+    }
+    
+    // Login successful
+    isLoggedIn = true;
+    currentUsername = username;
+    sessionToken = "local_session"; // For single-player/local mode
+    
+    // Load account info
+    currentAccount = accountManager->getAccount(username);
+    
+    showMessage("Login successful!", UIColors::Success);
+    clearInputs();
+    setState(UIState::MAIN_MENU);
 }
 
 void AccountUI::attemptRegister() {
@@ -521,6 +557,11 @@ void AccountUI::refreshLeaderboard() {
 }
 
 void AccountUI::logout() {
+    // Clear database login flag
+    if (!currentUsername.empty()) {
+        accountManager->setAccountLoggedIn(currentUsername, false);
+    }
+    
     isLoggedIn = false;
     currentUsername.clear();
     sessionToken.clear();

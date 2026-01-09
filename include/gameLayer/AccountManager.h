@@ -99,6 +99,12 @@ public:
     // Query
     bool accountExists(const std::string& username);
     bool emailExists(const std::string& email);
+    
+    // Session control (database-level for local login)
+    bool isAccountLoggedIn(const std::string& username);
+    bool setAccountLoggedIn(const std::string& username, bool loggedIn);
+    void clearAllLoggedInFlags();  // Call on startup to clean stale sessions
+    
     std::vector<Account> getTopPlayers(int limit = 100);
     std::vector<Account> getTopPlayersForMode(int mode, int limit = 100);
     

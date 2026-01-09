@@ -23,6 +23,7 @@ enum
 	headerLoginResponse,        // Server -> Client: session token or error
 	headerLogoutRequest,        // Client -> Server: session token
 	headerLogoutResponse,       // Server -> Client: success
+	headerForceDisconnect,      // Server -> Client: force disconnect (another login)
 	
 	// Existing game packets
 	headerReceiveCIDAndData,
@@ -196,6 +197,11 @@ void sendHordeMatchEnd(ENetPeer* peer, const struct HordeMatchEndData& data, boo
 // Response helpers (server -> client)
 void sendHordeBuyUpgradeResponse(ENetPeer* peer, const struct HordeBuyUpgradeResponse& data, bool reliable = true);
 void sendHordeBuyItemResponse(ENetPeer* peer, const struct HordeBuyItemResponse& data, bool reliable = true);
+
+// Force disconnect data (session control)
+struct ForceDisconnectData {
+    char reason[128];   // Reason for disconnect (e.g., "Logged in from another location")
+};
 
 // Room-related data structures
 struct CreateRoomData {

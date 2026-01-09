@@ -54,6 +54,10 @@ void setClientAccountManager(AccountManager* accMgr) {
 // Networked Leaderboard State
 static LeaderBoardUpdateData activeLeaderboard = {};
 
+// Force disconnect state (for session control)
+std::string g_forceDisconnectReason = "";
+bool g_wasForceDisconnected = false;
+
 #pragma endregion
 
 #pragma region Horde Defense State
@@ -374,6 +378,28 @@ void msgLoop(ENetHost *client)
 				{
 					auto find = players.find(p.cid);
 					players.erase(find);
+				}
+				else if (p.header == headerForceDisconnect)
+				{
+					// Another client logged in with same account - we're being kicked
+					auto disconnectData = *(ForceDisconnectData*)data;
+					std::cout << "Force disconnect: " << disconnectData.reason << std::endl;
+					
+					// Signal to return to login screen
+					// Set joined to false so the client knows to disconnect
+					joined = false;
+					
+					// Store the disconnect reason for UI to display
+					extern std::string g_forceDisconnectReason;
+					extern bool g_wasForceDisconnected;
+					g_forceDisconnectReason = std::string(disconnectData.reason);
+					g_wasForceDisconnected = true;
+					
+					// Reset the server connection
+					if (server) {
+						enet_peer_reset(server);
+						server = nullptr;
+					}
 				}else if (p.header == headerSendBullet)
 				{
 					bullets.push_back(*(phisics::Bullet *)data);

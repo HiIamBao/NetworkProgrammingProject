@@ -40,6 +40,9 @@ public:
     bool logoutByUsername(const std::string& username);
     bool logoutByPeer(ENetPeer* peer);
     
+    // Force disconnect (session control - another login)
+    void forceKickSession(const std::string& username, const std::string& reason);
+    
     // Session validation
     bool validateSession(const std::string& token);
     void updateActivity(const std::string& token);

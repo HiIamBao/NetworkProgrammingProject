@@ -111,7 +111,8 @@ bool AccountManager::createTables() {
         "ALTER TABLE accounts ADD COLUMN horde_defense_total_damage INTEGER DEFAULT 0;",
         "ALTER TABLE accounts ADD COLUMN boss_fight_total_score INTEGER DEFAULT 0;",
         "ALTER TABLE accounts ADD COLUMN boss_fight_games_played INTEGER DEFAULT 100;",
-        "ALTER TABLE accounts ADD COLUMN boss_fight_games_won INTEGER DEFAULT 0;"
+        "ALTER TABLE accounts ADD COLUMN boss_fight_games_won INTEGER DEFAULT 0;",
+        "ALTER TABLE accounts ADD COLUMN is_logged_in INTEGER DEFAULT 0;"  // Session control
     };
 
     for (const char* migration : migrations) {
@@ -428,6 +429,83 @@ bool AccountManager::emailExists(const std::string& email) {
     sqlite3_finalize(stmt);
     
     return rc == SQLITE_ROW;
+}
+
+// ============================================================================
+// SESSION CONTROL (Database-level for local login)
+// ============================================================================
+
+bool AccountManager::isAccountLoggedIn(const std::string& username) {
+    std::lock_guard<std::mutex> lock(accountMutex);
+    
+    if (!initialized) {
+        return false;
+    }
+    
+    const char* sql = "SELECT is_logged_in FROM accounts WHERE username = ? COLLATE NOCASE";
+    sqlite3_stmt* stmt = nullptr;
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return false;
+    }
+    
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
+    
+    bool isLoggedIn = false;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        isLoggedIn = sqlite3_column_int(stmt, 0) != 0;
+    }
+    
+    sqlite3_finalize(stmt);
+    return isLoggedIn;
+}
+
+bool AccountManager::setAccountLoggedIn(const std::string& username, bool loggedIn) {
+    std::lock_guard<std::mutex> lock(accountMutex);
+    
+    if (!initialized) {
+        return false;
+    }
+    
+    const char* sql = "UPDATE accounts SET is_logged_in = ? WHERE username = ? COLLATE NOCASE";
+    sqlite3_stmt* stmt = nullptr;
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Failed to prepare setAccountLoggedIn: " << sqlite3_errmsg(db) << std::endl;
+        return false;
+    }
+    
+    sqlite3_bind_int(stmt, 1, loggedIn ? 1 : 0);
+    sqlite3_bind_text(stmt, 2, username.c_str(), -1, SQLITE_TRANSIENT);
+    
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (rc == SQLITE_DONE) {
+        std::cout << "Account " << username << " logged " << (loggedIn ? "IN" : "OUT") << " (database)" << std::endl;
+        return true;
+    }
+    
+    return false;
+}
+
+void AccountManager::clearAllLoggedInFlags() {
+    std::lock_guard<std::mutex> lock(accountMutex);
+    
+    if (!initialized) {
+        return;
+    }
+    
+    const char* sql = "UPDATE accounts SET is_logged_in = 0";
+    char* errMsg = nullptr;
+    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &errMsg);
+    
+    if (rc != SQLITE_OK) {
+        std::cerr << "Failed to clear logged_in flags: " << errMsg << std::endl;
+        sqlite3_free(errMsg);
+    } else {
+        std::cout << "Cleared all logged_in flags on startup" << std::endl;
+    }
 }
 
 std::vector<Account> AccountManager::getTopPlayers(int limit) {
