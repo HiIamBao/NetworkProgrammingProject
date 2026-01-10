@@ -60,9 +60,9 @@ bool initGame()
 	textures.exploderSprite.loadFromFile(RESOURCES_PATH "exploder.png", true, true);
 	textures.eliteSprite.loadFromFile(RESOURCES_PATH "elite.png", true, true);
 	textures.bossSummonerSprite.loadFromFile(RESOURCES_PATH "boss_summoner.png", true, true);
-	textures.bossBulletHellSprite.loadFromFile(RESOURCES_PATH "boss_bullethell.png", true, true);
+	textures.bossBulletHellSprite.loadFromFile(RESOURCES_PATH "boss_bullethell.jpg", true, true);
 	textures.bossExploderSprite.loadFromFile(RESOURCES_PATH "boss_exploder.png", true, true);
-	textures.bossFinalSprite.loadFromFile(RESOURCES_PATH "boss_final.png", true, true);
+	textures.bossFinalSprite.loadFromFile(RESOURCES_PATH "boss_final.jpg", true, true);
 	
 	glui::gluiInit();
 

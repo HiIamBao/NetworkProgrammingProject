@@ -506,6 +506,7 @@ struct BossFightStateUpdateData {
 struct BossFightBossSpawnData {
     int32_t bossId;
     int bossType;              // BossType as int
+    int bossLevel;             // Boss difficulty level (1-3) for texture selection
     float posX, posY;          // Spawn position
     float health;
     float maxHealth;

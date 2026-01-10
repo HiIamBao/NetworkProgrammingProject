@@ -992,6 +992,7 @@ void msgLoop(ENetHost *client)
 					auto spawnData = *(BossFightBossSpawnData*)data;
 					clientBoss.bossId = spawnData.bossId;
 					clientBoss.type = static_cast<BossFight::BossType>(spawnData.bossType);
+					clientBoss.bossLevel = spawnData.bossLevel;  // Store boss level for texture selection
 					clientBoss.position = glm::vec2(spawnData.posX, spawnData.posY);
 					clientBoss.health = spawnData.health;
 					clientBoss.maxHealth = spawnData.maxHealth;
@@ -1001,7 +1002,7 @@ void msgLoop(ENetHost *client)
 					bossNotification = "BOSS SPAWNED!";
 					bossNotificationTimer = 3.0f;
 					
-					std::cout << "[BossFight] Boss spawned!" << std::endl;
+					std::cout << "[BossFight] Boss spawned! Level: " << clientBoss.bossLevel << std::endl;
 				}
 				else if (p.header == headerBossFightBossUpdate)
 				{
@@ -1853,11 +1854,25 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						bossSizeScreen
 					};
 					
-					// Boss color - dark purple/red
-					glm::vec4 bossColor = {0.6f, 0.1f, 0.3f, 1.0f};
+					// Select texture based on boss level
+					gl2d::Texture* bossTexture = nullptr;
+					switch (clientBoss.bossLevel) {
+						case 1:
+							bossTexture = &textures.bossSummonerSprite;  // Level 1 (Easy)
+							break;
+						case 2:
+							bossTexture = &textures.bossExploderSprite;  // Level 2 (Normal)
+							break;
+						case 3:
+							bossTexture = &textures.bossFinalSprite;     // Level 3 (Hard)
+							break;
+						default:
+							bossTexture = &textures.bossSummonerSprite;  // Fallback to level 1
+							break;
+					}
 					
-					// Draw boss body
-					renderer.renderRectangle(bossRect, bossColor);
+					// Draw boss sprite
+					renderer.renderRectangle(bossRect, {1.0f, 1.0f, 1.0f, 1.0f}, {}, 0.f, *bossTexture);
 					
 					// Draw boss health bar (width of boss)
 					float healthPercent = clientBoss.health / clientBoss.maxHealth;

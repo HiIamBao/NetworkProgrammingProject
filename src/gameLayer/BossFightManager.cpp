@@ -262,6 +262,7 @@ void BossFightManager::spawnBoss(glm::vec2 position) {
     BossFightBossSpawnData spawnData;
     spawnData.bossId = boss.bossId;
     spawnData.bossType = (int)boss.type;
+    spawnData.bossLevel = boss.bossLevel;  // Send boss level for texture selection
     spawnData.posX = boss.position.x;
     spawnData.posY = boss.position.y;
     spawnData.health = boss.health;
