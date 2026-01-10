@@ -198,9 +198,9 @@ void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             setState(UIState::BROWSE_ROOMS);
         }
 
-        if (glui::Button("Match Making", UIColors::Success)) {
-            setState(UIState::MATCH_MAKING);
-        }
+        // if (glui::Button("Match Making", UIColors::Success)) {
+        //     setState(UIState::MATCH_MAKING);
+        // }
         
         // if (glui::Button("Host Game", UIColors::Primary)) {
         //     setState(UIState::HOST_SERVER);

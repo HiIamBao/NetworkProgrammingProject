@@ -94,12 +94,12 @@ void BossFightManager::update(float deltaTime, std::map<int32_t, phisics::Entity
             
             // Check victory condition
             if (!boss.isAlive) {
-                endMatch(true);
+                endMatch(true, players);
             }
             
             // Check defeat condition
             if (allPlayersDead()) {
-                endMatch(false);
+                endMatch(false, players);
             }
             break;
             
@@ -180,46 +180,66 @@ void BossFightManager::startMatch(phisics::MapData* mapData, int level) {
     std::cout << "[BossFight] Boss spawned at (" << bossSpawnPos.x << ", " << bossSpawnPos.y << ")" << std::endl;
 }
 
-void BossFightManager::endMatch(bool victory) {
-    if (victory) {
-        setState(BossFightState::BOSS_DEFEATED);
-        std::cout << "[BossFight] VICTORY! Boss defeated!" << std::endl;
-    } else {
-        setState(BossFightState::PLAYERS_DEFEATED);
-        std::cout << "[BossFight] DEFEAT! All players died!" << std::endl;
-    }
+void BossFightManager::endMatch(bool victory, const std::map<int32_t, phisics::Entity>& players) {
+    setState(victory ? BossFightState::BOSS_DEFEATED : BossFightState::PLAYERS_DEFEATED);
     
-    // Find MVP (most damage dealt)
+    // Find MVP (most damage dealt in Boss Fight)
     int32_t mvpCid = -1;
     int maxDamage = 0;
-    for (const auto& pair : playerDamageDealt) {
-        if (pair.second > maxDamage) {
-            maxDamage = pair.second;
-            mvpCid = pair.first;
+    const char* mvpName = "Unknown";
+    
+    for (const auto& [cid, player] : players) {
+        int damage = getPlayerDamageDealt(cid);
+        if (damage > maxDamage) {
+            maxDamage = damage;
+            mvpCid = cid;
+            mvpName = player.name;
         }
+    }
+    
+    // Prepare match end data
+    MatchEndData endData;
+    endData.winnerCid = mvpCid;
+    strncpy(endData.winnerName, mvpName, sizeof(endData.winnerName) - 1);
+    endData.winnerName[sizeof(endData.winnerName) - 1] = '\0';
+    
+    // Set winner stats (damage dealt as "kills" for boss fight)
+    endData.winnerKills = maxDamage;
+    endData.winnerDeaths = 0;  // Not used in Boss Fight
+    endData.totalPlayers = players.size();
+    
+    // Add player scores to match end data
+    int scoreIndex = 0;
+    for (const auto& [cid, player] : players) {
+        if (scoreIndex >= MAX_SCOREBOARD_PLAYERS) break;
+        
+        PlayerScore score;
+        score.cid = cid;
+        strncpy(score.playerName, player.name, sizeof(score.playerName) - 1);
+        score.playerName[sizeof(score.playerName) - 1] = '\0';
+        score.kills = 0;  // Not used in Boss Fight
+        score.deaths = isPlayerAlive(cid) ? 0 : 1;
+        score.score = getPlayerDamageDealt(cid);  // Score = total damage to boss
+        score.totalDamageDealt = getPlayerDamageDealt(cid);
+        endData.scores[scoreIndex++] = score;
+    }
+    endData.totalPlayers = scoreIndex;
+    
+    // Debug output
+    std::cout << "DEBUG: Boss Fight Match End Data" << std::endl;
+    std::cout << "Victory: " << (victory ? "YES" : "NO") << " | Match Duration: " << matchTime << "s" << std::endl;
+    std::cout << "MVP CID: " << endData.winnerCid << " Name: " << endData.winnerName << std::endl;
+    std::cout << "MVP Damage: " << endData.winnerKills << " | Total Players: " << endData.totalPlayers << std::endl;
+    for (int i = 0; i < endData.totalPlayers; i++) {
+        const auto& s = endData.scores[i];
+        std::cout << " - Player: " << s.playerName << " (CID: " << s.cid << ") "
+                  << "Damage: " << s.totalDamageDealt << " | Deaths: " << s.deaths << std::endl;
     }
     
     // Broadcast match end
-    BossFightMatchEndData endData;
-    endData.victory = victory;
-    endData.matchDuration = matchTime;
-    endData.mvpPlayerId = mvpCid;
-    endData.mvpDamage = maxDamage;
-    endData.totalPlayerDeaths = 0;
-    
-    // Count total deaths
-    for (const auto& pair : playerAlive) {
-        if (!pair.second) {
-            endData.totalPlayerDeaths++;
-        }
-    }
-    
-    // MVP name will be filled by server from player data
-    endData.mvpPlayerName[0] = '\0';
-    
     if (broadcastCallback) {
         Packet p;
-        p.header = headerBossFightMatchEnd;
+        p.header = headerMatchEnd;
         p.cid = 0;
         broadcastCallback(p, &endData, sizeof(endData), true);
     }
