@@ -1,5 +1,15 @@
 #include "AudioManager.h"
 #include <iostream>
+#include <thread>
+#include <chrono>
+#include <cstdlib>
+
+// Track if cleanup has been called to prevent double cleanup
+static bool g_audioCleanupCalled = false;
+
+// Initialize static members
+std::mutex AudioManager::initMutex;
+std::atomic<bool> AudioManager::isInitializing(false);
 
 AudioManager& AudioManager::getInstance() {
     static AudioManager instance;
@@ -7,7 +17,19 @@ AudioManager& AudioManager::getInstance() {
 }
 
 bool AudioManager::init() {
+    // Prevent concurrent initialization attempts
+    bool expected = false;
+    if (!isInitializing.compare_exchange_strong(expected, true)) {
+        // Another thread is already initializing, wait for it
+        std::lock_guard<std::mutex> lock(initMutex);
+        return initialized;
+    }
+    
+    std::lock_guard<std::mutex> lock(initMutex);
+    
+    // Check again after acquiring lock (double-checked locking)
     if (initialized) {
+        isInitializing = false;
         return true;
     }
     
@@ -16,6 +38,7 @@ bool AudioManager::init() {
     
     if (!IsAudioDeviceReady()) {
         std::cerr << "Failed to initialize audio device" << std::endl;
+        isInitializing = false;
         return false;
     }
     
@@ -26,6 +49,7 @@ bool AudioManager::init() {
     if (!IsMusicReady(bgMusic)) {
         std::cerr << "Failed to load background music" << std::endl;
         CloseAudioDevice();
+        isInitializing = false;
         return false;
     }
     bgMusic.looping = true;
@@ -36,6 +60,7 @@ bool AudioManager::init() {
         std::cerr << "Failed to load button click sound" << std::endl;
         UnloadMusicStream(bgMusic);
         CloseAudioDevice();
+        isInitializing = false;
         return false;
     }
     
@@ -46,16 +71,31 @@ bool AudioManager::init() {
         UnloadSound(clickSound);
         UnloadMusicStream(bgMusic);
         CloseAudioDevice();
+        isInitializing = false;
         return false;
     }
     
     std::cout << "All audio resources loaded successfully" << std::endl;
     initialized = true;
+    isInitializing = false;
+    
+    // Register cleanup handler for abrupt termination (Ctrl+C, window close, etc.)
+    static bool atexitRegistered = false;
+    if (!atexitRegistered) {
+        std::atexit([]() {
+            if (!g_audioCleanupCalled) {
+                std::cout << "Emergency audio cleanup on exit..." << std::endl;
+                AudioManager::getInstance().cleanup();
+            }
+        });
+        atexitRegistered = true;
+    }
+    
     return true;
 }
 
 void AudioManager::playMusic() {
-    if (!initialized || !IsMusicReady(bgMusic)) {
+    if (!initialized || !IsAudioDeviceReady() || !IsMusicReady(bgMusic)) {
         return;
     }
     
@@ -66,7 +106,7 @@ void AudioManager::playMusic() {
 }
 
 void AudioManager::playClick() {
-    if (!initialized || !IsSoundReady(clickSound)) {
+    if (!initialized || !IsAudioDeviceReady() || !IsSoundReady(clickSound)) {
         return;
     }
     
@@ -74,7 +114,7 @@ void AudioManager::playClick() {
 }
 
 void AudioManager::playShoot() {
-    if (!initialized || !IsSoundReady(shootSound)) {
+    if (!initialized || !IsAudioDeviceReady() || !IsSoundReady(shootSound)) {
         return;
     }
     
@@ -82,7 +122,7 @@ void AudioManager::playShoot() {
 }
 
 void AudioManager::update() {
-    if (!initialized || !IsMusicReady(bgMusic)) {
+    if (!initialized || !IsAudioDeviceReady() || !IsMusicReady(bgMusic)) {
         return;
     }
     
@@ -91,9 +131,14 @@ void AudioManager::update() {
 }
 
 void AudioManager::cleanup() {
-    if (!initialized) {
+    std::lock_guard<std::mutex> lock(initMutex);
+    
+    if (!initialized || g_audioCleanupCalled) {
         return;
     }
+    
+    // Mark cleanup as started to prevent double cleanup
+    g_audioCleanupCalled = true;
     
     std::cout << "Cleaning up audio resources..." << std::endl;
     
@@ -112,8 +157,14 @@ void AudioManager::cleanup() {
         UnloadMusicStream(bgMusic);
     }
     
-    // Close audio device
-    CloseAudioDevice();
+    // Close audio device only if it's ready
+    if (IsAudioDeviceReady()) {
+        CloseAudioDevice();
+        
+        // CRITICAL: Give PulseAudio mainloop thread time to fully terminate
+        // Without this delay, rapid reinitialization causes "m->state == STATE_PASSIVE" assertion
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     
     initialized = false;
     std::cout << "Audio cleanup complete" << std::endl;

@@ -46,7 +46,7 @@ public:
     
     void setState(HordeDefense::HordeDefenseState newState);
     void startMatch();
-    void endMatch(bool victory);
+    void endMatch(bool victory, const std::map<int32_t, phisics::Entity>& players);
     
     // ========================================================================
     // Wave Management

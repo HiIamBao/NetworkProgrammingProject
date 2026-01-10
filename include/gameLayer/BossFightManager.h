@@ -41,8 +41,8 @@ public:
     
     BossFight::BossFightState getState() const { return currentState; }
     void setState(BossFight::BossFightState newState);
-    void startMatch(phisics::MapData* mapData = nullptr);
-    void endMatch(bool victory);
+    void startMatch(phisics::MapData* mapData = nullptr, int bossLevel = 1);
+    void endMatch(bool victory, const std::map<int32_t, phisics::Entity>& players);
     float getMatchTime() const { return matchTime; }
     
     // ========================================================================
@@ -55,6 +55,9 @@ public:
     const BossFight::Boss* getBoss() const { return &boss; }
     bool damageBoss(int damage, int32_t attackerCid);
     void updateBossPhase();
+    
+    // Boss HP scaling for difficulty levels
+    int getBossMaxHealth() const { return (int)boss.maxHealth; }
     
     // ========================================================================
     // Boss AI & Attacks

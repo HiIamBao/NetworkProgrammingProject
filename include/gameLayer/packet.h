@@ -1,6 +1,18 @@
 #pragma once
 #include<cstdint>
 #include<enet/enet.h>
+#include <vector>
+
+// Game mode enum (shared across server and client)
+enum class GameMode {
+    DEATHMATCH = 0,     // Free for all
+    TEAM_BATTLE = 1,    // Team vs Team (not implemented)
+    COOPERATIVE = 2,    // Players vs AI (not implemented)
+    TOWER_DEFENSE = 3,  // Tower Defense (DEPRECATED)
+    HORDE_DEFENSE = 4,  // Horde Defense - Players fight waves of AI enemies
+    BOSS_FIGHT = 5      // Boss Fight - Cooperative boss battle
+};
+
 
 struct Packet
 {
@@ -23,6 +35,7 @@ enum
 	headerLoginResponse,        // Server -> Client: session token or error
 	headerLogoutRequest,        // Client -> Server: session token
 	headerLogoutResponse,       // Server -> Client: success
+	headerForceDisconnect,      // Server -> Client: force disconnect (another login)
 	
 	// Existing game packets
 	headerReceiveCIDAndData,
@@ -197,6 +210,11 @@ void sendHordeMatchEnd(ENetPeer* peer, const struct HordeMatchEndData& data, boo
 void sendHordeBuyUpgradeResponse(ENetPeer* peer, const struct HordeBuyUpgradeResponse& data, bool reliable = true);
 void sendHordeBuyItemResponse(ENetPeer* peer, const struct HordeBuyItemResponse& data, bool reliable = true);
 
+// Force disconnect data (session control)
+struct ForceDisconnectData {
+    char reason[128];   // Reason for disconnect (e.g., "Logged in from another location")
+};
+
 // Room-related data structures
 struct CreateRoomData {
     char roomName[32];
@@ -204,6 +222,7 @@ struct CreateRoomData {
     int maxPlayers;
     int gameMode;      // GameMode enum as int
     int mapId;
+    int bossLevel;     // Boss difficulty level (1-3), only used for BOSS_FIGHT mode
 };
 
 struct CreateRoomResponse {
@@ -307,28 +326,35 @@ enum class MatchState {
     MATCH_ENDED = 2,
 };
 
-struct PlayerScore {
-    int32_t cid;
-    char playerName[32];
-    int kills;
-    int deaths;
-    int score;  // Kills - Deaths
-};
+
 
 struct MatchStartData {
     int gameMode;
     int matchDuration;  // in seconds, 0 = infinite
     int scoreLimit;     // 0 = no limit
     int mapId;          // Map selection (0=default, 1=industrial, 2=warehouse, 3=boss arena)
+    int bossLevel;      // Boss difficulty level (1-3), only used for BOSS_FIGHT mode
 };
 
+struct PlayerScore {
+    int32_t cid;
+    char playerName[32];
+    int kills;
+    int deaths;
+    int score;  // Kills - Deaths
+    int totalDamageDealt;
+};
+
+constexpr int MAX_SCOREBOARD_PLAYERS = 16;
 struct MatchEndData {
+    bool victory;
+    GameMode gameMode;
     int32_t winnerCid;
     char winnerName[32];
     int winnerKills;
     int winnerDeaths;
     int totalPlayers;
-    // Followed by array of PlayerScore for all players
+    PlayerScore scores[MAX_SCOREBOARD_PLAYERS];
 };
 
 struct PlayerKillData {
@@ -494,6 +520,7 @@ struct BossFightStateUpdateData {
 struct BossFightBossSpawnData {
     int32_t bossId;
     int bossType;              // BossType as int
+    int bossLevel;             // Boss difficulty level (1-3) for texture selection
     float posX, posY;          // Spawn position
     float health;
     float maxHealth;

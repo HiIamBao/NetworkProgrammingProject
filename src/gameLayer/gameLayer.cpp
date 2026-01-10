@@ -28,7 +28,8 @@ Textures textures;
 // Global account management
 static AccountManager* g_accountManager = nullptr;
 static SessionManager* g_sessionManager = nullptr;
-static AccountUI* g_accountUI = nullptr;
+AccountUI* g_accountUI = nullptr;  // Non-static so client.cpp can access it
+
 
 // Global room management
 static RoomManager* g_roomManager = nullptr;
@@ -59,9 +60,9 @@ bool initGame()
 	textures.exploderSprite.loadFromFile(RESOURCES_PATH "exploder.png", true, true);
 	textures.eliteSprite.loadFromFile(RESOURCES_PATH "elite.png", true, true);
 	textures.bossSummonerSprite.loadFromFile(RESOURCES_PATH "boss_summoner.png", true, true);
-	textures.bossBulletHellSprite.loadFromFile(RESOURCES_PATH "boss_bullethell.png", true, true);
+	textures.bossBulletHellSprite.loadFromFile(RESOURCES_PATH "boss_bullethell.jpg", true, true);
 	textures.bossExploderSprite.loadFromFile(RESOURCES_PATH "boss_exploder.png", true, true);
-	textures.bossFinalSprite.loadFromFile(RESOURCES_PATH "boss_final.png", true, true);
+	textures.bossFinalSprite.loadFromFile(RESOURCES_PATH "boss_final.jpg", true, true);
 	
 	glui::gluiInit();
 
@@ -77,6 +78,9 @@ bool initGame()
 	if (!g_accountManager->initialize(RESOURCES_PATH "game_accounts.db")) {
 		std::cerr << "Warning: Failed to initialize account manager" << std::endl;
 		// Continue anyway - game can run without accounts
+	} else {
+		// Clear any stale login flags from previous sessions
+		g_accountManager->clearAllLoggedInFlags();
 	}
 	
 	g_sessionManager = new SessionManager(g_accountManager);
@@ -174,7 +178,8 @@ bool gameLogic(float deltaTime)
 								g_accountUI->getCurrentUsername(),
 								data.maxPlayers,
 								data.gameMode,
-								data.mapId
+								data.mapId,
+								data.bossLevel  // Pass boss level to server
 							);						
 						if (roomSlot >= 0) {
 							std::cout << "Room created successfully in slot " << roomSlot << std::endl;
@@ -474,37 +479,59 @@ bool gameLogic(float deltaTime)
 		escWasPressed = escPressed;
 		
 		if (!isPaused) {
-			// Check if client has been disconnected (returns to menu)
-			extern bool joined;
-			
-			if (wasJoined && !joined) {
-				// Client was disconnected from server - return to menu
-				std::cout << "Client disconnected - returning to menu" << std::endl;
-				wasJoined = false;
+			// Check if we should transition to match summary
+			if (g_accountUI && g_accountUI->getState() == UIState::MATCH_SUMMARY) {
+				// Match ended, transition to menu state to show summary
+				std::cout << "Transitioning to menu state for match summary" << std::endl;
 				state = 0;
+				wasJoined = false;
 				
 				// Stop broadcasting if hosting
 				if (g_lanDiscovery && g_lanDiscovery->isBroadcasting()) {
 					g_lanDiscovery->stopBroadcasting();
 				}
 				
-				// Reset room UI state completely
+				// Reset room UI state
 				if (g_roomUI) {
 					g_roomUI->setState(RoomUIState::NONE);
 				}
-				
-				// Reset room UI initialization flag so callbacks get re-setup
 				roomUIInitialized = false;
 				
-				if (g_accountUI) {
-					g_accountUI->setState(UIState::MAIN_MENU);
-				}
-				
 				resetClient();
-			} else {
-				// Normal gameplay - just run the game
-				wasJoined = joined;
-				clientFunction(deltaTime, renderer, textures, ip, name, currentPort);
+			}
+			// Check if client has been disconnected (returns to menu)
+			else {
+				extern bool joined;
+				
+				if (wasJoined && !joined) {
+					// Client was disconnected from server - return to menu
+					std::cout << "Client disconnected - returning to menu" << std::endl;
+					wasJoined = false;
+					state = 0;
+					
+					// Stop broadcasting if hosting
+					if (g_lanDiscovery && g_lanDiscovery->isBroadcasting()) {
+						g_lanDiscovery->stopBroadcasting();
+					}
+					
+					// Reset room UI state completely
+					if (g_roomUI) {
+						g_roomUI->setState(RoomUIState::NONE);
+					}
+					
+					// Reset room UI initialization flag so callbacks get re-setup
+					roomUIInitialized = false;
+					
+					if (g_accountUI) {
+						g_accountUI->setState(UIState::MAIN_MENU);
+					}
+					
+					resetClient();
+				} else {
+					// Normal gameplay - just run the game
+					wasJoined = joined;
+					clientFunction(deltaTime, renderer, textures, ip, name, currentPort);
+				}
 			}
 		} else {
 			// PAUSED STATE - Render pause menu

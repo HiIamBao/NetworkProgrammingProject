@@ -47,12 +47,21 @@ static bool receivedInitialBossModeInfo = false;
 
 // Account Manager for recording match results
 static AccountManager* g_clientAccountManager = nullptr;
+
+// Account UI for displaying match summary
+#include "AccountUI.h"
+extern AccountUI* g_accountUI;
+
 void setClientAccountManager(AccountManager* accMgr) {
     g_clientAccountManager = accMgr;
 }
 
 // Networked Leaderboard State
 static LeaderBoardUpdateData activeLeaderboard = {};
+
+// Force disconnect state (for session control)
+std::string g_forceDisconnectReason = "";
+bool g_wasForceDisconnected = false;
 
 #pragma endregion
 
@@ -374,6 +383,28 @@ void msgLoop(ENetHost *client)
 				{
 					auto find = players.find(p.cid);
 					players.erase(find);
+				}
+				else if (p.header == headerForceDisconnect)
+				{
+					// Another client logged in with same account - we're being kicked
+					auto disconnectData = *(ForceDisconnectData*)data;
+					std::cout << "Force disconnect: " << disconnectData.reason << std::endl;
+					
+					// Signal to return to login screen
+					// Set joined to false so the client knows to disconnect
+					joined = false;
+					
+					// Store the disconnect reason for UI to display
+					extern std::string g_forceDisconnectReason;
+					extern bool g_wasForceDisconnected;
+					g_forceDisconnectReason = std::string(disconnectData.reason);
+					g_wasForceDisconnected = true;
+					
+					// Reset the server connection
+					if (server) {
+						enet_peer_reset(server);
+						server = nullptr;
+					}
 				}else if (p.header == headerSendBullet)
 				{
 					bullets.push_back(*(phisics::Bullet *)data);
@@ -456,7 +487,7 @@ void msgLoop(ENetHost *client)
 				}
 				else if (p.header == headerMatchEnd)
 				{
-					// Match ended!
+					// Match ended! (Supports all game modes)
 					auto endData = *(MatchEndData*)data;
 					
 					matchEnded = true;
@@ -464,7 +495,33 @@ void msgLoop(ENetHost *client)
 					strncpy(matchWinnerName, endData.winnerName, sizeof(matchWinnerName) - 1);
 					matchWinnerKills = endData.winnerKills;
 					
-					std::cout << "Match ended! Winner: " << matchWinnerName << " with " << matchWinnerKills << " kills!" << std::endl;
+					// Determine game mode name
+					const char* gameModeName = "Unknown";
+					switch (endData.gameMode) {
+						case GameMode::DEATHMATCH:
+							gameModeName = "Deathmatch";
+							break;
+						case GameMode::HORDE_DEFENSE:
+							gameModeName = "Horde Defense";
+							break;
+						case GameMode::BOSS_FIGHT:
+							gameModeName = "Boss Fight";
+							break;
+					}
+					
+					// Display victory/defeat status with game mode
+					std::cout << "========================================" << std::endl;
+					std::cout << "  " << gameModeName << " - " << (endData.victory ? "VICTORY!" : "DEFEAT!") << std::endl;
+					std::cout << "  MVP: " << matchWinnerName << " (" << matchWinnerKills 
+					          << (endData.gameMode == GameMode::DEATHMATCH ? " kills)" : " damage)") << std::endl;
+					std::cout << "========================================" << std::endl;
+					
+					// Collect all player scores for the scoreboard
+					std::vector<PlayerScore> playerScores;
+					for (int i = 0; i < endData.totalPlayers; i++)
+					{
+						playerScores.push_back(endData.scores[i]);
+					}
 					
 					// Save ALL players' match stats to database
 					if (g_clientAccountManager) {
@@ -487,7 +544,101 @@ void msgLoop(ENetHost *client)
 							}
 						}
 					}
+					
+					// Transition to match summary screen
+					extern AccountUI* g_accountUI;
+					if (g_accountUI) {
+						g_accountUI->setMatchSummary(matchWinnerName, matchWinnerKills, 
+						                              endData.totalPlayers, playerScores, 	
+						                              static_cast<int>(endData.gameMode), endData.victory);
+						g_accountUI->setState(UIState::MATCH_SUMMARY);
+						std::cout << "[Client] Transitioning to MATCH_SUMMARY screen" << std::endl;
+					}
 				}
+				/// DUNG headerMatchEnd cho tat ca game mode
+
+				// else if (p.header == headerHordeMatchEnd)
+				// {
+				// 	// Horde Defense match ended!
+				// 	auto endData = *(HordeMatchEndData*)data;
+				// 	matchEnded = true;
+				// 	currentMatchState = MatchState::MATCH_ENDED;
+					
+				// 	// Set winner info (MVP in Horde Defense)
+				// 	strncpy(matchWinnerName, endData.mvpPlayerName, sizeof(matchWinnerName) - 1);
+				// 	matchWinnerName[sizeof(matchWinnerName) - 1] = '\0';
+				// 	matchWinnerKills = endData.mvpKills;
+					
+				// 	// Set notification message
+				// 	if (endData.victory)
+				// 	{
+				// 		waveNotification = "VICTORY! All waves completed!";
+				// 	}
+				// 	else
+				// 	{
+				// 		waveNotification = "DEFEATED! Wave " + std::to_string(endData.finalWave);
+				// 	}
+				// 	waveNotificationTimer = 10.0f;
+					
+				// 	std::cout << "[HordeDefense] Match ended - Victory: " << endData.victory 
+				// 	          << ", Final Wave: " << endData.finalWave << std::endl;
+					
+				// 	// Collect all player scores for the scoreboard
+				// 	std::vector<PlayerScore> playerScores;
+				// 	for (const auto& playerPair : players) {
+				// 		const auto& playerEntity = playerPair.second;
+				// 		PlayerScore pScore;
+				// 		pScore.cid = playerPair.first;
+				// 		strncpy(pScore.playerName, playerEntity.name, sizeof(pScore.playerName) - 1);
+				// 		pScore.playerName[sizeof(pScore.playerName) - 1] = '\0';
+				// 		pScore.kills = playerEntity.kills;
+				// 		pScore.deaths = 0;  // Not tracked in Horde Defense
+				// 		pScore.score = playerEntity.totalDamageDealt;  // Use damage as score for Horde Defense
+				// 		playerScores.push_back(pScore);
+				// 	}
+					
+				// 	// Record match results to leaderboard
+				// 	if (g_clientAccountManager)
+				// 	{
+				// 		std::vector<MatchPlayerStats> matchStats;
+						
+				// 		// Collect stats for all players in the match
+				// 		for (const auto& [playerCid, playerEntity] : players)
+				// 		{
+				// 			MatchPlayerStats stats;
+				// 			stats.playerId = playerCid;
+				// 			stats.playerName = std::string(playerEntity.name);
+				// 			stats.roundsSurvived = endData.finalWave;  // Use final wave reached
+				// 			stats.damageDealt = playerEntity.totalDamageDealt;
+				// 			stats.kills = playerEntity.kills;
+				// 			matchStats.push_back(stats);
+							
+				// 			std::cout << "[HordeDefense] Recording stats for " << stats.playerName 
+				// 			          << ": Wave " << stats.roundsSurvived 
+				// 			          << ", Damage " << stats.damageDealt << std::endl;
+				// 		}
+						
+				// 		// Record to database
+				// 		if (g_clientAccountManager->recordHordeDefenseMatchEnd(matchStats))
+				// 		{
+				// 			std::cout << "[HordeDefense] Match results saved to leaderboard!" << std::endl;
+				// 		}
+				// 		else
+				// 		{
+				// 			std::cout << "[HordeDefense] Failed to save match results!" << std::endl;
+				// 		}
+				// 	}
+					
+				// 	// Transition to match summary screen
+				// 	extern AccountUI* g_accountUI;
+				// 	if (g_accountUI) {
+				// 		g_accountUI->setMatchSummary(matchWinnerName, matchWinnerKills, 
+				// 		                              (int)players.size(), playerScores, 
+				// 		                              static_cast<int>(currentGameMode));
+				// 		g_accountUI->setState(UIState::MATCH_SUMMARY);
+				// 		std::cout << "[Client] Transitioning to MATCH_SUMMARY screen (Horde Defense)" << std::endl;
+				// 	}
+				// }
 				else if (p.header == headerMatchStart)
 				{
 					// Match started OR game mode update (sent on connection)
@@ -842,61 +993,12 @@ void msgLoop(ENetHost *client)
 						std::cout << "Item purchase failed: " << response.message << std::endl;
 					}
 				}
-				else if (p.header == headerHordeMatchEnd)
-				{
-					auto endData = *(HordeMatchEndData*)data;
-					matchEnded = true;
-					
-					if (endData.victory)
-					{
-						waveNotification = "VICTORY! All waves completed!";
-					}
-					else
-					{
-						waveNotification = "DEFEATED! Wave " + std::to_string(endData.finalWave);
-					}
-					waveNotificationTimer = 10.0f;
-					
-					std::cout << "[HordeDefense] Match ended - Victory: " << endData.victory 
-					          << ", Final Wave: " << endData.finalWave << std::endl;
-					
-					// Record match results to leaderboard
-					if (g_clientAccountManager)
-					{
-						std::vector<MatchPlayerStats> matchStats;
-						
-						// Collect stats for all players in the match
-						for (const auto& [playerCid, playerEntity] : players)
-						{
-							MatchPlayerStats stats;
-							stats.playerId = playerCid;
-							stats.playerName = std::string(playerEntity.name);
-							stats.roundsSurvived = endData.finalWave;  // Use final wave reached
-							stats.damageDealt = playerEntity.totalDamageDealt;
-							stats.kills = playerEntity.kills;
-							matchStats.push_back(stats);
-							
-							std::cout << "[HordeDefense] Recording stats for " << stats.playerName 
-							          << ": Wave " << stats.roundsSurvived 
-							          << ", Damage " << stats.damageDealt << std::endl;
-						}
-						
-						// Record to database
-						if (g_clientAccountManager->recordHordeDefenseMatchEnd(matchStats))
-						{
-							std::cout << "[HordeDefense] Match results saved to leaderboard!" << std::endl;
-						}
-						else
-						{
-							std::cout << "[HordeDefense] Failed to save match results!" << std::endl;
-						}
-					}
-				}
+			
 
-				// ========================================================================
-				// BOSS FIGHT PACKET HANDLERS
-				// ========================================================================
-				else if (p.header == headerBossFightStateUpdate)
+			// ========================================================================
+			// BOSS FIGHT PACKET HANDLERS
+			// ========================================================================
+			else if (p.header == headerBossFightStateUpdate)
 				{
 					auto stateData = *(BossFightStateUpdateData*)data;
 					bossFightState = static_cast<BossFight::BossFightState>(stateData.gameState);
@@ -909,6 +1011,7 @@ void msgLoop(ENetHost *client)
 					auto spawnData = *(BossFightBossSpawnData*)data;
 					clientBoss.bossId = spawnData.bossId;
 					clientBoss.type = static_cast<BossFight::BossType>(spawnData.bossType);
+					clientBoss.bossLevel = spawnData.bossLevel;  // Store boss level for texture selection
 					clientBoss.position = glm::vec2(spawnData.posX, spawnData.posY);
 					clientBoss.health = spawnData.health;
 					clientBoss.maxHealth = spawnData.maxHealth;
@@ -918,7 +1021,7 @@ void msgLoop(ENetHost *client)
 					bossNotification = "BOSS SPAWNED!";
 					bossNotificationTimer = 3.0f;
 					
-					std::cout << "[BossFight] Boss spawned!" << std::endl;
+					std::cout << "[BossFight] Boss spawned! Level: " << clientBoss.bossLevel << std::endl;
 				}
 				else if (p.header == headerBossFightBossUpdate)
 				{
@@ -1559,9 +1662,9 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				{
 					// Size multiplier
 					// OLD BOSS was 5.0f. New Elites are 2.0f. New Bosses are 5.0f.
-					float sizeMultiplier = 1.0f;
-					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.0f;
-					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.0f;
+					float sizeMultiplier = 1.5f;  // Increased from 1.0f for better visibility
+					if (enemy.type == HordeDefense::EnemyType::ELITE) sizeMultiplier = 2.5f;  // Increased from 2.0f
+					else if (enemy.type >= HordeDefense::EnemyType::BOSS_WAVE5) sizeMultiplier = 5.5f;  // Slightly increased
 
 					// Calculate screen position and size
 					glm::vec4 enemyRect = {
@@ -1770,11 +1873,69 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						bossSizeScreen
 					};
 					
-					// Boss color - dark purple/red
-					glm::vec4 bossColor = {0.6f, 0.1f, 0.3f, 1.0f};
+					// Select texture based on boss level
+					gl2d::Texture* bossTexture = nullptr;
+					switch (clientBoss.bossLevel) {
+						case 1:
+							bossTexture = &textures.bossSummonerSprite;  // Level 1 (Easy)
+							break;
+						case 2:
+							bossTexture = &textures.bossExploderSprite;  // Level 2 (Normal)
+							break;
+						case 3:
+							bossTexture = &textures.bossFinalSprite;     // Level 3 (Hard)
+							break;
+						default:
+							bossTexture = &textures.bossSummonerSprite;  // Fallback to level 1
+							break;
+					}
 					
-					// Draw boss body
-					renderer.renderRectangle(bossRect, bossColor);
+					// Draw boss sprite
+				renderer.renderRectangle(bossRect, {1.0f, 1.0f, 1.0f, 1.0f}, {}, 0.f, *bossTexture);
+				
+				// DEBUG: Draw hitbox outline (red, 3px thick borders)
+				// float outlineThickness = 3.0f;
+				// glm::vec4 outlineColor = {1.0f, 0.0f, 0.0f, 0.8f};
+				// // Top border
+				// renderer.renderRectangle({bossRect.x, bossRect.y, bossRect.z, outlineThickness}, outlineColor);
+				// // Bottom border
+				// renderer.renderRectangle({bossRect.x, bossRect.y + bossRect.w - outlineThickness, bossRect.z, outlineThickness}, outlineColor);
+				// // Left border
+				// renderer.renderRectangle({bossRect.x, bossRect.y, outlineThickness, bossRect.w}, outlineColor);
+				// // Right border
+				// renderer.renderRectangle({bossRect.x + bossRect.z - outlineThickness, bossRect.y, outlineThickness, bossRect.w}, outlineColor);
+				
+				// DEBUG: Draw proximity damage zone (7 tile radius, tile-based visualization)
+				constexpr float PROXIMITY_RADIUS = 5.0f;  // BOSS_CONTACT_RADIUS
+				glm::vec4 proximityColor = {1.0f, 0.5f, 0.0f, 0.50f};  // Orange, 15% opacity for tiles
+				
+				// Get boss tile position (boss is centered)
+				int bossTileX = static_cast<int>(clientBoss.position.x);
+				int bossTileY = static_cast<int>(clientBoss.position.y);
+				
+				// Draw orange rectangle for each tile within proximity radius
+				int radiusInTiles = static_cast<int>(PROXIMITY_RADIUS);
+				for (int dx = -radiusInTiles; dx <= radiusInTiles; dx++) {
+					for (int dy = -radiusInTiles; dy <= radiusInTiles; dy++) {
+						// Calculate distance from boss center to this tile's center
+						float tileCenterX = bossTileX + dx + 0.5f;
+						float tileCenterY = bossTileY + dy + 0.5f;
+						float distance = sqrt((tileCenterX - clientBoss.position.x) * (tileCenterX - clientBoss.position.x) + 
+						                     (tileCenterY - clientBoss.position.y) * (tileCenterY - clientBoss.position.y));
+						
+						// Only draw if within radius
+						if (distance <= PROXIMITY_RADIUS) {
+							glm::vec4 tileRect = {
+								(bossTileX + dx) * worldMagnification,
+								(bossTileY + dy) * worldMagnification,
+								worldMagnification,
+								worldMagnification
+							};
+							renderer.renderRectangle(tileRect, proximityColor);
+						}
+					}
+				}
+				
 					
 					// Draw boss health bar (width of boss)
 					float healthPercent = clientBoss.health / clientBoss.maxHealth;
@@ -2308,8 +2469,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			}
 	#pragma endregion
 		float xLeft = 0.95;
-		float xSize = 0.04;
-		float xAdvance = xSize - 0.025;
+		float xSize = 0.05;  // Increased from 0.04 for better visibility
+		float xAdvance = xSize - 0.03;  // Adjusted spacing
 
 		// Debug: Log health values occasionally
 		static float debugTimer = 0.0f;
@@ -2593,7 +2754,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						auto textSize = renderer.getTextSize(startText, textures.font, textScale);
 						glm::vec2 startTextPos = {
 							centerX - textSize.x * 0.5f,
-							buttonY + (buttonH - textSize.y) * 0.5f
+							buttonY + (buttonH + textSize.y) * 0.5f
 						};
 						renderer.renderText(startTextPos, startText, textures.font,
 							glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), textScale, 4.f, 3.f, false);

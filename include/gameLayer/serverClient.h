@@ -5,7 +5,7 @@
 #include <AccountManager.h>
 struct Textures;
 
-void serverFunction(int port = 7778, int gameMode = 0, int mapId = 0);  // Now accepts port, gameMode, and mapId parameters with defaults
+void serverFunction(int port = 7778, int gameMode = 0, int mapId = 0, int bossLevel = 1);  // Now accepts port, gameMode, mapId, and bossLevel parameters with defaults
 
 // Server state management
 bool isServerRunning();  // Check if any server is running

@@ -356,7 +356,7 @@ struct WaveConfig {
         config.spawnInterval = std::max(0.3f, 1.5f - (wave * 0.05f));
         
         // Config for ~5-10 min game (quick pacing)
-        config.zombieCount = 8 + (wave * 3);
+        config.zombieCount = 2; //MODIFY THIS
         config.runnerCount = wave >= 2 ? (wave * 2) : 0;
         config.tankCount = wave >= 4 ? (wave / 2) : 0;
         config.exploderCount = wave >= 6 ? (wave / 2) : 0;
@@ -397,9 +397,9 @@ struct WaveConfig {
 // GAME CONSTANTS
 // ============================================================================
 
-constexpr int TOTAL_WAVES = 5;  // TEMP: Changed from 20 for testing winner screen
+constexpr int TOTAL_WAVES = 1;  // TEMP: Changed from 20 for testing winner screen
 constexpr int STARTING_MONEY = 500;
-constexpr float BUY_PHASE_DURATION = 30.0f;  // 30 seconds
+constexpr float BUY_PHASE_DURATION = 5.0f;  // 30 seconds
 constexpr float ENEMY_ATTACK_COOLDOWN = 1.0f; // 1 second between attacks
 constexpr float ENEMY_ATTACK_RANGE = 1.5f;    // Attack range in tiles
 

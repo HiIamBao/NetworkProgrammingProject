@@ -126,38 +126,79 @@ void HordeDefenseManager::startMatch() {
     phaseTimer = BUY_PHASE_DURATION;
 }
 
-void HordeDefenseManager::endMatch(bool victory) {
+
+void HordeDefenseManager::endMatch(bool victory, const std::map<int32_t, phisics::Entity>& players) {
     setState(victory ? HordeDefenseState::VICTORY : HordeDefenseState::DEFEAT);
     
-    // Prepare match end data
-    HordeMatchEndData endData;
-    endData.victory = victory;
-    endData.finalWave = currentWave;
-    endData.totalKills = totalEnemiesKilled;
-    endData.totalMoney = 0;
-    
-    // Find MVP (most kills)
+    // Find MVP (most damage dealt in Horde Defense)
     int32_t mvpCid = -1;
-    int maxKills = 0;
-    for (auto& [cid, kills] : playerKills) {
-        if (kills > maxKills) {
-            maxKills = kills;
+    int maxDamage = 0;
+    const char* mvpName = "Unknown";
+    
+    for (const auto& [cid, player] : players) {
+        if (player.totalDamageDealt > maxDamage) {
+            maxDamage = player.totalDamageDealt;
             mvpCid = cid;
+            mvpName = player.name;
         }
     }
     
-    endData.mvpPlayerId = mvpCid;
-    endData.mvpKills = maxKills;
-    strcpy(endData.mvpPlayerName, "Unknown"); // TODO: Get actual player name
+    // Prepare match end data
+    MatchEndData endData;
+    endData.victory = victory;
+    endData.gameMode = GameMode::HORDE_DEFENSE;
+    endData.winnerCid = mvpCid;
+    strncpy(endData.winnerName, mvpName, sizeof(endData.winnerName) - 1);
+    endData.winnerName[sizeof(endData.winnerName) - 1] = '\0';
+ 
+    // Find actual kills for the MVP
+    if (mvpCid != -1) {
+        auto it = players.find(mvpCid);
+        if (it != players.end()) {
+            endData.winnerKills = it->second.enemiesKilled;
+        }
+    }
+    endData.winnerDeaths = 0;  // Not used in Horde Defense
+    endData.totalPlayers = players.size();
+    
+    // Add player scores to match end data
+    int scoreIndex = 0;
+    for (const auto& [cid, player] : players) {
+        if (scoreIndex >= MAX_SCOREBOARD_PLAYERS) break;
+        
+        PlayerScore score;
+        score.cid = cid;
+        strncpy(score.playerName, player.name, sizeof(score.playerName) - 1);
+        score.playerName[sizeof(score.playerName) - 1] = '\0';
+        score.kills = player.enemiesKilled;
+        score.deaths = 0;  // Not tracked in Horde Defense
+        score.score = player.totalDamageDealt;  // Score = total damage
+        score.totalDamageDealt = player.totalDamageDealt;
+        endData.scores[scoreIndex++] = score;
+    }
+    endData.totalPlayers = scoreIndex;
+    
+    // Debug output
+    std::cout << "DEBUG: Horde Defense Match End Data" << std::endl;
+    std::cout << "Victory: " << (victory ? "YES" : "NO") << " | Final Wave: " << currentWave << std::endl;
+    std::cout << "MVP CID: " << endData.winnerCid << " Name: " << endData.winnerName << std::endl;
+    std::cout << "MVP Damage: " << endData.winnerKills << " | Total Players: " << endData.totalPlayers << std::endl;
+    for (int i = 0; i < endData.totalPlayers; i++) {
+        const auto& s = endData.scores[i];
+        std::cout << " - Player: " << s.playerName << " (CID: " << s.cid << ") "
+                  << "Enemies: " << s.kills << " | Damage: " << s.totalDamageDealt 
+                  << " | Waves: " << currentWave << std::endl;
+    }
     
     // Broadcast match end
     if (broadcastCallback) {
         Packet p;
-        p.header = headerHordeMatchEnd;
+        p.header = headerMatchEnd;
         p.cid = 0;
         broadcastCallback(p, &endData, sizeof(endData), true);
     }
 }
+
 
 // ============================================================================
 // Wave Management
@@ -234,7 +275,7 @@ void HordeDefenseManager::completeWave() {
     
     // Check for victory
     if (currentWave >= TOTAL_WAVES) {
-        endMatch(true);  // Victory!
+        setState(HordeDefenseState::VICTORY);  // Set victory state, server will call endMatch
         return;
     }
     

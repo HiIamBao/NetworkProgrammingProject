@@ -94,12 +94,12 @@ void BossFightManager::update(float deltaTime, std::map<int32_t, phisics::Entity
             
             // Check victory condition
             if (!boss.isAlive) {
-                endMatch(true);
+                endMatch(true, players);
             }
             
             // Check defeat condition
             if (allPlayersDead()) {
-                endMatch(false);
+                endMatch(false, players);
             }
             break;
             
@@ -158,7 +158,7 @@ glm::vec2 BossFightManager::findValidBossSpawnPosition(phisics::MapData* mapData
     return getRandomSpawnPosition();
 }
 
-void BossFightManager::startMatch(phisics::MapData* mapData) {
+void BossFightManager::startMatch(phisics::MapData* mapData, int level) {
     std::cout << "[BossFight] Starting match..." << std::endl;
     
     reset();
@@ -174,51 +174,74 @@ void BossFightManager::startMatch(phisics::MapData* mapData) {
     glm::vec2 bossSpawnPos = findValidBossSpawnPosition(mapData);
     
     setState(BossFightState::BOSS_SPAWNING);
+    boss.bossLevel = level;
     spawnBoss(bossSpawnPos);
     
     std::cout << "[BossFight] Boss spawned at (" << bossSpawnPos.x << ", " << bossSpawnPos.y << ")" << std::endl;
 }
 
-void BossFightManager::endMatch(bool victory) {
-    if (victory) {
-        setState(BossFightState::BOSS_DEFEATED);
-        std::cout << "[BossFight] VICTORY! Boss defeated!" << std::endl;
-    } else {
-        setState(BossFightState::PLAYERS_DEFEATED);
-        std::cout << "[BossFight] DEFEAT! All players died!" << std::endl;
-    }
+void BossFightManager::endMatch(bool victory, const std::map<int32_t, phisics::Entity>& players) {
+    setState(victory ? BossFightState::BOSS_DEFEATED : BossFightState::PLAYERS_DEFEATED);
     
-    // Find MVP (most damage dealt)
+    // Find MVP (most damage dealt in Boss Fight)
     int32_t mvpCid = -1;
     int maxDamage = 0;
-    for (const auto& pair : playerDamageDealt) {
-        if (pair.second > maxDamage) {
-            maxDamage = pair.second;
-            mvpCid = pair.first;
+    const char* mvpName = "Unknown";
+    
+    for (const auto& [cid, player] : players) {
+        int damage = getPlayerDamageDealt(cid);
+        if (damage > maxDamage) {
+            maxDamage = damage;
+            mvpCid = cid;
+            mvpName = player.name;
         }
+    }
+    
+    // Prepare match end data
+    MatchEndData endData;
+    endData.victory = victory;
+    endData.gameMode = GameMode::BOSS_FIGHT;
+    endData.winnerCid = mvpCid;
+    strncpy(endData.winnerName, mvpName, sizeof(endData.winnerName) - 1);
+    endData.winnerName[sizeof(endData.winnerName) - 1] = '\0';
+    
+    // Set winner stats (damage dealt as "kills" for boss fight)
+    endData.winnerKills = maxDamage;
+    endData.winnerDeaths = 0;  // Not used in Boss Fight
+    endData.totalPlayers = players.size();
+    
+    // Add player scores to match end data
+    int scoreIndex = 0;
+    for (const auto& [cid, player] : players) {
+        if (scoreIndex >= MAX_SCOREBOARD_PLAYERS) break;
+        
+        PlayerScore score;
+        score.cid = cid;
+        strncpy(score.playerName, player.name, sizeof(score.playerName) - 1);
+        score.playerName[sizeof(score.playerName) - 1] = '\0';
+        score.kills = 0;  // Not used in Boss Fight
+        score.deaths = isPlayerAlive(cid) ? 0 : 1;
+        score.score = getPlayerDamageDealt(cid);  // Score = total damage to boss
+        score.totalDamageDealt = getPlayerDamageDealt(cid);
+        endData.scores[scoreIndex++] = score;
+    }
+    endData.totalPlayers = scoreIndex;
+    
+    // Debug output
+    std::cout << "DEBUG: Boss Fight Match End Data" << std::endl;
+    std::cout << "Victory: " << (victory ? "YES" : "NO") << " | Match Duration: " << matchTime << "s" << std::endl;
+    std::cout << "MVP CID: " << endData.winnerCid << " Name: " << endData.winnerName << std::endl;
+    std::cout << "MVP Damage: " << endData.winnerKills << " | Total Players: " << endData.totalPlayers << std::endl;
+    for (int i = 0; i < endData.totalPlayers; i++) {
+        const auto& s = endData.scores[i];
+        std::cout << " - Player: " << s.playerName << " (CID: " << s.cid << ") "
+                  << "Damage: " << s.totalDamageDealt << " | Deaths: " << s.deaths << std::endl;
     }
     
     // Broadcast match end
-    BossFightMatchEndData endData;
-    endData.victory = victory;
-    endData.matchDuration = matchTime;
-    endData.mvpPlayerId = mvpCid;
-    endData.mvpDamage = maxDamage;
-    endData.totalPlayerDeaths = 0;
-    
-    // Count total deaths
-    for (const auto& pair : playerAlive) {
-        if (!pair.second) {
-            endData.totalPlayerDeaths++;
-        }
-    }
-    
-    // MVP name will be filled by server from player data
-    endData.mvpPlayerName[0] = '\0';
-    
     if (broadcastCallback) {
         Packet p;
-        p.header = headerBossFightMatchEnd;
+        p.header = headerMatchEnd;
         p.cid = 0;
         broadcastCallback(p, &endData, sizeof(endData), true);
     }
@@ -227,6 +250,7 @@ void BossFightManager::endMatch(bool victory) {
 // ============================================================================
 // Boss Management
 // ============================================================================
+
 
 void BossFightManager::spawnBoss(glm::vec2 position) {
     boss.bossId = 1;
@@ -238,8 +262,10 @@ void BossFightManager::spawnBoss(glm::vec2 position) {
     boss.isAlive = true;
     
     BossStats stats = BossStats::getStats(BossType::GIANT_DEMON);
-    boss.health = stats.baseHealth;
-    boss.maxHealth = stats.baseHealth;
+  
+    boss.health = stats.baseHealth * boss.bossLevel;
+    boss.maxHealth = stats.baseHealth * boss.bossLevel;
+    
     boss.speed = stats.baseSpeed;
     boss.baseDamage = stats.baseDamage;
     boss.currentTargetId = -1;
@@ -247,12 +273,18 @@ void BossFightManager::spawnBoss(glm::vec2 position) {
     boss.nextAttackTimer = 2.0f;
     boss.nextAttackType = BossAttackType::MELEE;
     
-    std::cout << "[BossFight] Boss spawned at (" << position.x << ", " << position.y << ")" << std::endl;
-    
+
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss spawned at (" << position.x << ", " << position.y << ")" << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss health: " << boss.health << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss max health: " << boss.maxHealth << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss level: " << boss.bossLevel << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss base damage: " << boss.baseDamage << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss speed: " << boss.speed << std::endl;
     // Broadcast boss spawn
     BossFightBossSpawnData spawnData;
     spawnData.bossId = boss.bossId;
     spawnData.bossType = (int)boss.type;
+    spawnData.bossLevel = boss.bossLevel;  // Send boss level for texture selection
     spawnData.posX = boss.position.x;
     spawnData.posY = boss.position.y;
     spawnData.health = boss.health;

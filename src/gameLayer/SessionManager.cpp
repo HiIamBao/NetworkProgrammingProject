@@ -1,9 +1,11 @@
 #include "SessionManager.h"
+#include "packet.h"
 #include <random>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
 #include <algorithm>
+#include <cstring>
 
 SessionManager::SessionManager(AccountManager* accMgr) 
     : accountManager(accMgr) {
@@ -52,9 +54,22 @@ std::string SessionManager::login(const std::string& username, const std::string
         std::string oldToken = existingIt->second;
         auto sessionIt = sessions.find(oldToken);
         if (sessionIt != sessions.end()) {
-            // Force logout old session
-            if (sessionIt->second.peer) {
-                peerSessions.erase(sessionIt->second.peer);
+            // Send force disconnect packet to the old peer before removing
+            ENetPeer* oldPeer = sessionIt->second.peer;
+            if (oldPeer) {
+                // Send force disconnect notification
+                ForceDisconnectData disconnectData;
+                strncpy(disconnectData.reason, "Logged in from another location", sizeof(disconnectData.reason) - 1);
+                disconnectData.reason[sizeof(disconnectData.reason) - 1] = '\0';
+                
+                Packet packet;
+                packet.header = headerForceDisconnect;
+                packet.cid = 0;
+                sendPacket(oldPeer, packet, reinterpret_cast<char*>(&disconnectData), sizeof(disconnectData), true, 0);
+                
+                std::cout << "Sent force disconnect to existing session for: " << username << std::endl;
+                
+                peerSessions.erase(oldPeer);
             }
             sessions.erase(sessionIt);
         }
@@ -156,6 +171,38 @@ bool SessionManager::logoutByPeer(ENetPeer* peer) {
     peerSessions.erase(it);
     
     return true;
+}
+
+void SessionManager::forceKickSession(const std::string& username, const std::string& reason) {
+    std::lock_guard<std::mutex> lock(sessionMutex);
+    
+    auto it = usernameSessions.find(username);
+    if (it == usernameSessions.end()) {
+        return;
+    }
+    
+    std::string token = it->second;
+    auto sessionIt = sessions.find(token);
+    if (sessionIt != sessions.end()) {
+        ENetPeer* peer = sessionIt->second.peer;
+        if (peer) {
+            // Send force disconnect notification
+            ForceDisconnectData disconnectData;
+            strncpy(disconnectData.reason, reason.c_str(), sizeof(disconnectData.reason) - 1);
+            disconnectData.reason[sizeof(disconnectData.reason) - 1] = '\0';
+            
+            Packet packet;
+            packet.header = headerForceDisconnect;
+            packet.cid = 0;
+            sendPacket(peer, packet, reinterpret_cast<char*>(&disconnectData), sizeof(disconnectData), true, 0);
+            
+            std::cout << "Sent force disconnect to: " << username << " (reason: " << reason << ")" << std::endl;
+            
+            peerSessions.erase(peer);
+        }
+        sessions.erase(sessionIt);
+    }
+    usernameSessions.erase(it);
 }
 
 bool SessionManager::validateSession(const std::string& token) {

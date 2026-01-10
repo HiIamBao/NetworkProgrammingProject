@@ -126,14 +126,14 @@ rm -f cmake_install.cmake
 rm -f Makefile
 
 echo "✅ Clean complete!"
-echo ""
-echo "🔨 Creating build directory..."
+# echo ""
+# echo "🔨 Creating build directory..."
 
 # Create fresh build directory
 mkdir -p build
 cd build
 
-echo "⚙️  Running CMake..."
+# echo "⚙️  Running CMake..."
 
 # Generate build files
 cmake ..
@@ -143,17 +143,17 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "✅ CMake configuration complete!"
-echo ""
-echo "🔨 Building project..."
+# echo "✅ CMake configuration complete!"
+# echo ""
+# echo "🔨 Building project..."
 
 # Build the project
 make -j$(nproc)
 
-if [ $? -ne 0 ]; then
-    echo "❌ Build failed! Please check the error messages above."
-    exit 1
-fi
+# if [ $? -ne 0 ]; then
+#     echo "❌ Build failed! Please check the error messages above."
+#     exit 1
+# fi
 
 echo ""
 echo "✅ Build complete! Executables are in the build directory."

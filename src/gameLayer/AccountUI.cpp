@@ -19,6 +19,28 @@ AccountUI::~AccountUI() {
 }
 
 void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, const Textures& textures, float deltaTime) {
+    // Check for force disconnect (session control - another login kicked us)
+    extern std::string g_forceDisconnectReason;
+    extern bool g_wasForceDisconnected;
+    
+    if (g_wasForceDisconnected) {
+        // Reset our login state
+        isLoggedIn = false;
+        currentUsername.clear();
+        sessionToken.clear();
+        currentAccount = nullptr;
+        
+        // Show the disconnect message
+        showMessage(g_forceDisconnectReason, UIColors::Error);
+        
+        // Reset to main menu (login screen)
+        setState(UIState::MAIN_MENU);
+        
+        // Clear the flag
+        g_wasForceDisconnected = false;
+        g_forceDisconnectReason.clear();
+    }
+    
     // Save current camera and reset to default for UI rendering
     auto savedCamera = renderer.currentCamera;
     renderer.currentCamera.setDefault();
@@ -71,6 +93,9 @@ void AccountUI::render(gl2d::Renderer2D& renderer, gl2d::Font& font, const Textu
             break;
         case UIState::MATCH_MAKING:
             renderMatchMaking(renderer, font);
+            break;
+        case UIState::MATCH_SUMMARY:
+            renderMatchSummary(renderer, font);
             break;
         default:
             break;
@@ -154,16 +179,11 @@ void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
         std::string welcomeText = "Welcome, " + currentUsername + "!";
         glui::Text(welcomeText.c_str(), UIColors::Success);
         
-        if (currentAccount) {
-            char levelText[64];
-            sprintf(levelText, "Level %d | Score: %d", currentAccount->level, currentAccount->totalScore);
-            glui::Text(levelText, UIColors::White);
-        }
-        
         glui::Space(20);
         
         // Menu buttons for logged in user
-        if (glui::Button("View Account Info", UIColors::Panel)) {
+        if (glui::Button("Match History", UIColors::Panel)) {
+            refreshMatchHistory();
             setState(UIState::ACCOUNT_INFO);
         }
         
@@ -178,9 +198,9 @@ void AccountUI::renderMainMenu(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             setState(UIState::BROWSE_ROOMS);
         }
 
-        if (glui::Button("Match Making", UIColors::Success)) {
-            setState(UIState::MATCH_MAKING);
-        }
+        // if (glui::Button("Match Making", UIColors::Success)) {
+        //     setState(UIState::MATCH_MAKING);
+        // }
         
         // if (glui::Button("Host Game", UIColors::Primary)) {
         //     setState(UIState::HOST_SERVER);
@@ -299,54 +319,62 @@ void AccountUI::renderRegisterScreen(gl2d::Renderer2D& renderer, gl2d::Font& fon
 }
 
 void AccountUI::renderAccountInfo(gl2d::Renderer2D& renderer, gl2d::Font& font) {
-    glui::Text("===== ACCOUNT INFO =====", UIColors::Primary);
-    glui::Space(20);
+    glui::Text("===== MATCH HISTORY =====", UIColors::Primary);
+    glui::Space(10);
     
-    if (currentAccount) {
-        char buffer[256];
-        
-        sprintf(buffer, "Username: %s", currentAccount->username.c_str());
-        glui::Text(buffer, UIColors::White);
-        
-        sprintf(buffer, "Email: %s", currentAccount->email.c_str());
-        glui::Text(buffer, UIColors::White);
-        
-        glui::Space(10);
-        
-        sprintf(buffer, "Level: %d", currentAccount->level);
-        glui::Text(buffer, UIColors::Success);
-        
-        sprintf(buffer, "Total Score: %d", currentAccount->totalScore);
-        glui::Text(buffer, UIColors::Success);
-        
-        glui::Space(10);
-        
-        sprintf(buffer, "Games Played: %d", currentAccount->gamesPlayed);
-        glui::Text(buffer, UIColors::White);
-        
-        sprintf(buffer, "Games Won: %d", currentAccount->gamesWon);
-        glui::Text(buffer, UIColors::White);
-        
-        sprintf(buffer, "Win Rate: %.1f%%", currentAccount->winRate * 100.0f);
-        glui::Text(buffer, UIColors::Warning);
-        
-        if (currentAccount->ranking > 0) {
-            sprintf(buffer, "Ranking: %d", currentAccount->ranking);
-            glui::Text(buffer, UIColors::Primary);
+    // Mode tabs: Deathmatch, Horde Defense, Boss Fight
+    const char* modeTabs[] = {"Deathmatch", "Horde Defense", "Boss Fight"};
+    for (int i = 0; i < 3; i++) {
+        char label[64];
+        if (matchHistorySelectedMode == i) {
+            snprintf(label, sizeof(label), ">>> %s <<<##mh_mode%d", modeTabs[i], i);
+        } else {
+            snprintf(label, sizeof(label), "    %s    ##mh_mode%d", modeTabs[i], i);
         }
         
-        glui::Space(10);
+        glm::vec4 color = (matchHistorySelectedMode == i) ? UIColors::Success : UIColors::Panel;
+        if (glui::Button(label, color)) {
+            matchHistorySelectedMode = i;
+            refreshMatchHistory();
+        }
         
-        sprintf(buffer, "Member Since: %s", currentAccount->createdAt.c_str());
-        glui::Text(buffer, UIColors::White);
+        glui::SameLine();
+    }
+    glui::NewLine();
+    glui::Space(10);
+    
+    // Display match history
+    if (matchHistoryCache.empty()) {
+        glui::Text("No matches found for this mode", UIColors::White);
     } else {
-        glui::Text("Failed to load account info", UIColors::Error);
+        char buffer[256];
+        int displayCount = std::min(10, (int)matchHistoryCache.size());
+        
+        for (int i = 0; i < displayCount; i++) {
+            const MatchRecord& record = matchHistoryCache[i];
+            
+            // Result color
+            glm::vec4 resultColor = record.result == 1 ? UIColors::Success : UIColors::Error;
+            const char* resultText = record.result == 1 ? "WIN" : "LOSS";
+            
+            // Format based on game mode
+            if (record.gameMode == 0) {  // Deathmatch
+                snprintf(buffer, sizeof(buffer), "[%s] %s - %d kills", resultText, record.playedAt.c_str(), record.score);
+            } else if (record.gameMode == 1) {  // Horde Defense
+                snprintf(buffer, sizeof(buffer), "[%s] %s - %d damage (%s)", resultText, record.playedAt.c_str(), record.score, record.extraData.c_str());
+            } else {  // Boss Fight
+                snprintf(buffer, sizeof(buffer), "[%s] %s - %d score (%s)", resultText, record.playedAt.c_str(), record.score, record.extraData.c_str());
+            }
+            
+            glui::Text(buffer, resultColor);
+            glui::Space(3);
+        }
     }
     
-    glui::Space(20);
+    glui::Space(10);
     
     if (glui::Button("Refresh", UIColors::Primary)) {
-        refreshAccountInfo();
+        refreshMatchHistory();
     }
     
     if (glui::Button("Back", UIColors::Panel)) {
@@ -441,21 +469,35 @@ void AccountUI::attemptLogin() {
         return;
     }
     
-    // Attempt login (in single-player mode, just validate credentials)
-    if (accountManager->validateCredentials(username, password)) {
-        isLoggedIn = true;
-        currentUsername = username;
-        sessionToken = "local_session"; // For single-player/local mode
-        
-        // Load account info
-        currentAccount = accountManager->getAccount(username);
-        
-        showMessage("Login successful!", UIColors::Success);
-        clearInputs();
-        setState(UIState::MAIN_MENU);
-    } else {
+    // First check credentials
+    if (!accountManager->validateCredentials(username, password)) {
         showMessage("Invalid username or password", UIColors::Error);
+        return;
     }
+    
+    // Check if account is already logged in (database-level session control)
+    if (accountManager->isAccountLoggedIn(username)) {
+        showMessage("Account already logged in from another location", UIColors::Error);
+        return;
+    }
+    
+    // Mark account as logged in (in database)
+    if (!accountManager->setAccountLoggedIn(username, true)) {
+        showMessage("Failed to establish session", UIColors::Error);
+        return;
+    }
+    
+    // Login successful
+    isLoggedIn = true;
+    currentUsername = username;
+    sessionToken = "local_session"; // For single-player/local mode
+    
+    // Load account info
+    currentAccount = accountManager->getAccount(username);
+    
+    showMessage("Login successful!", UIColors::Success);
+    clearInputs();
+    setState(UIState::MAIN_MENU);
 }
 
 void AccountUI::attemptRegister() {
@@ -520,7 +562,18 @@ void AccountUI::refreshLeaderboard() {
     leaderboardCache = accountManager->getTopPlayersForMode(leaderboardSelectedMode, 100);
 }
 
+void AccountUI::refreshMatchHistory() {
+    if (isLoggedIn) {
+        matchHistoryCache = accountManager->getMatchHistory(currentUsername, matchHistorySelectedMode, 20);
+    }
+}
+
 void AccountUI::logout() {
+    // Clear database login flag
+    if (!currentUsername.empty()) {
+        accountManager->setAccountLoggedIn(currentUsername, false);
+    }
+    
     isLoggedIn = false;
     currentUsername.clear();
     sessionToken.clear();
@@ -580,4 +633,97 @@ bool AccountUI::validateEmail(const std::string& email) {
             dotPos != std::string::npos && 
             dotPos > atPos && 
             email.length() > 5);
+}
+
+void AccountUI::setMatchSummary(const char* winnerName, int winnerKills, int totalPlayers, 
+                                  const std::vector<PlayerScore>& scores, int gameMode, bool victory) {
+    strncpy(matchSummary.winnerName, winnerName, sizeof(matchSummary.winnerName) - 1);
+    matchSummary.winnerName[sizeof(matchSummary.winnerName) - 1] = '\0';
+    matchSummary.winnerKills = winnerKills;
+    matchSummary.totalPlayers = totalPlayers;
+    matchSummary.playerScores = scores;
+    matchSummary.gameMode = gameMode;
+    matchSummary.victory = victory;
+}
+
+void AccountUI::renderMatchSummary(gl2d::Renderer2D& renderer, gl2d::Font& font) {
+    // Determine game mode name
+    const char* gameModeName = "Unknown";
+    switch (static_cast<GameMode>(matchSummary.gameMode)) {
+        case GameMode::DEATHMATCH:
+            gameModeName = "Deathmatch";
+            break;
+        case GameMode::HORDE_DEFENSE:
+            gameModeName = "Horde Defense";
+            break;
+        case GameMode::BOSS_FIGHT:
+            gameModeName = "Boss Fight";
+            break;
+        default:
+            gameModeName = "Unknown Mode";
+            break;
+    }
+    
+    // Display game mode and victory/defeat status
+    char headerText[128];
+    snprintf(headerText, sizeof(headerText), "===== %s - %s =====", 
+             gameModeName, matchSummary.victory ? "VICTORY" : "DEFEAT");
+    glm::vec4 headerColor = matchSummary.victory ? UIColors::Success : UIColors::Error;
+    glui::Text(headerText, headerColor);
+    glui::Space(20);
+    
+    // Display MVP
+    char mvpText[128];
+    const char* statLabel = (matchSummary.gameMode == static_cast<int>(GameMode::DEATHMATCH)) ? "Kills" : "Damage";
+    snprintf(mvpText, sizeof(mvpText), "MVP: %s (%d %s)", 
+             matchSummary.winnerName, matchSummary.winnerKills, statLabel);
+    glui::Text(mvpText, glm::vec4(1.0f, 0.84f, 0.0f, 1.0f));  // Gold color
+    
+    glui::Space(20);
+    glui::Text("===== FINAL SCOREBOARD =====", UIColors::White);
+    glui::Space(10);
+    
+    // Display all player scores sorted by score (descending)
+    std::vector<PlayerScore> sortedScores = matchSummary.playerScores;
+    std::sort(sortedScores.begin(), sortedScores.end(), 
+              [](const PlayerScore& a, const PlayerScore& b) {
+                  return a.score > b.score;  // Sort by score descending
+              });
+    
+    // Display each player's score
+    for (size_t i = 0; i < sortedScores.size(); i++) {
+        const auto& score = sortedScores[i];
+        
+        // Color based on rank
+        glm::vec4 color = UIColors::White;
+        if (i == 0) color = glm::vec4(1.0f, 0.84f, 0.0f, 1.0f);  // Gold
+        else if (i == 1) color = glm::vec4(0.75f, 0.75f, 0.75f, 1.0f);  // Silver
+        else if (i == 2) color = glm::vec4(0.8f, 0.5f, 0.2f, 1.0f);  // Bronze
+        
+        char scoreText[128];
+        if (matchSummary.gameMode == static_cast<int>(GameMode::DEATHMATCH)) {
+            snprintf(scoreText, sizeof(scoreText), "%d. %s - Kills: %d | Deaths: %d",
+                     (int)(i + 1), score.playerName, score.kills, score.deaths);
+        } else {
+            // Horde Defense or Boss Fight - show damage
+            snprintf(scoreText, sizeof(scoreText), "%d. %s - Damage: %d | Deaths: %d",
+                     (int)(i + 1), score.playerName, score.totalDamageDealt, score.deaths);
+        }
+        glui::Text(scoreText, color);
+        glui::Space(5);
+    }
+    
+    glui::Space(20);
+    
+    // Button to return to browse rooms
+    if (glui::Button("Return to Browse Rooms", UIColors::Primary)) {
+        setState(UIState::BROWSE_ROOMS);
+    }
+    
+    glui::Space(10);
+    
+    // Alternative: Return to main menu
+    if (glui::Button("Return to Main Menu", UIColors::Panel)) {
+        setState(UIState::MAIN_MENU);
+    }
 }
