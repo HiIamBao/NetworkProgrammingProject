@@ -483,13 +483,36 @@ bool gameLogic(float deltaTime)
 			if (g_accountUI && g_accountUI->getState() == UIState::MATCH_SUMMARY) {
 				// Match ended, transition to menu state to show summary
 				std::cout << "Transitioning to menu state for match summary" << std::endl;
-				state = 0;
-				wasJoined = false;
 				
 				// Stop broadcasting if hosting
 				if (g_lanDiscovery && g_lanDiscovery->isBroadcasting()) {
 					g_lanDiscovery->stopBroadcasting();
 				}
+				
+				
+				// AUTO-CLEANUP: Close server and stop room when match ends
+				// This prevents port resources from being locked after match completion
+				if (state == 2) {
+					// Close the specific server on current port
+					closeServerByPort(currentPort);
+					std::cout << "[AutoCleanup] Closed server on port " << currentPort << std::endl;
+					
+					// Stop the room in MultiRoomManager if it exists
+					if (g_multiRoomManager) {
+						auto activeRooms = g_multiRoomManager->getActiveRooms();
+						for (const auto& room : activeRooms) {
+							if (room.port == currentPort) {
+								g_multiRoomManager->stopRoom(room.slotId);
+								std::cout << "[AutoCleanup] Stopped room on port " << currentPort << std::endl;
+								break;
+							}
+						}
+					}
+				}
+				
+				// NOW change state to menu (after cleanup checks)
+				state = 0;
+				wasJoined = false;
 				
 				// Reset room UI state
 				if (g_roomUI) {
