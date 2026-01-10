@@ -178,7 +178,8 @@ bool gameLogic(float deltaTime)
 								g_accountUI->getCurrentUsername(),
 								data.maxPlayers,
 								data.gameMode,
-								data.mapId
+								data.mapId,
+								data.bossLevel  // Pass boss level to server
 							);						
 						if (roomSlot >= 0) {
 							std::cout << "Room created successfully in slot " << roomSlot << std::endl;

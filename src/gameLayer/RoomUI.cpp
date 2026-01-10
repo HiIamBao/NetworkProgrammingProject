@@ -11,6 +11,7 @@ RoomUI::RoomUI()
     , selectedMaxPlayers(1)
     , selectedGameMode(0)
     , selectedMapId(0)
+    , selectedBossLevel(0)
     , joiningRoomId(-1)
     , currentRoomId(-1)
     , inRoom(false)
@@ -291,7 +292,43 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
         "Survive 20 waves of enemies - Buy upgrades!"
     };
     glui::Text(modeDescriptions[selectedGameMode], RoomUIColors::Gray);
-    glui::Space(20);
+    glui::Space(15);
+    
+    // Boss Level Selection (only for Boss Fight mode)
+    if (selectedGameMode == 2) {  // Boss Fight is index 2 in UI
+        glui::Text("Boss Difficulty:", RoomUIColors::White);
+        glui::Space(5);
+        
+        const char* levelOptions[] = {"Level 1 (Easy)", "Level 2 (Normal)", "Level 3 (Hard)"};
+        
+        // Render buttons with visual selection indicator
+        for (int i = 0; i < 3; i++) {
+            char buttonLabel[64];
+            // Add visual indicator to show selection
+            if (selectedBossLevel == i) {
+                snprintf(buttonLabel, sizeof(buttonLabel), ">>> %s <<<##bosslvl%d", levelOptions[i], i);
+            } else {
+                snprintf(buttonLabel, sizeof(buttonLabel), "    %s    ##bosslvl%d", levelOptions[i], i);
+            }
+            
+            glm::vec4 btnColor = (selectedBossLevel == i) ? RoomUIColors::Success : RoomUIColors::Gray;
+            if (glui::Button(buttonLabel, btnColor)) {
+                selectedBossLevel = i;
+            }
+        }
+        
+        // Show description based on selected boss level
+        glui::Space(5);
+        const char* levelDescriptions[] = {
+            "Beginner-friendly boss with moderate health and damage",
+            "Balanced challenge with increased boss stats",
+            "Extreme difficulty - only for experienced players!"
+        };
+        glui::Text(levelDescriptions[selectedBossLevel], RoomUIColors::Gray);
+        glui::Space(15);
+    } else {
+        glui::Space(5);
+    }
     
     if (glui::Button("Create Room", RoomUIColors::Success)) {
         if (strlen(roomNameInput) == 0) {
@@ -320,6 +357,9 @@ void RoomUI::renderCreateRoom(gl2d::Renderer2D& renderer, gl2d::Font& font) {
             // BOSS_FIGHT (5) -> bossFightArena.bin (mapId=3)
             // All other modes -> mapData2.bin (mapId=0)
             createData.mapId = (createData.gameMode == 5) ? 3 : 0;
+            
+            // Set boss level (1-3), only used for Boss Fight mode
+            createData.bossLevel = selectedBossLevel + 1;  // Convert 0-2 to 1-3
             
             onCreateRoom(createData);
             showMessage("Creating room...", RoomUIColors::White);
@@ -579,6 +619,7 @@ void RoomUI::clearCreateRoomInputs() {
     selectedMaxPlayers = 1;
     selectedGameMode = 0;
     selectedMapId = 0;
+    selectedBossLevel = 0;
 }
 
 void RoomUI::clearJoinInputs() {

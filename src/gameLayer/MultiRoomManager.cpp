@@ -39,7 +39,8 @@ int MultiRoomManager::createRoom(const std::string& roomName,
                                   const std::string& hostName,
                                   int maxPlayers,
                                   int gameMode,
-                                  int mapId) {
+                                  int mapId,
+                                  int bossLevel) {
         // mapId parameter is ignored - map is auto-selected based on gameMode
         // BOSS_FIGHT (5) -> mapId=3, All other modes -> mapId=0
     std::lock_guard<std::mutex> lock(roomsMutex);
@@ -78,15 +79,17 @@ int MultiRoomManager::createRoom(const std::string& roomName,
             // BOSS_FIGHT (5) -> mapId=3, All other modes -> mapId=0
             int autoMapId = (gameMode == 5) ? 3 : 0;  // 5 = BOSS_FIGHT
             rooms[i].mapId = autoMapId;
+            rooms[i].bossLevel = bossLevel;  // Store boss level
             
-            // Start server thread with game mode and auto-selected map
-            rooms[i].serverThread = std::make_unique<std::thread>([port, gameMode, autoMapId]() {
-                serverFunction(port, gameMode, autoMapId);
+            // Start server thread with game mode, auto-selected map, and boss level
+            rooms[i].serverThread = std::make_unique<std::thread>([port, gameMode, autoMapId, bossLevel]() {
+                serverFunction(port, gameMode, autoMapId, bossLevel);
             });
             
             std::cout << "MultiRoomManager: Created room '" << roomName 
                       << "' in slot " << i << " on port " << port 
-                      << " (GameMode: " << gameMode << ", Auto-selected Map: " << autoMapId << ")" << std::endl;
+                      << " (GameMode: " << gameMode << ", Auto-selected Map: " << autoMapId 
+                      << ", Boss Level: " << bossLevel << ")" << std::endl;
             
             return i;  // Return slot ID
         }
@@ -147,6 +150,7 @@ std::vector<RoomInfo> MultiRoomManager::getActiveRooms() {
             info.currentPlayers = rooms[i].currentPlayers.load();
             info.gameMode = rooms[i].gameMode;
             info.mapId = rooms[i].mapId;
+            info.bossLevel = rooms[i].bossLevel;
             activeRooms.push_back(info);
         }
     }
@@ -184,10 +188,11 @@ RoomInfo MultiRoomManager::getRoomInfo(int slotId) {
         info.currentPlayers = rooms[slotId].currentPlayers.load();
         info.gameMode = rooms[slotId].gameMode;
         info.mapId = rooms[slotId].mapId;
+        info.bossLevel = rooms[slotId].bossLevel;
         return info;
     }
     
-    return RoomInfo{-1, 0, false, "", "", 0, 0, 0, 0};
+    return RoomInfo{-1, 0, false, "", "", 0, 0, 0, 0, 1};
 }
 
 bool MultiRoomManager::hasActiveRooms() const {

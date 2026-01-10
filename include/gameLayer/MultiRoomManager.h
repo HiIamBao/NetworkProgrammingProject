@@ -18,6 +18,7 @@ struct RoomInfo {
     int currentPlayers;
     int gameMode;
     int mapId;
+    int bossLevel;  // Boss difficulty level (1-3), only used for BOSS_FIGHT mode
 };
 
 struct RoomSlot {
@@ -30,9 +31,10 @@ struct RoomSlot {
     std::atomic<int> currentPlayers;
     int gameMode;
     int mapId;
+    int bossLevel;  // Boss difficulty level (1-3), only used for BOSS_FIGHT mode
     std::unique_ptr<std::thread> serverThread;
     
-    RoomSlot() : active(false), currentPlayers(0), slotId(0), port(0), maxPlayers(4), gameMode(0), mapId(0) {}
+    RoomSlot() : active(false), currentPlayers(0), slotId(0), port(0), maxPlayers(4), gameMode(0), mapId(0), bossLevel(1) {}
 };
 
 class MultiRoomManager {
@@ -45,7 +47,8 @@ public:
                    const std::string& hostName,
                    int maxPlayers,
                    int gameMode = 0,
-                   int mapId = 0);
+                   int mapId = 0,
+                   int bossLevel = 1);
     
     // Stop a specific room by slot ID
     void stopRoom(int slotId);

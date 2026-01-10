@@ -210,6 +210,7 @@ struct CreateRoomData {
     int maxPlayers;
     int gameMode;      // GameMode enum as int
     int mapId;
+    int bossLevel;     // Boss difficulty level (1-3), only used for BOSS_FIGHT mode
 };
 
 struct CreateRoomResponse {
@@ -320,6 +321,7 @@ struct MatchStartData {
     int matchDuration;  // in seconds, 0 = infinite
     int scoreLimit;     // 0 = no limit
     int mapId;          // Map selection (0=default, 1=industrial, 2=warehouse, 3=boss arena)
+    int bossLevel;      // Boss difficulty level (1-3), only used for BOSS_FIGHT mode
 };
 
 struct PlayerScore {

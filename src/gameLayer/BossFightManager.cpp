@@ -158,7 +158,7 @@ glm::vec2 BossFightManager::findValidBossSpawnPosition(phisics::MapData* mapData
     return getRandomSpawnPosition();
 }
 
-void BossFightManager::startMatch(phisics::MapData* mapData) {
+void BossFightManager::startMatch(phisics::MapData* mapData, int level) {
     std::cout << "[BossFight] Starting match..." << std::endl;
     
     reset();
@@ -174,6 +174,7 @@ void BossFightManager::startMatch(phisics::MapData* mapData) {
     glm::vec2 bossSpawnPos = findValidBossSpawnPosition(mapData);
     
     setState(BossFightState::BOSS_SPAWNING);
+    boss.bossLevel = level;
     spawnBoss(bossSpawnPos);
     
     std::cout << "[BossFight] Boss spawned at (" << bossSpawnPos.x << ", " << bossSpawnPos.y << ")" << std::endl;
@@ -228,6 +229,7 @@ void BossFightManager::endMatch(bool victory) {
 // Boss Management
 // ============================================================================
 
+
 void BossFightManager::spawnBoss(glm::vec2 position) {
     boss.bossId = 1;
     boss.type = BossType::GIANT_DEMON;
@@ -238,8 +240,10 @@ void BossFightManager::spawnBoss(glm::vec2 position) {
     boss.isAlive = true;
     
     BossStats stats = BossStats::getStats(BossType::GIANT_DEMON);
-    boss.health = stats.baseHealth;
-    boss.maxHealth = stats.baseHealth;
+  
+    boss.health = stats.baseHealth * boss.bossLevel;
+    boss.maxHealth = stats.baseHealth * boss.bossLevel;
+    
     boss.speed = stats.baseSpeed;
     boss.baseDamage = stats.baseDamage;
     boss.currentTargetId = -1;
@@ -247,8 +251,13 @@ void BossFightManager::spawnBoss(glm::vec2 position) {
     boss.nextAttackTimer = 2.0f;
     boss.nextAttackType = BossAttackType::MELEE;
     
-    std::cout << "[BossFight] Boss spawned at (" << position.x << ", " << position.y << ")" << std::endl;
-    
+
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss spawned at (" << position.x << ", " << position.y << ")" << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss health: " << boss.health << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss max health: " << boss.maxHealth << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss level: " << boss.bossLevel << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss base damage: " << boss.baseDamage << std::endl;
+    std::cout << "[DEBUG][BossFightManager.cpp][256] Boss speed: " << boss.speed << std::endl;
     // Broadcast boss spawn
     BossFightBossSpawnData spawnData;
     spawnData.bossId = boss.bossId;

@@ -43,6 +43,7 @@ private:
     int selectedMaxPlayers;
     int selectedGameMode;
     int selectedMapId;
+    int selectedBossLevel;
     
     // Join room
     char joinPasswordInput[32];

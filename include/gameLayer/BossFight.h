@@ -65,6 +65,7 @@ struct Boss {
     float maxHealth;
     float speed;
     int baseDamage;
+    int bossLevel;
     int32_t currentTargetId;  // CID of targeted player
     bool isAlive;
     float lastAttackTime;     // For melee attack cooldown
@@ -77,7 +78,7 @@ struct Boss {
     Boss() : bossId(1), type(BossType::GIANT_DEMON), currentPhase(BossPhase::PHASE_1),
              position(0, 0), velocity(0, 0), health(5000), maxHealth(5000),
              speed(4.0f), baseDamage(30), currentTargetId(-1), isAlive(true),
-             lastAttackTime(0.0f), nextAttackTimer(2.5f), 
+             lastAttackTime(0.0f), nextAttackTimer(2.5f), bossLevel(1), 
              nextAttackType(BossAttackType::MELEE), lastSkillTime(0.0f),
              skillCooldown(3.0f), isSprayingCircle(false) {}
 };
@@ -106,6 +107,12 @@ struct BossStats {
     float baseSpeed;
     int baseDamage;
     float attackCooldown;
+    int bossLevel;
+    
+    // Level multipliers for difficulty scaling
+    float healthMultiplier;    // HP scaling per level (e.g., 1.0 = 100% per level)
+    float damageMultiplier;    // Damage scaling per level
+    float speedMultiplier;     // Speed scaling per level
     
     static BossStats getStats(BossType type) {
         BossStats stats;
@@ -113,10 +120,15 @@ struct BossStats {
         
         switch (type) {
             case BossType::GIANT_DEMON:
-                stats.baseHealth = 5000.0f;
+                stats.baseHealth = 10.0f;
                 stats.baseSpeed = 4.0f;
                 stats.baseDamage = 30;
                 stats.attackCooldown = 2.5f;
+                
+                // Level scaling multipliers
+                stats.healthMultiplier = 1.0f;   // 100% HP increase per level (Level 1: 1x, Level 2: 2x, Level 3: 3x)
+                stats.damageMultiplier = 0.5f;   // 50% damage increase per level (Level 1: 1x, Level 2: 1.5x, Level 3: 2x)
+                stats.speedMultiplier = 0.2f;    // 20% speed increase per level (Level 1: 1x, Level 2: 1.2x, Level 3: 1.4x)
                 break;
         }
         return stats;
