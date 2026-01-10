@@ -145,6 +145,8 @@ void HordeDefenseManager::endMatch(bool victory, const std::map<int32_t, phisics
     
     // Prepare match end data
     MatchEndData endData;
+    endData.victory = victory;
+    endData.gameMode = GameMode::HORDE_DEFENSE;
     endData.winnerCid = mvpCid;
     strncpy(endData.winnerName, mvpName, sizeof(endData.winnerName) - 1);
     endData.winnerName[sizeof(endData.winnerName) - 1] = '\0';

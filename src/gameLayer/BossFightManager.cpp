@@ -199,6 +199,8 @@ void BossFightManager::endMatch(bool victory, const std::map<int32_t, phisics::E
     
     // Prepare match end data
     MatchEndData endData;
+    endData.victory = victory;
+    endData.gameMode = GameMode::BOSS_FIGHT;
     endData.winnerCid = mvpCid;
     strncpy(endData.winnerName, mvpName, sizeof(endData.winnerName) - 1);
     endData.winnerName[sizeof(endData.winnerName) - 1] = '\0';

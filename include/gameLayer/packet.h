@@ -2,6 +2,18 @@
 #include<cstdint>
 #include<enet/enet.h>
 #include <vector>
+
+// Game mode enum (shared across server and client)
+enum class GameMode {
+    DEATHMATCH = 0,     // Free for all
+    TEAM_BATTLE = 1,    // Team vs Team (not implemented)
+    COOPERATIVE = 2,    // Players vs AI (not implemented)
+    TOWER_DEFENSE = 3,  // Tower Defense (DEPRECATED)
+    HORDE_DEFENSE = 4,  // Horde Defense - Players fight waves of AI enemies
+    BOSS_FIGHT = 5      // Boss Fight - Cooperative boss battle
+};
+
+
 struct Packet
 {
 	int32_t header = 0;
@@ -335,6 +347,8 @@ struct PlayerScore {
 
 constexpr int MAX_SCOREBOARD_PLAYERS = 16;
 struct MatchEndData {
+    bool victory;
+    GameMode gameMode;
     int32_t winnerCid;
     char winnerName[32];
     int winnerKills;

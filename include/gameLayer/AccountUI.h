@@ -78,6 +78,7 @@ private:
         int totalPlayers;
         std::vector<PlayerScore> playerScores;
         int gameMode;  // To know which game mode the match was
+        bool victory;  // Whether the match was won or lost
     };
     MatchSummaryData matchSummary;
     
@@ -108,7 +109,7 @@ public:
     
     // Match Summary
     void setMatchSummary(const char* winnerName, int winnerKills, int totalPlayers, 
-                         const std::vector<PlayerScore>& scores, int gameMode);
+                         const std::vector<PlayerScore>& scores, int gameMode, bool victory);
     
 private:
     // Screen rendering

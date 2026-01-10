@@ -487,7 +487,7 @@ void msgLoop(ENetHost *client)
 				}
 				else if (p.header == headerMatchEnd)
 				{
-					// Match ended! (Supports Deathmatch mode)
+					// Match ended! (Supports all game modes)
 					auto endData = *(MatchEndData*)data;
 					
 					matchEnded = true;
@@ -495,7 +495,26 @@ void msgLoop(ENetHost *client)
 					strncpy(matchWinnerName, endData.winnerName, sizeof(matchWinnerName) - 1);
 					matchWinnerKills = endData.winnerKills;
 					
-					std::cout << "Match ended! Winner: " << matchWinnerName << " with " << matchWinnerKills << " kills!" << std::endl;
+					// Determine game mode name
+					const char* gameModeName = "Unknown";
+					switch (endData.gameMode) {
+						case GameMode::DEATHMATCH:
+							gameModeName = "Deathmatch";
+							break;
+						case GameMode::HORDE_DEFENSE:
+							gameModeName = "Horde Defense";
+							break;
+						case GameMode::BOSS_FIGHT:
+							gameModeName = "Boss Fight";
+							break;
+					}
+					
+					// Display victory/defeat status with game mode
+					std::cout << "========================================" << std::endl;
+					std::cout << "  " << gameModeName << " - " << (endData.victory ? "VICTORY!" : "DEFEAT!") << std::endl;
+					std::cout << "  MVP: " << matchWinnerName << " (" << matchWinnerKills 
+					          << (endData.gameMode == GameMode::DEATHMATCH ? " kills)" : " damage)") << std::endl;
+					std::cout << "========================================" << std::endl;
 					
 					// Collect all player scores for the scoreboard
 					std::vector<PlayerScore> playerScores;
@@ -531,7 +550,7 @@ void msgLoop(ENetHost *client)
 					if (g_accountUI) {
 						g_accountUI->setMatchSummary(matchWinnerName, matchWinnerKills, 
 						                              endData.totalPlayers, playerScores, 	
-						                              static_cast<int>(currentGameMode));
+						                              static_cast<int>(endData.gameMode), endData.victory);
 						g_accountUI->setState(UIState::MATCH_SUMMARY);
 						std::cout << "[Client] Transitioning to MATCH_SUMMARY screen" << std::endl;
 					}

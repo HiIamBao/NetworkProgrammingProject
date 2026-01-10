@@ -636,37 +636,58 @@ bool AccountUI::validateEmail(const std::string& email) {
 }
 
 void AccountUI::setMatchSummary(const char* winnerName, int winnerKills, int totalPlayers, 
-                                  const std::vector<PlayerScore>& scores, int gameMode) {
+                                  const std::vector<PlayerScore>& scores, int gameMode, bool victory) {
     strncpy(matchSummary.winnerName, winnerName, sizeof(matchSummary.winnerName) - 1);
     matchSummary.winnerName[sizeof(matchSummary.winnerName) - 1] = '\0';
     matchSummary.winnerKills = winnerKills;
     matchSummary.totalPlayers = totalPlayers;
     matchSummary.playerScores = scores;
     matchSummary.gameMode = gameMode;
+    matchSummary.victory = victory;
 }
 
 void AccountUI::renderMatchSummary(gl2d::Renderer2D& renderer, gl2d::Font& font) {
-    glui::Text("===== MATCH SUMMARY =====", UIColors::Primary);
+    // Determine game mode name
+    const char* gameModeName = "Unknown";
+    switch (static_cast<GameMode>(matchSummary.gameMode)) {
+        case GameMode::DEATHMATCH:
+            gameModeName = "Deathmatch";
+            break;
+        case GameMode::HORDE_DEFENSE:
+            gameModeName = "Horde Defense";
+            break;
+        case GameMode::BOSS_FIGHT:
+            gameModeName = "Boss Fight";
+            break;
+        default:
+            gameModeName = "Unknown Mode";
+            break;
+    }
+    
+    // Display game mode and victory/defeat status
+    char headerText[128];
+    snprintf(headerText, sizeof(headerText), "===== %s - %s =====", 
+             gameModeName, matchSummary.victory ? "VICTORY" : "DEFEAT");
+    glm::vec4 headerColor = matchSummary.victory ? UIColors::Success : UIColors::Error;
+    glui::Text(headerText, headerColor);
     glui::Space(20);
     
-    // Display winner
-    char winnerText[128];
-    snprintf(winnerText, sizeof(winnerText), "Winner: %s", matchSummary.winnerName);
-    glui::Text(winnerText, glm::vec4(1.0f, 0.84f, 0.0f, 1.0f));  // Gold color
-    
-    char killsText[64];
-    snprintf(killsText, sizeof(killsText), "Kills: %d", matchSummary.winnerKills);
-    glui::Text(killsText, UIColors::Success);
+    // Display MVP
+    char mvpText[128];
+    const char* statLabel = (matchSummary.gameMode == static_cast<int>(GameMode::DEATHMATCH)) ? "Kills" : "Damage";
+    snprintf(mvpText, sizeof(mvpText), "MVP: %s (%d %s)", 
+             matchSummary.winnerName, matchSummary.winnerKills, statLabel);
+    glui::Text(mvpText, glm::vec4(1.0f, 0.84f, 0.0f, 1.0f));  // Gold color
     
     glui::Space(20);
     glui::Text("===== FINAL SCOREBOARD =====", UIColors::White);
     glui::Space(10);
     
-    // Display all player scores sorted by kills (descending)
+    // Display all player scores sorted by score (descending)
     std::vector<PlayerScore> sortedScores = matchSummary.playerScores;
     std::sort(sortedScores.begin(), sortedScores.end(), 
               [](const PlayerScore& a, const PlayerScore& b) {
-                  return a.kills > b.kills;  // Sort by kills descending
+                  return a.score > b.score;  // Sort by score descending
               });
     
     // Display each player's score
@@ -680,8 +701,14 @@ void AccountUI::renderMatchSummary(gl2d::Renderer2D& renderer, gl2d::Font& font)
         else if (i == 2) color = glm::vec4(0.8f, 0.5f, 0.2f, 1.0f);  // Bronze
         
         char scoreText[128];
-        snprintf(scoreText, sizeof(scoreText), "%d. %s - Kills: %d | Deaths: %d | Score: %d",
-                 (int)(i + 1), score.playerName, score.kills, score.deaths, score.score);
+        if (matchSummary.gameMode == static_cast<int>(GameMode::DEATHMATCH)) {
+            snprintf(scoreText, sizeof(scoreText), "%d. %s - Kills: %d | Deaths: %d",
+                     (int)(i + 1), score.playerName, score.kills, score.deaths);
+        } else {
+            // Horde Defense or Boss Fight - show damage
+            snprintf(scoreText, sizeof(scoreText), "%d. %s - Damage: %d | Deaths: %d",
+                     (int)(i + 1), score.playerName, score.totalDamageDealt, score.deaths);
+        }
         glui::Text(scoreText, color);
         glui::Space(5);
     }
