@@ -1891,7 +1891,51 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 					}
 					
 					// Draw boss sprite
-					renderer.renderRectangle(bossRect, {1.0f, 1.0f, 1.0f, 1.0f}, {}, 0.f, *bossTexture);
+				renderer.renderRectangle(bossRect, {1.0f, 1.0f, 1.0f, 1.0f}, {}, 0.f, *bossTexture);
+				
+				// DEBUG: Draw hitbox outline (red, 3px thick borders)
+				// float outlineThickness = 3.0f;
+				// glm::vec4 outlineColor = {1.0f, 0.0f, 0.0f, 0.8f};
+				// // Top border
+				// renderer.renderRectangle({bossRect.x, bossRect.y, bossRect.z, outlineThickness}, outlineColor);
+				// // Bottom border
+				// renderer.renderRectangle({bossRect.x, bossRect.y + bossRect.w - outlineThickness, bossRect.z, outlineThickness}, outlineColor);
+				// // Left border
+				// renderer.renderRectangle({bossRect.x, bossRect.y, outlineThickness, bossRect.w}, outlineColor);
+				// // Right border
+				// renderer.renderRectangle({bossRect.x + bossRect.z - outlineThickness, bossRect.y, outlineThickness, bossRect.w}, outlineColor);
+				
+				// DEBUG: Draw proximity damage zone (7 tile radius, tile-based visualization)
+				constexpr float PROXIMITY_RADIUS = 5.0f;  // BOSS_CONTACT_RADIUS
+				glm::vec4 proximityColor = {1.0f, 0.5f, 0.0f, 0.50f};  // Orange, 15% opacity for tiles
+				
+				// Get boss tile position (boss is centered)
+				int bossTileX = static_cast<int>(clientBoss.position.x);
+				int bossTileY = static_cast<int>(clientBoss.position.y);
+				
+				// Draw orange rectangle for each tile within proximity radius
+				int radiusInTiles = static_cast<int>(PROXIMITY_RADIUS);
+				for (int dx = -radiusInTiles; dx <= radiusInTiles; dx++) {
+					for (int dy = -radiusInTiles; dy <= radiusInTiles; dy++) {
+						// Calculate distance from boss center to this tile's center
+						float tileCenterX = bossTileX + dx + 0.5f;
+						float tileCenterY = bossTileY + dy + 0.5f;
+						float distance = sqrt((tileCenterX - clientBoss.position.x) * (tileCenterX - clientBoss.position.x) + 
+						                     (tileCenterY - clientBoss.position.y) * (tileCenterY - clientBoss.position.y));
+						
+						// Only draw if within radius
+						if (distance <= PROXIMITY_RADIUS) {
+							glm::vec4 tileRect = {
+								(bossTileX + dx) * worldMagnification,
+								(bossTileY + dy) * worldMagnification,
+								worldMagnification,
+								worldMagnification
+							};
+							renderer.renderRectangle(tileRect, proximityColor);
+						}
+					}
+				}
+				
 					
 					// Draw boss health bar (width of boss)
 					float healthPercent = clientBoss.health / clientBoss.maxHealth;
@@ -2710,7 +2754,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 						auto textSize = renderer.getTextSize(startText, textures.font, textScale);
 						glm::vec2 startTextPos = {
 							centerX - textSize.x * 0.5f,
-							buttonY + (buttonH - textSize.y) * 0.5f
+							buttonY + (buttonH + textSize.y) * 0.5f
 						};
 						renderer.renderText(startTextPos, startText, textures.font,
 							glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), textScale, 4.f, 3.f, false);
