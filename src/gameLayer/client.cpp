@@ -523,27 +523,62 @@ void msgLoop(ENetHost *client)
 						playerScores.push_back(endData.scores[i]);
 					}
 					
-					// Save ALL players' match stats to database
-					if (g_clientAccountManager) {
-						std::vector<MatchPlayerStats> matchStats;
+				// Save ALL players' match stats to database (game mode-specific)
+				if (g_clientAccountManager) {
+					std::vector<MatchPlayerStats> matchStats;
+					
+					// Populate matchStats from PlayerScore data in endData
+					for (int i = 0; i < endData.totalPlayers; i++) {
+						const PlayerScore& score = endData.scores[i];
+						MatchPlayerStats pStats;
+						pStats.playerId = score.cid;
+						pStats.playerName = std::string(score.playerName);
+						pStats.kills = score.kills;
+						pStats.roundsSurvived = 0;  // Will be set for Horde Defense if needed
+						pStats.damageDealt = score.totalDamageDealt;
+						matchStats.push_back(pStats);
+					}
+					
+					// Call appropriate record function based on game mode
+					if (!matchStats.empty()) {
+						bool recordSuccess = false;
 						
-						for (const auto& playerPair : players) {
-							const auto& playerEntity = playerPair.second;
-							MatchPlayerStats pStats;
-							pStats.playerId = playerPair.first;
-							pStats.playerName = std::string(playerEntity.name);
-							pStats.kills = playerEntity.kills;
-							pStats.roundsSurvived = 0;  // Not used in deathmatch
-							pStats.damageDealt = 0;      // Not tracked in deathmatch
-							matchStats.push_back(pStats);
-						}
-						
-						if (!matchStats.empty()) {
-							if (g_clientAccountManager->recordDeathmatchMatchEnd(matchStats)) {
-								std::cout << "[Deathmatch] Recorded match stats for " << matchStats.size() << " players!" << std::endl;
+						switch (endData.gameMode) {
+							case GameMode::DEATHMATCH:
+								recordSuccess = g_clientAccountManager->recordDeathmatchMatchEnd(matchStats);
+								if (recordSuccess) {
+									std::cout << "[Deathmatch] Recorded match stats for " << matchStats.size() << " players!" << std::endl;
+								}
+								break;
+								
+							case GameMode::HORDE_DEFENSE:
+								// For Horde Defense, we might need to get wave info from somewhere
+								// For now, using the damage as the primary stat
+								recordSuccess = g_clientAccountManager->recordHordeDefenseMatchEnd(matchStats);
+								if (recordSuccess) {
+									std::cout << "[Horde Defense] Recorded match stats for " << matchStats.size() << " players!" << std::endl;
+								}
+								break;
+								
+							case GameMode::BOSS_FIGHT:
+							{
+								// For Boss Fight, we need the boss level - get it from the match start data or clientBoss
+								extern BossFight::Boss clientBoss;
+								int bossLevel = clientBoss.bossLevel > 0 ? clientBoss.bossLevel : 1;
+								recordSuccess = g_clientAccountManager->recordBossFightMatchEnd(matchStats, bossLevel);
+								if (recordSuccess) {
+									std::cout << "[Boss Fight] Recorded match stats for " << matchStats.size() 
+									          << " players (Boss Level " << bossLevel << ")!" << std::endl;
+								}
+								break;
 							}
+							
+							default:
+								std::cout << "[Client] Unknown game mode, match stats not recorded" << std::endl;
+								break;
 						}
 					}
+				}
 					
 					// Transition to match summary screen
 					extern AccountUI* g_accountUI;
